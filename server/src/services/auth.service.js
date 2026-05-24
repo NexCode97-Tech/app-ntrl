@@ -2,7 +2,6 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import { pool } from "../config/database.js";
-import { redis } from "../config/redis.js";
 import { config } from "../config/index.js";
 import { AppError } from "../utils/AppError.js";
 
@@ -79,7 +78,7 @@ export async function logout(accessToken, refreshToken) {
     const payload = jwt.decode(accessToken);
     if (payload?.exp) {
       const ttl = payload.exp - Math.floor(Date.now() / 1000);
-      if (ttl > 0) await redis.setex(`revoked:${accessToken}`, ttl, "1");
+      // Redis desactivado — revocación de token no disponible
     }
   } catch { /* token inválido, ignorar */ }
 

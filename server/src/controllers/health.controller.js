@@ -1,5 +1,4 @@
 import { pool } from "../config/database.js";
-import { redis } from "../config/redis.js";
 import { statfsSync } from "fs";
 
 export async function health(req, res) {
@@ -14,14 +13,7 @@ export async function health(req, res) {
     result.status = "degraded";
   }
 
-  // Redis
-  try {
-    await redis.ping();
-    result.checks.redis = "ok";
-  } catch (err) {
-    result.checks.redis = "error";
-    result.status = "degraded";
-  }
+  result.checks.redis = "disabled";
 
   // Disco
   try {

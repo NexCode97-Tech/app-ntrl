@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
 import { config } from "../config/index.js";
-import { redis } from "../config/redis.js";
 import { AppError } from "../utils/AppError.js";
 
 export async function requireAuth(req, res, next) {
@@ -11,12 +10,6 @@ export async function requireAuth(req, res, next) {
     }
 
     const token = authHeader.slice(7);
-
-    // Verificar si el token fue revocado (logout) — fallo de Redis no bloquea
-    const revoked = await redis.get(`revoked:${token}`).catch(() => null);
-    if (revoked) {
-      throw new AppError("Token revocado.", 401, "TOKEN_REVOKED");
-    }
 
     const payload = jwt.verify(token, config.jwt.accessSecret);
     req.user = { id: payload.sub, role: payload.role, area: payload.area };
@@ -37,9 +30,6 @@ export async function requireAuthSSE(req, res, next) {
   try {
     const token = req.query.token;
     if (!token) throw new AppError("Token requerido.", 401, "UNAUTHORIZED");
-
-    const revoked = await redis.get(`revoked:${token}`).catch(() => null);
-    if (revoked) throw new AppError("Token revocado.", 401, "TOKEN_REVOKED");
 
     const payload = jwt.verify(token, config.jwt.accessSecret);
     req.user = { id: payload.sub, role: payload.role, area: payload.area };

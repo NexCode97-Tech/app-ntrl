@@ -2,7 +2,6 @@ import { pool } from "../config/database.js";
 import { AppError } from "../utils/AppError.js";
 import { notifyAdmins, broadcastInvalidate } from "../utils/sseManager.js";
 import { pushToRoles } from "../utils/pushNotifications.js";
-import { redis } from "../config/redis.js";
 
 // Vista general de producción para el admin: pedidos activos con estado por área
 export async function getProductionOverview(req, res, next) {
@@ -126,7 +125,7 @@ export async function updateTaskStatus(req, res, next) {
       }).catch(() => {});
     }
 
-    redis.del("dashboard:summary").catch(() => {});
+    // Redis desactivado
     broadcastInvalidate(["order", task.order_id], "production", "dashboard");
     res.json({ status: "ok", data: updated });
   } catch (err) { next(err); }

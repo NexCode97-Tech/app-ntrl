@@ -1,14 +1,7 @@
 import { pool } from "../config/database.js";
-import { redis } from "../config/redis.js";
-
-const CACHE_TTL = 300; // 5 minutos
 
 async function cached(key, fn) {
-  const hit = await redis.get(key);
-  if (hit) return JSON.parse(hit);
-  const data = await fn();
-  await redis.setex(key, CACHE_TTL, JSON.stringify(data));
-  return data;
+  return await fn();
 }
 
 // Guarda snapshot del mes indicado (formato 'YYYY-MM') si aún no existe
@@ -137,7 +130,6 @@ export async function getSummary(req, res, next) {
 }
 
 export async function invalidateCache(req, res) {
-  await redis.del("dashboard:summary");
   res.json({ status: "ok", message: "Caché invalidada." });
 }
 

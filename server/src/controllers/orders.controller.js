@@ -3,7 +3,6 @@ import { saveFile, deleteFile } from "../utils/fileStorage.js";
 import { unlinkSync, existsSync } from "fs";
 import path from "path";
 import { config } from "../config/index.js";
-import { redis, redisPub } from "../config/redis.js";
 import { pushToWorkers } from "../utils/pushNotifications.js";
 import { broadcastInvalidate } from "../utils/sseManager.js";
 import { generateInvoicePDF } from "../utils/pdfGenerator.js";
@@ -11,7 +10,7 @@ import { sendMail } from "../utils/mailer.js";
 import { AppError } from "../utils/AppError.js";
 
 function invalidateDashboard() {
-  return redis.del("dashboard:summary").catch(() => {});
+  return Promise.resolve();
 }
 
 export async function list(req, res, next) {
