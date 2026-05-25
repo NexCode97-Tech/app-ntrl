@@ -40,23 +40,34 @@ function StatCard({ label, value, sub, accent }) {
 // ── Edit modal — formulario por empleado ──────────────────────
 function EditModal({ tx, periodId, onClose, onSaved }) {
   // Recargos Colombia: diurna 25%, nocturna 75%, dominical/festiva diurna 75%, dominical nocturna 110%
-  // Recargos CST Colombia Art. 168 — sobre valor hora ordinaria diurna
-  const RECARGOS = { diurna: 1.25, nocturna: 1.75, dominical_diurna: 2.00, dominical_nocturna: 2.50 };
-  // Ley 2101/2021: jornada nocturna desde 7pm (vigente jul 2025); cambia a 6pm en jul 2026
+  // Ley 2466 + Ley 2101/2021 — vigente 2026 (nocturna: 7pm–6am; jornada: 44h/sem)
+  // Divisor: 44h × 4.333 semanas/mes = 190.67 ≈ 191
+  const RECARGOS = {
+    extra_diurna:             1.25,  // Hora extra diurna 6am–7pm (+25%)
+    recargo_nocturno:         1.35,  // Jornada ordinaria nocturna 7pm–6am (+35%)
+    extra_nocturna:           1.75,  // Hora extra nocturna 7pm–6am (+75%)
+    recargo_dominical:        1.90,  // Jornada ordinaria dominical/festivo (+90%)
+    recargo_dom_nocturno:     2.25,  // Jornada ordinaria dom/fest nocturna (+125%)
+    extra_diurna_dominical:   2.15,  // Hora extra diurna dom/fest (+25%+90%)
+    extra_nocturna_dominical: 2.65,  // Hora extra nocturna dom/fest (+75%+90%)
+  };
   const RECARGO_LABEL = {
-    diurna:             "Diurna 6am–7pm (×1.25 — +25%)",
-    nocturna:           "Nocturna 7pm–6am (×1.75 — +75%)",
-    dominical_diurna:   "Dominical/fest. diurna (×2.00 — +100%)",
-    dominical_nocturna: "Dominical/fest. nocturna (×2.50 — +150%)",
+    extra_diurna:             "H. extra diurna 6am–7pm (×1.25)",
+    recargo_nocturno:         "Recargo nocturno ordinario 7pm–6am (×1.35)",
+    extra_nocturna:           "H. extra nocturna 7pm–6am (×1.75)",
+    recargo_dominical:        "Recargo dominical/festivo diurno (×1.90)",
+    recargo_dom_nocturno:     "Recargo dominical/festivo nocturno (×2.25)",
+    extra_diurna_dominical:   "H. extra diurna dom/festivo (×2.15)",
+    extra_nocturna_dominical: "H. extra nocturna dom/festivo (×2.65)",
   };
 
-  const valorHora = Math.round(Number(tx.salario_base_snap) / 240); // salario / (30 días × 8 h)
+  const valorHora = Math.round(Number(tx.salario_base_snap) / 191); // 44h/sem × 4.333 = 190.67
 
   const [form, setForm] = useState({
     dias_laborados:        tx.dias_laborados        ?? 15,
     anticipo_prestaciones: tx.anticipo_prestaciones ?? 0,
     num_horas_extras:      0,
-    tipo_hora_extra:       "diurna",
+    tipo_hora_extra:       "extra_diurna",
     horas_extras:          tx.horas_extras          ?? 0,
     otros_ingresos:        tx.otros_ingresos        ?? 0,
     anticipo_adelanto:     tx.anticipo_adelanto      ?? 0,
