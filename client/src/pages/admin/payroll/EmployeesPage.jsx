@@ -24,8 +24,14 @@ const fmt = (v) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v);
 
 
+function formatPriceCO(raw) {
+  const digits = String(raw).replace(/\D/g, "");
+  if (!digits) return "";
+  return Number(digits).toLocaleString("es-CO");
+}
+
 const EMPTY_FORM = {
-  nombre: "", email: "", cargo: "", salario_base: "",
+  nombre: "", email: "", cargo: "", salario_base: "", salario_base_display: "",
   cuenta_banco: "", banco: "", tipo_identificacion: "CC",
   numero_identificacion: "", fecha_ingreso: "", estado_laboral: "activo", notas: "",
 };
@@ -85,6 +91,7 @@ export default function EmployeesPage() {
       email: emp.email ?? "",
       cargo: emp.cargo,
       salario_base: emp.salario_base ?? "",
+      salario_base_display: emp.salario_base ? Number(emp.salario_base).toLocaleString("es-CO") : "",
       cuenta_banco: emp.cuenta_banco ?? "",
       banco: emp.banco ?? "",
       tipo_identificacion: emp.tipo_identificacion,
@@ -279,7 +286,12 @@ export default function EmployeesPage() {
 
                 <div>
                   <label className="block text-zinc-400 text-xs mb-1">Salario base (COP) *</label>
-                  <input required type="number" min="0" value={form.salario_base} onChange={(e) => setForm({ ...form, salario_base: e.target.value })}
+                  <input required type="text" inputMode="numeric"
+                    value={form.salario_base_display ?? ""}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, "");
+                      setForm({ ...form, salario_base: Number(digits) || 0, salario_base_display: formatPriceCO(digits) });
+                    }}
                     className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-brand-green" />
                 </div>
 
