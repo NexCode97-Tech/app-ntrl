@@ -23,6 +23,27 @@ const ESTADO_LABEL = {
 const fmt = (v) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v);
 
+function SalarioInput({ value, onChange }) {
+  const [display, setDisplay] = useState(
+    value ? String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ""
+  );
+  return (
+    <input
+      required
+      type="text"
+      inputMode="numeric"
+      value={display}
+      onChange={(e) => {
+        const digits = e.target.value.replace(/\./g, "").replace(/\D/g, "");
+        const formatted = digits ? digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "";
+        setDisplay(formatted);
+        onChange(digits ? Number(digits) : "", formatted);
+      }}
+      className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-brand-green"
+    />
+  );
+}
+
 const EMPTY_FORM = {
   nombre: "", email: "", cargo: "", salario_base: "",
   cuenta_banco: "", banco: "", tipo_identificacion: "CC",
@@ -281,15 +302,13 @@ export default function EmployeesPage() {
 
                 <div>
                   <label className="block text-zinc-400 text-xs mb-1">Salario base (COP) *</label>
-                  <input required type="text" inputMode="numeric"
-                    value={salarioDisplay}
-                    onChange={(e) => {
-                      const digits = e.target.value.replace(/\./g, "").replace(/\D/g, "");
-                      const formatted = digits ? digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "";
-                      setSalarioDisplay(formatted);
-                      setForm({ ...form, salario_base: digits ? Number(digits) : "" });
+                  <SalarioInput
+                    value={form.salario_base}
+                    onChange={(num, display) => {
+                      setForm({ ...form, salario_base: num });
+                      setSalarioDisplay(display);
                     }}
-                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-brand-green" />
+                  />
                 </div>
 
                 <div>
