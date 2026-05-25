@@ -39,6 +39,15 @@ export function errorHandler(err, req, res, next) {
     });
   }
 
+  // Error de PostgreSQL — violación de CHECK constraint
+  if (err.code === "23514") {
+    return res.status(400).json({
+      status: "error",
+      code: "CONSTRAINT_VIOLATION",
+      message: "La operación viola una restricción de datos (ej: el monto supera el saldo disponible).",
+    });
+  }
+
   // Error inesperado — log sanitizado (sin datos sensibles del request)
   const safeLog = {
     message: err.message,

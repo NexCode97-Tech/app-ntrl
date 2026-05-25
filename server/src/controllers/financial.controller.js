@@ -65,6 +65,15 @@ export async function addPayment(req, res, next) {
     );
     if (!order) throw new AppError("Pedido no encontrado.", 404, "NOT_FOUND");
 
+    // Validar que el monto no exceda el saldo pendiente
+    const balance = Number(order.total) - Number(order.amount_paid);
+    if (Number(amount) > balance + 0.01) {
+      throw new AppError(
+        `El monto ($${Number(amount).toLocaleString("es-CO")}) supera el saldo pendiente ($${balance.toLocaleString("es-CO")}).`,
+        400, "AMOUNT_EXCEEDS_BALANCE"
+      );
+    }
+
     // Idempotencia: si ya existe devolver 200 sin error
     const { rows: existing } = await pool.query(
       "SELECT id FROM order_payments WHERE order_id = $1 AND payment_number = $2",
