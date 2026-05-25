@@ -6,14 +6,30 @@ import { config } from "../config/index.js";
 import { AppError } from "../utils/AppError.js";
 
 // Magic bytes para validar tipo real de archivo
+// Soporta JPEG, PNG, PDF, WebP, HEIC/HEIF, AVIF, GIF, BMP
 const MAGIC_BYTES = {
-  "ffd8ff":       "image/jpeg",
-  "89504e47":     "image/png",
-  "25504446":     "application/pdf",
+  "ffd8ff":           "image/jpeg",          // JPEG
+  "89504e47":         "image/png",           // PNG
+  "25504446":         "application/pdf",     // PDF
+  "52494646":         "image/webp",          // WebP (RIFF....WEBP)
+  "00000018":         "image/heic",          // HEIC/HEIF
+  "0000001c":         "image/heic",          // HEIC variante
+  "00000020":         "image/heic",          // HEIF
+  "47494638":         "image/gif",           // GIF
+  "424d":             "image/bmp",           // BMP
 };
 
+// Para WebP necesitamos verificar también los bytes 8-11 ("WEBP")
 function detectMimeType(buffer) {
   const hex = buffer.slice(0, 4).toString("hex");
+
+  // WebP: empieza con RIFF y en posición 8 dice WEBP
+  if (hex.startsWith("52494646")) {
+    const webpTag = buffer.slice(8, 12).toString("ascii");
+    if (webpTag === "WEBP") return "image/webp";
+    return null; // RIFF pero no WebP
+  }
+
   for (const [magic, mime] of Object.entries(MAGIC_BYTES)) {
     if (hex.startsWith(magic)) return mime;
   }
@@ -22,7 +38,7 @@ function detectMimeType(buffer) {
 
 const storage = multer.memoryStorage();
 
-const ALLOWED_EXTENSIONS       = [".jpg", ".jpeg", ".png", ".pdf"];
+const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".pdf", ".webp", ".heic", ".heif", ".gif", ".bmp"];
 const ALLOWED_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png"];
 
 function makeUpload(allowedExts, errMsg) {
@@ -39,7 +55,7 @@ function makeUpload(allowedExts, errMsg) {
   });
 }
 
-export const upload      = makeUpload(ALLOWED_EXTENSIONS,       "Solo JPG, PNG o PDF.");
+export const upload      = makeUpload(ALLOWED_EXTENSIONS,       "Solo JPG, PNG, PDF, WebP o HEIC.");
 export const uploadImage = makeUpload(ALLOWED_IMAGE_EXTENSIONS, "Solo JPG o PNG.");
 
 // Middleware LIGERO: solo valida magic bytes, sin Sharp (para diseños de pedidos)

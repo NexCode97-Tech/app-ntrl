@@ -30,7 +30,7 @@ export const config = {
   upload: {
     dir: process.env.UPLOAD_DIR || "./data/uploads",
     maxSizeMB: 10,
-    allowedMimeTypes: ["image/jpeg", "image/png", "application/pdf"],
+    allowedMimeTypes: ["image/jpeg", "image/png", "application/pdf", "image/webp", "image/heic", "image/heif", "image/avif", "image/gif", "image/bmp"],
   },
 
   google: {
