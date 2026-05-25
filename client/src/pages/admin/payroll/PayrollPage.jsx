@@ -272,8 +272,14 @@ function PeriodsTab() {
 // ══════════════════════════════════════════════════════════════
 // TAB EMPLEADOS
 // ══════════════════════════════════════════════════════════════
+function formatPriceCO(raw) {
+  const digits = String(raw).split(".")[0].replace(/\D/g, "");
+  if (!digits) return "";
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
 const EMPTY_EMP = {
-  nombre: "", email: "", cargo: "", salario_base: "",
+  nombre: "", email: "", cargo: "", salario_base: "", salario_base_display: "",
   tipo_contrato: "prestacion_servicios",
   banco: "", tipo_cuenta: "nequi", numero_cuenta: "",
   anticipo_prest_fijo: "0",
@@ -323,6 +329,7 @@ function EmployeesTab() {
       email: emp.email ?? "",
       cargo: emp.cargo ?? "",
       salario_base: emp.salario_base ?? "",
+      salario_base_display: emp.salario_base ? formatPriceCO(emp.salario_base) : "",
       tipo_contrato: emp.tipo_contrato ?? "prestacion_servicios",
       banco: emp.banco ?? "",
       tipo_cuenta: emp.tipo_cuenta ?? "nequi",
@@ -457,8 +464,13 @@ function EmployeesTab() {
                 </div>
                 <div>
                   <label className="block text-zinc-400 text-xs mb-1">Salario base *</label>
-                  <input required type="number" min="1" className="input-field" value={form.salario_base}
-                    onChange={f("salario_base")} placeholder="1750905" />
+                  <input required type="text" inputMode="numeric" className="input-field"
+                    value={form.salario_base_display ?? ""}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, "");
+                      setForm((prev) => ({ ...prev, salario_base: Number(digits) || 0, salario_base_display: formatPriceCO(digits) }));
+                    }}
+                    placeholder="1.750.905" />
                 </div>
                 <div>
                   <label className="block text-zinc-400 text-xs mb-1">Tipo ID</label>
