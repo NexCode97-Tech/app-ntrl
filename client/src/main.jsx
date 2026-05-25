@@ -1,9 +1,11 @@
-// v3
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./App.jsx";
 import "./styles/globals.css";
+
+const APP_BUILD = "2026.05.25.1";
+console.debug("[NTRL]", APP_BUILD);
 
 const queryClient = new QueryClient({
   defaultOptions: {
