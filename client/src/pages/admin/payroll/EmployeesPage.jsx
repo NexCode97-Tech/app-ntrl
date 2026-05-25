@@ -94,7 +94,7 @@ export default function EmployeesPage() {
       estado_laboral: emp.estado_laboral,
       notas: emp.notas ?? "",
     });
-    setSalarioDisplay(emp.salario_base ? Number(emp.salario_base).toLocaleString("es-CO") : "");
+    setSalarioDisplay(emp.salario_base ? String(emp.salario_base).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "");
     setError("");
     setShowModal(true);
   }
@@ -285,7 +285,8 @@ export default function EmployeesPage() {
                     value={salarioDisplay}
                     onChange={(e) => {
                       const digits = e.target.value.replace(/\./g, "").replace(/\D/g, "");
-                      setSalarioDisplay(digits ? Number(digits).toLocaleString("es-CO") : "");
+                      const formatted = digits ? digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "";
+                      setSalarioDisplay(formatted);
                       setForm({ ...form, salario_base: digits ? Number(digits) : "" });
                     }}
                     className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-brand-green" />
