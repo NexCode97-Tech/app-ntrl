@@ -152,11 +152,13 @@ export async function listTransactions(req, res, next) {
     const { rows } = await pool.query(`
       SELECT
         pt.*,
-        e.nombre  AS empleado_nombre,
-        e.cargo   AS empleado_cargo,
-        e.banco   AS empleado_banco,
+        e.nombre      AS empleado_nombre,
+        e.cargo       AS empleado_cargo,
+        e.banco       AS empleado_banco,
         e.tipo_cuenta AS empleado_tipo_cuenta,
-        e.numero_cuenta AS empleado_numero_cuenta
+        e.numero_cuenta AS empleado_numero_cuenta,
+        e.hora_entrada AS empleado_hora_entrada,
+        e.hora_salida  AS empleado_hora_salida
       FROM payroll_transactions pt
       JOIN employees e ON e.id = pt.employee_id
       WHERE pt.period_id = $1

@@ -63,6 +63,8 @@ export const employeeSchema = Joi.object({
   fecha_ingreso:         Joi.date().iso().required(),
   estado_laboral:        Joi.string().valid("activo","licencia","terminado").default("activo"),
   notas:                 Joi.string().max(500).optional().allow(null, ""),
+  hora_entrada:          Joi.string().pattern(/^\d{2}:\d{2}$/).default("07:00"),
+  hora_salida:           Joi.string().pattern(/^\d{2}:\d{2}$/).default("17:00"),
 });
 
 export const employeePatchSchema = Joi.object({
@@ -80,6 +82,8 @@ export const employeePatchSchema = Joi.object({
   fecha_ingreso:         Joi.date().iso(),
   estado_laboral:        Joi.string().valid("activo","licencia","terminado"),
   notas:                 Joi.string().max(500).allow(null, ""),
+  hora_entrada:          Joi.string().pattern(/^\d{2}:\d{2}$/),
+  hora_salida:           Joi.string().pattern(/^\d{2}:\d{2}$/),
 }).min(1);
 
 export const periodSchema = Joi.object({

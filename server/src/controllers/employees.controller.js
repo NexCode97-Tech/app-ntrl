@@ -54,8 +54,9 @@ export async function createEmployee(req, res, next) {
          (nombre, email, cargo, salario_base, tipo_contrato,
           banco, tipo_cuenta, numero_cuenta, anticipo_prest_fijo,
           tipo_identificacion, numero_identificacion,
-          fecha_ingreso, estado_laboral, notas)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+          fecha_ingreso, estado_laboral, notas,
+          hora_entrada, hora_salida)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
        RETURNING *`,
       [
         b.nombre, b.email || null, b.cargo, b.salario_base,
@@ -65,6 +66,7 @@ export async function createEmployee(req, res, next) {
         b.tipo_identificacion || "CC", b.numero_identificacion,
         b.fecha_ingreso, b.estado_laboral || "activo",
         b.notas || null,
+        b.hora_entrada || "07:00", b.hora_salida || "17:00",
       ]
     );
     res.status(201).json({ status: "ok", data: rows[0] });
@@ -84,6 +86,7 @@ export async function updateEmployee(req, res, next) {
       "banco","tipo_cuenta","numero_cuenta","anticipo_prest_fijo",
       "tipo_identificacion","numero_identificacion",
       "fecha_ingreso","estado_laboral","notas",
+      "hora_entrada","hora_salida",
     ];
 
     const sets = [];

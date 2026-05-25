@@ -63,11 +63,21 @@ function EditModal({ tx, periodId, onClose, onSaved }) {
 
   const valorHora = Math.round(Number(tx.salario_base_snap) / 191); // 44h/sem × 4.333 = 190.67
 
+  // Detectar tipo de hora extra según horario del empleado
+  // hora_salida guardada como "HH:MM" o "HH:MM:SS"
+  function detectarTipoHora(horaSalida) {
+    if (!horaSalida) return "extra_diurna";
+    const [h] = horaSalida.split(":").map(Number);
+    return h >= 19 ? "extra_nocturna" : "extra_diurna"; // 19:00 = 7pm inicio jornada nocturna
+  }
+
+  const tipoHoraDetectado = detectarTipoHora(tx.empleado_hora_salida);
+
   const [form, setForm] = useState({
     dias_laborados:        tx.dias_laborados        ?? 15,
     anticipo_prestaciones: tx.anticipo_prestaciones ?? 0,
     num_horas_extras:      0,
-    tipo_hora_extra:       "extra_diurna",
+    tipo_hora_extra:       tipoHoraDetectado,
     horas_extras:          tx.horas_extras          ?? 0,
     otros_ingresos:        tx.otros_ingresos        ?? 0,
     anticipo_adelanto:     tx.anticipo_adelanto      ?? 0,

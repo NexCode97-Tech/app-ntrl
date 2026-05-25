@@ -285,6 +285,7 @@ const EMPTY_EMP = {
   anticipo_prest_fijo: "0",
   tipo_identificacion: "CC", numero_identificacion: "",
   fecha_ingreso: "", estado_laboral: "activo", notas: "",
+  hora_entrada: "07:00", hora_salida: "17:00",
 };
 
 function EmployeesTab() {
@@ -335,6 +336,8 @@ function EmployeesTab() {
       tipo_cuenta: emp.tipo_cuenta ?? "nequi",
       numero_cuenta: emp.numero_cuenta ?? "",
       anticipo_prest_fijo: emp.anticipo_prest_fijo ?? "0",
+      hora_entrada: emp.hora_entrada?.slice(0,5) ?? "07:00",
+      hora_salida:  emp.hora_salida?.slice(0,5)  ?? "17:00",
       tipo_identificacion: emp.tipo_identificacion ?? "CC",
       numero_identificacion: emp.numero_identificacion ?? "",
       fecha_ingreso: emp.fecha_ingreso ? emp.fecha_ingreso.slice(0, 10) : "",
@@ -495,6 +498,14 @@ function EmployeesTab() {
                     <option value="licencia">Licencia</option>
                     <option value="terminado">Terminado</option>
                   </select>
+                </div>
+                <div>
+                  <label className="block text-zinc-400 text-xs mb-1">Hora entrada</label>
+                  <input type="time" className="input-field" value={form.hora_entrada} onChange={f("hora_entrada")} />
+                </div>
+                <div>
+                  <label className="block text-zinc-400 text-xs mb-1">Hora salida</label>
+                  <input type="time" className="input-field" value={form.hora_salida} onChange={f("hora_salida")} />
                 </div>
               </div>
 
