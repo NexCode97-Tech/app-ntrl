@@ -48,7 +48,7 @@ export const config = {
 };
 
 // Validar variables críticas al arrancar
-const required = ["DATABASE_URL", "REDIS_URL", "JWT_ACCESS_SECRET", "JWT_REFRESH_SECRET"];
+const required = ["DATABASE_URL", "JWT_ACCESS_SECRET", "JWT_REFRESH_SECRET"]; // REDIS_URL es opcional
 for (const key of required) {
   if (!process.env[key]) {
     throw new Error(`Variable de entorno requerida no definida: ${key}`);
