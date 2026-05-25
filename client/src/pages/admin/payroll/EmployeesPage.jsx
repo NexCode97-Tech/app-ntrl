@@ -91,7 +91,7 @@ export default function EmployeesPage() {
       email: emp.email ?? "",
       cargo: emp.cargo,
       salario_base: emp.salario_base ?? "",
-      salario_base_display: emp.salario_base ? Number(emp.salario_base).toLocaleString("es-CO") : "",
+      salario_base_display: emp.salario_base ? formatPriceCO(emp.salario_base) : "",
       cuenta_banco: emp.cuenta_banco ?? "",
       banco: emp.banco ?? "",
       tipo_identificacion: emp.tipo_identificacion,
