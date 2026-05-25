@@ -23,26 +23,6 @@ const ESTADO_LABEL = {
 const fmt = (v) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v);
 
-function SalarioInput({ value, onChange }) {
-  const [display, setDisplay] = useState(
-    value ? String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ""
-  );
-  return (
-    <input
-      required
-      type="text"
-      inputMode="numeric"
-      value={display}
-      onChange={(e) => {
-        const digits = e.target.value.replace(/\./g, "").replace(/\D/g, "");
-        const formatted = digits ? digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "";
-        setDisplay(formatted);
-        onChange(digits ? Number(digits) : "", formatted);
-      }}
-      className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-brand-green"
-    />
-  );
-}
 
 const EMPTY_FORM = {
   nombre: "", email: "", cargo: "", salario_base: "",
@@ -57,7 +37,6 @@ export default function EmployeesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null); // null = crear, obj = editar
   const [form, setForm] = useState(EMPTY_FORM);
-  const [salarioDisplay, setSalarioDisplay] = useState("");
   const [error, setError] = useState("");
 
   // ── Fetch ────────────────────────────────────────────────────
@@ -95,7 +74,6 @@ export default function EmployeesPage() {
   function openCreate() {
     setEditing(null);
     setForm(EMPTY_FORM);
-    setSalarioDisplay("");
     setError("");
     setShowModal(true);
   }
@@ -115,7 +93,6 @@ export default function EmployeesPage() {
       estado_laboral: emp.estado_laboral,
       notas: emp.notas ?? "",
     });
-    setSalarioDisplay(emp.salario_base ? String(emp.salario_base).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "");
     setError("");
     setShowModal(true);
   }
@@ -302,13 +279,8 @@ export default function EmployeesPage() {
 
                 <div>
                   <label className="block text-zinc-400 text-xs mb-1">Salario base (COP) *</label>
-                  <SalarioInput
-                    value={form.salario_base}
-                    onChange={(num, display) => {
-                      setForm({ ...form, salario_base: num });
-                      setSalarioDisplay(display);
-                    }}
-                  />
+                  <input required type="number" min="0" value={form.salario_base} onChange={(e) => setForm({ ...form, salario_base: e.target.value })}
+                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-brand-green" />
                 </div>
 
                 <div>
