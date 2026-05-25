@@ -42,9 +42,10 @@ function EditModal({ tx, periodId, onClose, onSaved }) {
   // Recargos Colombia: diurna 25%, nocturna 75%, dominical/festiva diurna 75%, dominical nocturna 110%
   // Recargos CST Colombia Art. 168 — sobre valor hora ordinaria diurna
   const RECARGOS = { diurna: 1.25, nocturna: 1.75, dominical_diurna: 2.00, dominical_nocturna: 2.50 };
+  // Ley 2101/2021: jornada nocturna desde 7pm (vigente jul 2025); cambia a 6pm en jul 2026
   const RECARGO_LABEL = {
-    diurna:             "Diurna (×1.25 — +25%)",
-    nocturna:           "Nocturna (×1.75 — +75%)",
+    diurna:             "Diurna 6am–7pm (×1.25 — +25%)",
+    nocturna:           "Nocturna 7pm–6am (×1.75 — +75%)",
     dominical_diurna:   "Dominical/fest. diurna (×2.00 — +100%)",
     dominical_nocturna: "Dominical/fest. nocturna (×2.50 — +150%)",
   };
