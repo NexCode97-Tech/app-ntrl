@@ -284,7 +284,7 @@ export default function EmployeesPage() {
                   <input required type="text" inputMode="numeric"
                     value={salarioDisplay}
                     onChange={(e) => {
-                      const digits = e.target.value.replace(/\D/g, "");
+                      const digits = e.target.value.replace(/\./g, "").replace(/\D/g, "");
                       setSalarioDisplay(digits ? Number(digits).toLocaleString("es-CO") : "");
                       setForm({ ...form, salario_base: digits ? Number(digits) : "" });
                     }}
