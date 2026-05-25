@@ -55,6 +55,26 @@
     padding-right: 2.25rem;
   }
 
+  /* Iconos de calendario y reloj en inputs date/time — color zinc-400 (#a1a1aa) */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+  input[type="month"]::-webkit-calendar-picker-indicator,
+  input[type="week"]::-webkit-calendar-picker-indicator {
+    filter: invert(70%) sepia(5%) saturate(300%) hue-rotate(200deg) brightness(95%);
+    cursor: pointer;
+    opacity: 0.8;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator:hover,
+  input[type="time"]::-webkit-calendar-picker-indicator:hover,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
+  input[type="month"]::-webkit-calendar-picker-indicator:hover,
+  input[type="week"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+    filter: invert(70%) sepia(60%) saturate(500%) hue-rotate(60deg) brightness(110%);
+  }
+
   .card {
     @apply bg-zinc-900 border border-zinc-800 rounded-xl p-4;
   }
