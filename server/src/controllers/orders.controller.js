@@ -111,7 +111,7 @@ export async function remove(req, res, next) {
     await orderService.deleteOrder(req.params.id);
     await invalidateDashboard();
     broadcastInvalidate("orders", "dashboard");
-    await redisPub.publish("ntrl:notifications", JSON.stringify({ targetRole: "worker", type: "order_deleted" })).catch(() => {});
+    pushToWorkers({ title: "Pedido eliminado", body: "Un pedido fue eliminado del sistema.", url: "/tasks" }).catch(() => {});
     res.json({ status: "ok", message: "Pedido eliminado." });
   } catch (err) { next(err); }
 }
