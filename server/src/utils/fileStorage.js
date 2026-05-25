@@ -32,8 +32,10 @@ export async function saveFile(file, subfolder = "uploads") {
       const uploadStream = cloudinary.uploader.upload_stream(
         { folder: subfolder, resource_type: resourceType },
         (error, result) => {
-          if (error) reject(error);
-          else resolve(result.secure_url);
+          if (error) {
+            console.error("[fileStorage] Cloudinary upload error:", error?.message || error);
+            reject(error);
+          } else resolve(result.secure_url);
         }
       );
       uploadStream.end(file.buffer);

@@ -83,7 +83,15 @@ export async function addPayment(req, res, next) {
       return res.json({ status: "ok", message: "Abono ya registrado.", existing: true });
     }
 
-    const receiptUrl = req.file ? await saveFile(req.file, "receipts") : null;
+    let receiptUrl = null;
+    if (req.file) {
+      try {
+        receiptUrl = await saveFile(req.file, "receipts");
+      } catch (uploadErr) {
+        console.error("[addPayment] Error subiendo comprobante:", uploadErr?.message || uploadErr);
+        throw new AppError("No se pudo subir el comprobante. Intenta con otra imagen o sin comprobante.", 502, "UPLOAD_FAILED");
+      }
+    }
 
     const { rows: [payment] } = await pool.query(
       `INSERT INTO order_payments (order_id, payment_number, amount, method, bank, paid_at, created_by, receipt_url)
