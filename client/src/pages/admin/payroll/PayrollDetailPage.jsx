@@ -39,9 +39,20 @@ function StatCard({ label, value, sub, accent }) {
 
 // ── Edit modal — formulario por empleado ──────────────────────
 function EditModal({ tx, periodId, onClose, onSaved }) {
+  // Recargos Colombia: diurna 25%, nocturna 75%, dominical/festiva diurna 75%, dominical nocturna 110%
+  const RECARGOS = { diurna: 1.25, nocturna: 1.75, dominical_diurna: 1.75, dominical_nocturna: 2.10 };
+  const RECARGO_LABEL = {
+    diurna: "Diurna (×1.25)", nocturna: "Nocturna (×1.75)",
+    dominical_diurna: "Dominical/fest. diurna (×1.75)", dominical_nocturna: "Dominical/fest. nocturna (×2.10)",
+  };
+
+  const valorHora = Math.round(Number(tx.salario_base_snap) / 240); // salario / (30 días × 8 h)
+
   const [form, setForm] = useState({
     dias_laborados:        tx.dias_laborados        ?? 15,
     anticipo_prestaciones: tx.anticipo_prestaciones ?? 0,
+    num_horas_extras:      0,
+    tipo_hora_extra:       "diurna",
     horas_extras:          tx.horas_extras          ?? 0,
     otros_ingresos:        tx.otros_ingresos        ?? 0,
     anticipo_adelanto:     tx.anticipo_adelanto      ?? 0,
@@ -50,6 +61,14 @@ function EditModal({ tx, periodId, onClose, onSaved }) {
     observaciones:         tx.observaciones         ?? "",
   });
   const [error, setError] = useState("");
+
+  // Recalcular valor horas extras al cambiar num o tipo
+  function setHorasExtras(num, tipo) {
+    const n = Math.max(0, Number(num) || 0);
+    const t = tipo ?? form.tipo_hora_extra;
+    const valor = Math.round(n * valorHora * RECARGOS[t]);
+    setForm((p) => ({ ...p, num_horas_extras: num, tipo_hora_extra: t, horas_extras: valor }));
+  }
 
   const esLaboral = tx.tipo_contrato_snap === "laboral";
 
@@ -118,10 +137,26 @@ function EditModal({ tx, periodId, onClose, onSaved }) {
                     onChange={set("anticipo_prestaciones")} />
                 </div>
               )}
-              <div>
-                <label className="block text-zinc-500 text-xs mb-1">Horas extras ($)</label>
-                <input type="number" min="0" className="input-field" value={form.horas_extras}
-                  onChange={set("horas_extras")} />
+              <div className="col-span-2">
+                <label className="block text-zinc-500 text-xs mb-2">Horas extras</label>
+                <div className="flex gap-2 items-center">
+                  <input type="number" min="0" step="0.5" className="input-field w-24"
+                    value={form.num_horas_extras}
+                    onChange={(e) => setHorasExtras(e.target.value, form.tipo_hora_extra)}
+                    placeholder="0" />
+                  <select className="input-field flex-1"
+                    value={form.tipo_hora_extra}
+                    onChange={(e) => setHorasExtras(form.num_horas_extras, e.target.value)}>
+                    {Object.entries(RECARGO_LABEL).map(([k, v]) => (
+                      <option key={k} value={k}>{v}</option>
+                    ))}
+                  </select>
+                </div>
+                {form.horas_extras > 0 && (
+                  <p className="text-zinc-500 text-xs mt-1">
+                    Valor h/ord: {fmt(valorHora)} → Total: <span className="text-brand-green font-semibold">{fmt(form.horas_extras)}</span>
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-zinc-500 text-xs mb-1">Otros ingresos ($)</label>
@@ -221,7 +256,12 @@ function EditModal({ tx, periodId, onClose, onSaved }) {
           <div className="flex justify-end gap-3">
             <button type="button" onClick={onClose} className="btn-secondary px-4">Cancelar</button>
             <button
-              onClick={() => { setError(""); saveMut.mutate(form); }}
+              onClick={() => {
+                setError("");
+                // eslint-disable-next-line no-unused-vars
+                const { num_horas_extras, tipo_hora_extra, ...body } = form;
+                saveMut.mutate(body);
+              }}
               disabled={saveMut.isPending}
               className="btn-primary px-5">
               {saveMut.isPending ? "Guardando..." : "Guardar cambios"}
