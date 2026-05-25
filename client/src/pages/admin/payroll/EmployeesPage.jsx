@@ -25,9 +25,9 @@ const fmt = (v) =>
 
 
 function formatPriceCO(raw) {
-  const digits = String(raw).replace(/\D/g, "");
+  const digits = String(raw).split(".")[0].replace(/\D/g, "");
   if (!digits) return "";
-  return Number(digits).toLocaleString("es-CO");
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 const EMPTY_FORM = {
