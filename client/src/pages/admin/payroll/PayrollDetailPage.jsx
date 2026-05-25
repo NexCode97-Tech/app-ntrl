@@ -40,10 +40,13 @@ function StatCard({ label, value, sub, accent }) {
 // ── Edit modal — formulario por empleado ──────────────────────
 function EditModal({ tx, periodId, onClose, onSaved }) {
   // Recargos Colombia: diurna 25%, nocturna 75%, dominical/festiva diurna 75%, dominical nocturna 110%
-  const RECARGOS = { diurna: 1.25, nocturna: 1.75, dominical_diurna: 1.75, dominical_nocturna: 2.10 };
+  // Recargos CST Colombia Art. 168 — sobre valor hora ordinaria diurna
+  const RECARGOS = { diurna: 1.25, nocturna: 1.75, dominical_diurna: 2.00, dominical_nocturna: 2.50 };
   const RECARGO_LABEL = {
-    diurna: "Diurna (×1.25)", nocturna: "Nocturna (×1.75)",
-    dominical_diurna: "Dominical/fest. diurna (×1.75)", dominical_nocturna: "Dominical/fest. nocturna (×2.10)",
+    diurna:             "Diurna (×1.25 — +25%)",
+    nocturna:           "Nocturna (×1.75 — +75%)",
+    dominical_diurna:   "Dominical/fest. diurna (×2.00 — +100%)",
+    dominical_nocturna: "Dominical/fest. nocturna (×2.50 — +150%)",
   };
 
   const valorHora = Math.round(Number(tx.salario_base_snap) / 240); // salario / (30 días × 8 h)
