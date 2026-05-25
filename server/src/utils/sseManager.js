@@ -1,10 +1,9 @@
 /**
- * SSE Manager — Notificaciones en tiempo real
- * Usa Redis Pub/Sub para escalar entre instancias.
- * Máximo 50 conexiones simultáneas.
+ * SSE Manager — Notificaciones en tiempo real.
+ * Modo memoria (single-instance): broadcastInvalidate entrega directamente a los clientes.
+ * Si REDIS_URL está configurado: usa Redis Pub/Sub para escalar entre instancias.
  */
 
-import { redisSub, redisPub } from "../config/redis.js";
 import { pool } from "../config/database.js";
 
 const MAX_CONNECTIONS = 50;
@@ -12,19 +11,7 @@ const MAX_CONNECTIONS = 50;
 // userId -> Set<{ res, role }>
 const clients = new Map();
 
-export function initSSESubscriber() {
-  redisSub.subscribe("ntrl:notifications", (err) => {
-    if (err) console.error("SSE Redis subscribe error:", err);
-  });
-
-  redisSub.on("message", (channel, raw) => {
-    if (channel !== "ntrl:notifications") return;
-    try {
-      const msg = JSON.parse(raw);
-      _deliver(msg);
-    } catch { /* ignorar mensajes malformados */ }
-  });
-}
+// ── Gestión de conexiones ─────────────────────────────────────
 
 export function addClient(userId, role, res) {
   const total = [...clients.values()].reduce((sum, s) => sum + s.size, 0);
@@ -45,52 +32,89 @@ export function addClient(userId, role, res) {
   return true;
 }
 
-// Entrega interna: respeta targetRole si está definido
+// ── Entrega interna ───────────────────────────────────────────
+
 function _deliver(msg) {
   const data = `data: ${JSON.stringify(msg)}\n\n`;
-  for (const [, entrySet] of clients) {
+  for (const entrySet of clients.values()) {
     for (const { res, role } of entrySet) {
-      if (!msg.targetRole || msg.targetRole === role) {
-        res.write(data);
+      if (msg.targetRole && msg.targetRole !== role) continue;
+      if (msg.userId) {
+        // notificación dirigida — se maneja en sendToUser
+        continue;
       }
+      try { res.write(data); } catch { /* cliente desconectado */ }
     }
   }
 }
 
+// ── API pública ───────────────────────────────────────────────
+
+/** Inicializa suscriptor Redis si está disponible. Llamado desde server.js. */
+export function initSSESubscriber() {
+  if (!process.env.REDIS_URL) return; // sin Redis → modo memoria, nada que suscribir
+
+  import("../config/redis.js").then(({ redisSub }) => {
+    if (redisSub._isNoop) return;
+    redisSub.subscribe("ntrl:notifications", (err) => {
+      if (err) console.error("SSE Redis subscribe error:", err);
+    });
+    redisSub.on("message", (channel, raw) => {
+      if (channel !== "ntrl:notifications") return;
+      try { _deliver(JSON.parse(raw)); } catch { /* ignorar mensajes malformados */ }
+    });
+  }).catch(() => {});
+}
+
+/** Broadcast de invalidación de cache a todos los clientes conectados. */
+export function broadcastInvalidate(...queryKeys) {
+  const msg = { type: "invalidate", queryKeys };
+
+  // Modo memoria — entrega directa (single-instance)
+  _deliver(msg);
+
+  // Si Redis está disponible, publicar también para otras instancias
+  if (process.env.REDIS_URL) {
+    import("../config/redis.js").then(({ redisPub }) => {
+      if (!redisPub._isNoop) {
+        redisPub.publish("ntrl:notifications", JSON.stringify(msg)).catch(() => {});
+      }
+    }).catch(() => {});
+  }
+}
+
+/** Envia mensaje a un usuario específico. */
 export function sendToUser(userId, msg) {
   const entrySet = clients.get(userId);
   if (!entrySet) return;
   const data = `data: ${JSON.stringify(msg)}\n\n`;
-  for (const { res } of entrySet) res.write(data);
+  for (const { res } of entrySet) {
+    try { res.write(data); } catch { /* cliente desconectado */ }
+  }
 }
 
-// Guardar notificación admin en BD y enviar SSE solo a admins
+/** Guarda notificación admin en BD y envía SSE solo a admins. */
 export async function notifyAdmins(type, message, data = {}) {
   await pool.query(
     `INSERT INTO notifications (user_id, type, message, data) VALUES (NULL, $1, $2, $3)`,
     [type, message, JSON.stringify(data)]
   );
-  redisPub.publish("ntrl:notifications", JSON.stringify({
-    targetRole: "admin",
-    type,
-    message,
-    data,
-  })).catch(() => {});
+  _deliver({ targetRole: "admin", type, message, data });
+
+  if (process.env.REDIS_URL) {
+    import("../config/redis.js").then(({ redisPub }) => {
+      if (!redisPub._isNoop) {
+        redisPub.publish("ntrl:notifications", JSON.stringify({ targetRole: "admin", type, message, data })).catch(() => {});
+      }
+    }).catch(() => {});
+  }
 }
 
-// Broadcast de invalidación de cache a todos los clientes conectados
-export function broadcastInvalidate(...queryKeys) {
-  redisPub.publish("ntrl:notifications", JSON.stringify({
-    type: "invalidate",
-    queryKeys,
-  })).catch(() => {});
-}
-
-// Notificación para un usuario específico
+/** Notificación para un usuario específico. */
 export async function notify(userId, type, message, data = {}) {
   await pool.query(
     `INSERT INTO notifications (user_id, type, message, data) VALUES ($1, $2, $3, $4)`,
     [userId || null, type, message, JSON.stringify(data)]
   );
-  redisPub.publish("ntrl:notifications", JSON.stringify({ userId, type, message, data })).catch(() => {});
+  sendToUser(userId, { userId, type, message, data });
 }

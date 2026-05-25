@@ -1,33 +1,60 @@
-import Redis from "ioredis";
-import { config } from "./index.js";
+/**
+ * Redis — opcional.
+ * Si REDIS_URL no está configurado, todos los clientes son stubs no-op.
+ * Esto permite correr la app sin Redis (SSE en memoria, sin pub/sub distribuido).
+ */
 
-function createClient(name) {
-  const client = new Redis(config.redis.url, {
-    lazyConnect: true,
-    maxRetriesPerRequest: 1,
-    retryStrategy: (times) => {
-      if (times > 10) return null; // dejar de reintentar después de 10 intentos
-      return Math.min(times * 500, 10000);
-    },
-    enableOfflineQueue: false, // no acumular comandos cuando Redis está caído
-  });
+const REDIS_URL = process.env.REDIS_URL;
 
-  client.on("connect",      () => console.log(`Redis [${name}] conectado`));
-  client.on("error",        (err) => console.error(`Redis [${name}] error:`, err.message));
-  client.on("reconnecting", () => console.warn(`Redis [${name}] reconectando...`));
-
-  return client;
+function createNoopClient(name) {
+  return {
+    publish:   () => Promise.resolve(0),
+    subscribe: () => Promise.resolve(),
+    on:        () => {},
+    connect:   () => Promise.resolve(),
+    quit:      () => Promise.resolve(),
+    get:       () => Promise.resolve(null),
+    set:       () => Promise.resolve("OK"),
+    del:       () => Promise.resolve(0),
+    _isNoop:   true,
+  };
 }
 
-// Cliente principal — operaciones de lectura/escritura
-export const redis = createClient("main");
+let redis    = createNoopClient("main");
+let redisPub = createNoopClient("pub");
+let redisSub = createNoopClient("sub");
 
-// Cliente dedicado para publicar mensajes SSE
-export const redisPub = createClient("pub");
-
-// Cliente dedicado para suscribirse a mensajes SSE
-export const redisSub = createClient("sub");
+export { redis, redisPub, redisSub };
 
 export async function connectRedis() {
+  if (!REDIS_URL) {
+    console.log("Redis no configurado — SSE funcionará en modo memoria (single-instance).");
+    return;
+  }
+
+  const { default: Redis } = await import("ioredis");
+
+  function createClient(name) {
+    const client = new Redis(REDIS_URL, {
+      lazyConnect:          true,
+      maxRetriesPerRequest: 1,
+      retryStrategy: (times) => {
+        if (times > 5) return null; // dejar de reintentar después de 5 intentos
+        return Math.min(times * 1000, 5000);
+      },
+      enableOfflineQueue: false,
+    });
+
+    client.on("connect",      () => console.log(`Redis [${name}] conectado`));
+    client.on("error",        (err) => console.error(`Redis [${name}] error:`, err.message));
+    client.on("reconnecting", () => console.warn(`Redis [${name}] reconectando...`));
+
+    return client;
+  }
+
+  redis    = createClient("main");
+  redisPub = createClient("pub");
+  redisSub = createClient("sub");
+
   await Promise.all([redis.connect(), redisPub.connect(), redisSub.connect()]);
 }
