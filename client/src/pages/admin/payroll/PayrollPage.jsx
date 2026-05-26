@@ -181,17 +181,18 @@ function PeriodsTab() {
 
                 {/* Flecha + eliminar */}
                 <div className="flex items-center gap-2 shrink-0">
-                  {p.estado === "borrador" && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (confirm("¿Eliminar este período?")) deleteMut.mutate(p.id);
-                      }}
-                      className="p-1.5 text-zinc-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </button>
-                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const msg = ["aprobado", "pagado"].includes(p.estado)
+                        ? `⚠️ Este período está "${PERIOD_LABEL[p.estado]}". ¿Seguro que deseas eliminarlo? Esta acción no se puede deshacer.`
+                        : `¿Eliminar el período "${p.nombre}"?`;
+                      if (confirm(msg)) deleteMut.mutate(p.id);
+                    }}
+                    className="p-1.5 text-zinc-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
                   <ChevronRightIcon className="w-4 h-4 text-zinc-600" />
                 </div>
               </div>

@@ -427,7 +427,7 @@ export default function PayrollDetailPage() {
           </div>
           <p className="text-zinc-500 text-sm mt-0.5">
             {period?.fecha_inicio
-              ? `${new Date(period.fecha_inicio + "T12:00:00").toLocaleDateString("es-CO")} — ${new Date(period.fecha_fin + "T12:00:00").toLocaleDateString("es-CO")}`
+              ? `${new Date(String(period.fecha_inicio).slice(0, 10) + "T12:00:00").toLocaleDateString("es-CO")} — ${new Date(String(period.fecha_fin).slice(0, 10) + "T12:00:00").toLocaleDateString("es-CO")}`
               : ""}
             {period?.paid_at ? ` · Pagado ${new Date(period.paid_at).toLocaleDateString("es-CO")}` : ""}
           </p>
