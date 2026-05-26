@@ -129,7 +129,7 @@ export async function createPeriod(req, res, next) {
 // DELETE /payroll/:id
 export async function deletePeriod(req, res, next) {
   try {
-    if (req.user.role !== "admin") throw new AppError("Solo administradores.", 403, "FORBIDDEN");
+    if (!["admin", "vendedor"].includes(req.user.role)) throw new AppError("Acceso denegado.", 403, "FORBIDDEN");
     const { rows } = await pool.query(
       `SELECT estado FROM payroll_periods WHERE id = $1`, [req.params.id]
     );
