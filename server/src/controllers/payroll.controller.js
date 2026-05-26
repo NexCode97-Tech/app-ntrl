@@ -134,8 +134,6 @@ export async function deletePeriod(req, res, next) {
       `SELECT estado FROM payroll_periods WHERE id = $1`, [req.params.id]
     );
     if (!rows.length) throw new AppError("Período no encontrado.", 404, "NOT_FOUND");
-    if (rows[0].estado !== "borrador")
-      throw new AppError("Solo se pueden eliminar períodos en borrador.", 400, "BAD_REQUEST");
 
     await pool.query(`DELETE FROM payroll_periods WHERE id = $1`, [req.params.id]);
     res.json({ status: "ok", message: "Período eliminado." });

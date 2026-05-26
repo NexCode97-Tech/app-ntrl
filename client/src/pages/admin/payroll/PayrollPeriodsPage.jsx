@@ -198,15 +198,19 @@ export default function PayrollPeriodsPage() {
                       Ver detalle <ArrowRightIcon className="w-3 h-3" />
                     </button>
                   )}
-                  {["borrador", "generado"].includes(p.estado) && (
-                    <button
-                      onClick={() => { if (confirm(`¿Eliminar período "${p.nombre}"?`)) deleteMut.mutate(p.id); }}
-                      className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-                      title="Eliminar"
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      const msg = ["aprobado","pagado"].includes(p.estado)
+                        ? `⚠️ Este período está "${ESTADO_LABEL[p.estado]}". ¿Seguro que deseas eliminarlo? Esta acción no se puede deshacer.`
+                        : `¿Eliminar el período "${p.nombre}"?`;
+                      if (confirm(msg)) deleteMut.mutate(p.id);
+                    }}
+                    disabled={deleteMut.isPending}
+                    className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                    title="Eliminar período"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             </div>
