@@ -1,6 +1,7 @@
 import { pool } from "../config/database.js";
 import { AppError } from "../utils/AppError.js";
 import { calcularTransaccion } from "../validations/nomina.validation.js";
+import { generateComprobantePDF, generateLiquidacionPDF } from "../utils/payrollPdf.js";
 
 function requireAdminOrVendedor(req) {
   if (!["admin", "vendedor"].includes(req.user.role))
@@ -101,15 +102,15 @@ export async function createPeriod(req, res, next) {
             basico, aux_transporte, anticipo_prestaciones, horas_extras,
             otros_ingresos, total_devengado,
             salud, pension, anticipo_adelanto, funeral,
-            otros_descuentos, total_deducido, neto_pagable, observaciones)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)`,
+            otros_descuentos, descuento_horas_extras, total_deducido, neto_pagable, observaciones)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)`,
         [
           emp.id, period.id,
           tx.tipo_contrato_snap, tx.salario_base_snap, tx.dias_laborados,
           tx.basico, tx.aux_transporte, tx.anticipo_prestaciones, tx.horas_extras,
           tx.otros_ingresos, tx.total_devengado,
           tx.salud, tx.pension, tx.anticipo_adelanto, tx.funeral,
-          tx.otros_descuentos, tx.total_deducido, tx.neto_pagable, null,
+          tx.otros_descuentos, tx.descuento_horas_extras, tx.total_deducido, tx.neto_pagable, null,
         ]
       );
     }
@@ -200,14 +201,15 @@ export async function updateTransaction(req, res, next) {
       anticipo_prest_fijo: tx.anticipo_prest_fijo,
     };
     const nuevos = calcularTransaccion(empSnap, {
-      dias_laborados:        req.body.dias_laborados        ?? tx.dias_laborados,
-      anticipo_prestaciones: req.body.anticipo_prestaciones ?? tx.anticipo_prestaciones,
-      horas_extras:          req.body.horas_extras          ?? tx.horas_extras,
-      otros_ingresos:        req.body.otros_ingresos        ?? tx.otros_ingresos,
-      anticipo_adelanto:     req.body.anticipo_adelanto      ?? tx.anticipo_adelanto,
-      funeral:               req.body.funeral               ?? tx.funeral,
-      otros_descuentos:      req.body.otros_descuentos      ?? tx.otros_descuentos,
-      observaciones:         req.body.observaciones         ?? tx.observaciones,
+      dias_laborados:          req.body.dias_laborados          ?? tx.dias_laborados,
+      anticipo_prestaciones:   req.body.anticipo_prestaciones   ?? tx.anticipo_prestaciones,
+      horas_extras:            req.body.horas_extras            ?? tx.horas_extras,
+      otros_ingresos:          req.body.otros_ingresos          ?? tx.otros_ingresos,
+      anticipo_adelanto:       req.body.anticipo_adelanto       ?? tx.anticipo_adelanto,
+      funeral:                 req.body.funeral                 ?? tx.funeral,
+      otros_descuentos:        req.body.otros_descuentos        ?? tx.otros_descuentos,
+      descuento_horas_extras:  req.body.descuento_horas_extras  ?? tx.descuento_horas_extras ?? 0,
+      observaciones:           req.body.observaciones           ?? tx.observaciones,
     });
 
     const { rows: [updated] } = await pool.query(
@@ -216,15 +218,15 @@ export async function updateTransaction(req, res, next) {
          anticipo_prestaciones=$4, horas_extras=$5, otros_ingresos=$6,
          total_devengado=$7, salud=$8, pension=$9,
          anticipo_adelanto=$10, funeral=$11, otros_descuentos=$12,
-         total_deducido=$13, neto_pagable=$14, observaciones=$15
-       WHERE id=$16 AND period_id=$17
+         descuento_horas_extras=$13, total_deducido=$14, neto_pagable=$15, observaciones=$16
+       WHERE id=$17 AND period_id=$18
        RETURNING *`,
       [
         nuevos.dias_laborados, nuevos.basico, nuevos.aux_transporte,
         nuevos.anticipo_prestaciones, nuevos.horas_extras, nuevos.otros_ingresos,
         nuevos.total_devengado, nuevos.salud, nuevos.pension,
         nuevos.anticipo_adelanto, nuevos.funeral, nuevos.otros_descuentos,
-        nuevos.total_deducido, nuevos.neto_pagable, nuevos.observaciones,
+        nuevos.descuento_horas_extras, nuevos.total_deducido, nuevos.neto_pagable, nuevos.observaciones,
         txId, periodId,
       ]
     );
@@ -340,7 +342,7 @@ export async function exportBanco(req, res, next) {
 }
 
 // GET /payroll/:id/export/comprobante/:txId
-// Devuelve los datos del comprobante (tira de pago) de un empleado
+// Genera la tirilla de pago en PDF
 export async function getComprobante(req, res, next) {
   try {
     requireAdminOrVendedor(req);
@@ -361,61 +363,63 @@ export async function getComprobante(req, res, next) {
 
     if (!data) throw new AppError("Comprobante no encontrado.", 404, "NOT_FOUND");
 
-    // Construir comprobante en texto plano (para imprimir / mostrar)
-    const fmt = (n) => `$${Math.round(Number(n || 0)).toLocaleString("es-CO")}`;
-    const mesNombre = MESES[data.mes] || "";
-    const quincena = data.quincena === 1 ? "Primera" : "Segunda";
-
-    const lineas = [
-      `NATURAL ROPA DEPORTIVA`,
-      `COMPROBANTE DE NÓMINA`,
-      `${quincena} Quincena — ${mesNombre} ${data.anio}`,
-      `${"─".repeat(42)}`,
-      `NOMBRE:       ${data.nombre}`,
-      `CARGO:        ${data.cargo}`,
-      `${data.tipo_identificacion}: ${data.numero_identificacion}`,
-      `DÍAS LABORADOS: ${data.dias_laborados}`,
-      `SALARIO BASE: ${fmt(data.salario_base_snap)}`,
-      `${"─".repeat(42)}`,
-      `DEVENGADOS`,
-      `  Básico:                  ${fmt(data.basico)}`,
-      ...(Number(data.aux_transporte) > 0
-        ? [`  Aux. Transporte:          ${fmt(data.aux_transporte)}`] : []),
-      ...(Number(data.anticipo_prestaciones) > 0
-        ? [`  Anticipo Prestaciones:    ${fmt(data.anticipo_prestaciones)}`] : []),
-      ...(Number(data.horas_extras) > 0
-        ? [`  Horas Extras:             ${fmt(data.horas_extras)}`] : []),
-      ...(Number(data.otros_ingresos) > 0
-        ? [`  Otros Ingresos:           ${fmt(data.otros_ingresos)}`] : []),
-      `  TOTAL DEVENGADO:         ${fmt(data.total_devengado)}`,
-      `${"─".repeat(42)}`,
-      `DEDUCIDOS`,
-      ...(Number(data.salud) > 0
-        ? [`  Salud (4%):               ${fmt(data.salud)}`] : []),
-      ...(Number(data.pension) > 0
-        ? [`  Pensión (4%):             ${fmt(data.pension)}`] : []),
-      ...(Number(data.anticipo_adelanto) > 0
-        ? [`  Anticipo:                 ${fmt(data.anticipo_adelanto)}`] : []),
-      ...(Number(data.funeral) > 0
-        ? [`  Fondo Funeral:            ${fmt(data.funeral)}`] : []),
-      ...(Number(data.otros_descuentos) > 0
-        ? [`  Otros Descuentos:         ${fmt(data.otros_descuentos)}`] : []),
-      `  TOTAL DEDUCIDO:          ${fmt(data.total_deducido)}`,
-      `${"═".repeat(42)}`,
-      `NETO A PAGAR:              ${fmt(data.neto_pagable)}`,
-      `${"═".repeat(42)}`,
-      `FORMA DE PAGO: TRANSFERENCIA`,
-      ...(data.banco ? [`BANCO: ${(data.tipo_cuenta || data.banco).toUpperCase()}`] : []),
-      ...(data.numero_cuenta ? [`CUENTA: ${data.numero_cuenta}`] : []),
-      ...(data.observaciones ? [`\nOBSERVACIONES: ${data.observaciones}`] : []),
-      `\n_______________________    _______________________`,
-      `FIRMA EMPLEADOR              FIRMA TRABAJADOR`,
-    ];
-
-    const texto = lineas.join("\n");
-    const filename = `comprobante_${data.nombre.replace(/\s+/g, "_")}.txt`;
-    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    const pdfBuffer = await generateComprobantePDF(data, MESES);
+    const filename  = `comprobante_${data.nombre.replace(/\s+/g, "_")}_${data.periodo_nombre?.replace(/\s+/g, "_") ?? periodId}.pdf`;
+    res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-    res.send(texto);
+    res.send(pdfBuffer);
+  } catch (err) { next(err); }
+}
+
+// GET /payroll/employees/:empId/liquidacion?fecha_retiro=YYYY-MM-DD
+// Calcula y descarga la liquidación de un empleado
+export async function getLiquidacion(req, res, next) {
+  try {
+    requireAdminOrVendedor(req);
+    const { empId } = req.params;
+    const fecha_retiro = req.query.fecha_retiro
+      ? new Date(req.query.fecha_retiro)
+      : new Date();
+
+    const { rows: [emp] } = await pool.query(
+      `SELECT id, nombre, cargo, salario_base, tipo_contrato,
+              tipo_identificacion, numero_identificacion, fecha_ingreso
+       FROM employees WHERE id = $1`,
+      [empId]
+    );
+    if (!emp) throw new AppError("Empleado no encontrado.", 404, "NOT_FOUND");
+
+    const ingreso  = new Date(emp.fecha_ingreso);
+    const salario  = Number(emp.salario_base);
+
+    // Días trabajados totales (entre ingreso y retiro)
+    const msDiff   = fecha_retiro - ingreso;
+    const diasTotal = Math.max(0, Math.round(msDiff / (1000 * 60 * 60 * 24)));
+
+    // Fórmulas ley colombiana
+    const cesantias           = Math.round((salario * diasTotal) / 360);
+    const intereses_cesantias = Math.round((cesantias * diasTotal * 0.12) / 360);
+    const prima               = Math.round((salario * diasTotal) / 360);
+    const vacaciones          = Math.round((salario * diasTotal) / 720);
+    const total               = cesantias + intereses_cesantias + prima + vacaciones;
+
+    const liqData = {
+      ...emp,
+      fecha_ingreso:        ingreso,
+      fecha_retiro,
+      dias_trabajados:      diasTotal,
+      salario_base:         salario,
+      cesantias,
+      intereses_cesantias,
+      prima,
+      vacaciones,
+      total,
+    };
+
+    const pdfBuffer = await generateLiquidacionPDF(liqData);
+    const filename  = `liquidacion_${emp.nombre.replace(/\s+/g, "_")}.pdf`;
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.send(pdfBuffer);
   } catch (err) { next(err); }
 }

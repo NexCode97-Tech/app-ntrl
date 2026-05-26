@@ -1,8 +1,9 @@
 import Joi from "joi";
 
 // ── Constantes Colombia 2026 ──────────────────────────────────
-export const SMMLV_2026     = 1_750_905;
-export const AUX_TRANSPORTE = 249_095;
+export const SMMLV_2026      = 1_750_905;
+export const AUX_TRANSPORTE  = 249_095;
+export const VALOR_HORA_EXTRA = 9_948; // Valor fijo hora extra Natural Ropa Deportiva
 
 // ── Helpers de cálculo ────────────────────────────────────────
 export function calcularTransaccion(emp, campos = {}) {
@@ -17,12 +18,13 @@ export function calcularTransaccion(emp, campos = {}) {
   const otros_ingresos      = Number(campos.otros_ingresos ?? 0);
   const total_devengado     = basico + aux_transporte + anticipo_prestaciones + horas_extras + otros_ingresos;
 
-  const salud               = esLaboral ? Math.round(basico * 0.04) : 0;
-  const pension             = esLaboral ? Math.round(basico * 0.04) : 0;
-  const anticipo_adelanto   = Number(campos.anticipo_adelanto ?? 0);
-  const funeral             = Number(campos.funeral ?? 0);
-  const otros_descuentos    = Number(campos.otros_descuentos ?? 0);
-  const total_deducido      = salud + pension + anticipo_adelanto + funeral + otros_descuentos;
+  const salud                  = esLaboral ? Math.round(basico * 0.04) : 0;
+  const pension                = esLaboral ? Math.round(basico * 0.04) : 0;
+  const anticipo_adelanto      = Number(campos.anticipo_adelanto ?? 0);
+  const funeral                = Number(campos.funeral ?? 0);
+  const otros_descuentos       = Number(campos.otros_descuentos ?? 0);
+  const descuento_horas_extras = Number(campos.descuento_horas_extras ?? 0);
+  const total_deducido         = salud + pension + anticipo_adelanto + funeral + otros_descuentos + descuento_horas_extras;
 
   const neto_pagable = total_devengado - total_deducido;
 
@@ -41,6 +43,7 @@ export function calcularTransaccion(emp, campos = {}) {
     anticipo_adelanto,
     funeral,
     otros_descuentos,
+    descuento_horas_extras,
     total_deducido,
     neto_pagable,
     observaciones:         campos.observaciones ?? null,
@@ -96,12 +99,13 @@ export const periodSchema = Joi.object({
 });
 
 export const transactionUpdateSchema = Joi.object({
-  dias_laborados:        Joi.number().min(0.5).max(30),
-  anticipo_prestaciones: Joi.number().min(0),
-  horas_extras:          Joi.number().min(0),
-  otros_ingresos:        Joi.number().min(0),
-  anticipo_adelanto:     Joi.number().min(0),
-  funeral:               Joi.number().min(0),
-  otros_descuentos:      Joi.number().min(0),
-  observaciones:         Joi.string().max(500).allow("", null),
+  dias_laborados:          Joi.number().min(0.5).max(30),
+  anticipo_prestaciones:   Joi.number().min(0),
+  horas_extras:            Joi.number().min(0),
+  otros_ingresos:          Joi.number().min(0),
+  anticipo_adelanto:       Joi.number().min(0),
+  funeral:                 Joi.number().min(0),
+  otros_descuentos:        Joi.number().min(0),
+  descuento_horas_extras:  Joi.number().min(0),
+  observaciones:           Joi.string().max(500).allow("", null),
 }).min(1);

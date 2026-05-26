@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../../config/api.js";
 import {
   ArrowLeftIcon, ArrowDownTrayIcon, CheckCircleIcon,
-  BanknotesIcon, PencilSquareIcon, XMarkIcon,
+  BanknotesIcon, PencilSquareIcon, XMarkIcon, DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -61,7 +61,9 @@ function EditModal({ tx, periodId, onClose, onSaved }) {
     extra_nocturna_dominical: "H. extra nocturna dom/festivo (×2.65)",
   };
 
-  const valorHora = Math.round(Number(tx.salario_base_snap) / 191); // 44h/sem × 4.333 = 190.67
+  const VALOR_HORA_EXTRA = 9_948; // Valor fijo hora extra Natural Ropa Deportiva
+  // eslint-disable-next-line no-unused-vars
+  const valorHora = VALOR_HORA_EXTRA;
 
   // Detectar tipo de hora extra según horario del empleado
   // hora_salida guardada como "HH:MM" o "HH:MM:SS"
@@ -74,16 +76,18 @@ function EditModal({ tx, periodId, onClose, onSaved }) {
   const tipoHoraDetectado = detectarTipoHora(tx.empleado_hora_salida);
 
   const [form, setForm] = useState({
-    dias_laborados:        tx.dias_laborados        ?? 15,
-    anticipo_prestaciones: tx.anticipo_prestaciones ?? 0,
-    num_horas_extras:      0,
-    tipo_hora_extra:       tipoHoraDetectado,
-    horas_extras:          tx.horas_extras          ?? 0,
-    otros_ingresos:        tx.otros_ingresos        ?? 0,
-    anticipo_adelanto:     tx.anticipo_adelanto      ?? 0,
-    funeral:               tx.funeral               ?? 0,
-    otros_descuentos:      tx.otros_descuentos      ?? 0,
-    observaciones:         tx.observaciones         ?? "",
+    dias_laborados:          tx.dias_laborados          ?? 15,
+    anticipo_prestaciones:   tx.anticipo_prestaciones   ?? 0,
+    num_horas_extras:        0,
+    tipo_hora_extra:         tipoHoraDetectado,
+    horas_extras:            tx.horas_extras            ?? 0,
+    otros_ingresos:          tx.otros_ingresos          ?? 0,
+    anticipo_adelanto:       tx.anticipo_adelanto       ?? 0,
+    funeral:                 tx.funeral                 ?? 0,
+    otros_descuentos:        tx.otros_descuentos        ?? 0,
+    num_horas_debe:          0,                              // horas que el empleado debe
+    descuento_horas_extras:  tx.descuento_horas_extras  ?? 0,
+    observaciones:           tx.observaciones           ?? "",
   });
   const [error, setError] = useState("");
 
@@ -109,7 +113,8 @@ function EditModal({ tx, periodId, onClose, onSaved }) {
   const antAdel  = Number(form.anticipo_adelanto);
   const funeral  = Number(form.funeral);
   const otrosD   = Number(form.otros_descuentos);
-  const deducido = salud + pension + antAdel + funeral + otrosD;
+  const descHrs  = Number(form.descuento_horas_extras);
+  const deducido = salud + pension + antAdel + funeral + otrosD + descHrs;
   const neto     = deveng - deducido;
 
   const saveMut = useMutation({
@@ -205,6 +210,43 @@ function EditModal({ tx, periodId, onClose, onSaved }) {
                 <input type="number" min="0" className="input-field" value={form.funeral}
                   onChange={set("funeral")} />
               </div>
+
+              {/* ── Descuento de horas que el empleado debe ── */}
+              <div className="col-span-2 bg-zinc-950 border border-red-500/20 rounded-xl p-3 space-y-2">
+                <p className="text-red-400 text-xs font-medium">Descuento horas pendientes</p>
+                <div className="flex gap-2 items-center">
+                  <div className="flex-1">
+                    <label className="block text-zinc-500 text-[10px] mb-1">N° horas que debe</label>
+                    <input
+                      type="number" min="0" step="0.5"
+                      className="input-field w-full"
+                      value={form.num_horas_debe}
+                      onChange={(e) => {
+                        const n = Math.max(0, Number(e.target.value) || 0);
+                        const desc = Math.round(n * VALOR_HORA_EXTRA);
+                        setForm((p) => ({ ...p, num_horas_debe: e.target.value, descuento_horas_extras: desc }));
+                      }}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-zinc-500 text-[10px] mb-1">Valor descuento ($)</label>
+                    <input
+                      type="number" min="0"
+                      className="input-field w-full"
+                      value={form.descuento_horas_extras}
+                      onChange={(e) => setForm((p) => ({ ...p, descuento_horas_extras: Number(e.target.value) || 0, num_horas_debe: "" }))}
+                    />
+                  </div>
+                </div>
+                {Number(form.descuento_horas_extras) > 0 && (
+                  <p className="text-zinc-500 text-[10px]">
+                    Valor hora: <span className="text-zinc-300">{fmt(VALOR_HORA_EXTRA)}</span>
+                    {form.num_horas_debe > 0 && <> · {form.num_horas_debe} hrs × {fmt(VALOR_HORA_EXTRA)} = <span className="text-red-400 font-semibold">{fmt(form.descuento_horas_extras)}</span></>}
+                  </p>
+                )}
+              </div>
+
               <div className="col-span-2">
                 <label className="block text-zinc-500 text-xs mb-1">Otros descuentos ($)</label>
                 <input type="number" min="0" className="input-field" value={form.otros_descuentos}
@@ -258,6 +300,11 @@ function EditModal({ tx, periodId, onClose, onSaved }) {
                   <span>Funeral</span><span className="font-mono">−{fmt(funeral)}</span>
                 </div>
               )}
+              {descHrs > 0 && (
+                <div className="flex justify-between text-red-400 text-xs">
+                  <span>Desc. horas pendientes</span><span className="font-mono">−{fmt(descHrs)}</span>
+                </div>
+              )}
               {otrosD > 0 && (
                 <div className="flex justify-between text-red-400 text-xs">
                   <span>Otros descuentos</span><span className="font-mono">−{fmt(otrosD)}</span>
@@ -284,7 +331,7 @@ function EditModal({ tx, periodId, onClose, onSaved }) {
               onClick={() => {
                 setError("");
                 // eslint-disable-next-line no-unused-vars
-                const { num_horas_extras, tipo_hora_extra, ...body } = form;
+                const { num_horas_extras, tipo_hora_extra, num_horas_debe, ...body } = form;
                 saveMut.mutate(body);
               }}
               disabled={saveMut.isPending}
@@ -307,6 +354,8 @@ export default function PayrollDetailPage() {
   const qc = useQueryClient();
   const [editingTx, setEditingTx] = useState(null);
   const [actionError, setActionError] = useState("");
+  const [liqEmpId, setLiqEmpId] = useState(null);      // empleado seleccionado para liquidación
+  const [liqDate, setLiqDate] = useState(() => new Date().toISOString().slice(0, 10));
 
   // ── Queries ────────────────────────────────────────────────
   const { data: period, isLoading: loadingPeriod } = useQuery({
@@ -355,13 +404,29 @@ export default function PayrollDetailPage() {
   async function downloadComprobante(txId, nombre) {
     try {
       const res = await api.get(`/payroll/${id}/export/comprobante/${txId}`, { responseType: "blob" });
-      const url = URL.createObjectURL(new Blob([res.data]));
+      const url = URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
       const a = document.createElement("a");
       a.href = url;
-      a.download = `comprobante_${nombre?.replace(/\s+/g, "_") ?? txId}.txt`;
+      a.download = `comprobante_${nombre?.replace(/\s+/g, "_") ?? txId}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
     } catch { setActionError("Error al generar comprobante."); }
+  }
+
+  async function downloadLiquidacion(empId, nombre) {
+    try {
+      const res = await api.get(`/payroll/employees/${empId}/liquidacion`, {
+        params: { fecha_retiro: liqDate },
+        responseType: "blob",
+      });
+      const url = URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `liquidacion_${nombre?.replace(/\s+/g, "_") ?? empId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setLiqEmpId(null);
+    } catch { setActionError("Error al generar liquidación."); }
   }
 
   function onTxSaved() {
@@ -513,10 +578,15 @@ export default function PayrollDetailPage() {
                           {canExport && (
                             <button onClick={() => downloadComprobante(tx.id, tx.empleado_nombre)}
                               className="p-1.5 text-zinc-500 hover:text-brand-green hover:bg-brand-green/10 rounded transition-colors"
-                              title="Comprobante">
+                              title="Tirilla de pago">
                               <ArrowDownTrayIcon className="w-3.5 h-3.5" />
                             </button>
                           )}
+                          <button onClick={() => setLiqEmpId(tx.employee_id ?? tx.empleado_id)}
+                            className="p-1.5 text-zinc-500 hover:text-amber-400 hover:bg-amber-400/10 rounded transition-colors"
+                            title="Liquidación">
+                            <DocumentTextIcon className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -592,7 +662,7 @@ export default function PayrollDetailPage() {
                       <p className="text-zinc-500 text-xs">Neto a pagar</p>
                       <p className="text-brand-green font-black text-base font-mono">{fmt(tx.neto_pagable)}</p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       {canEdit && (
                         <button onClick={() => setEditingTx(tx)} className="btn-secondary text-xs flex items-center gap-1.5 py-1.5 px-3">
                           <PencilSquareIcon className="w-3.5 h-3.5" /> Editar
@@ -601,9 +671,13 @@ export default function PayrollDetailPage() {
                       {canExport && (
                         <button onClick={() => downloadComprobante(tx.id, tx.empleado_nombre)}
                           className="btn-secondary text-xs flex items-center gap-1.5 py-1.5 px-3">
-                          <ArrowDownTrayIcon className="w-3.5 h-3.5" /> Comprobante
+                          <ArrowDownTrayIcon className="w-3.5 h-3.5" /> Tirilla
                         </button>
                       )}
+                      <button onClick={() => setLiqEmpId(tx.employee_id ?? tx.empleado_id)}
+                        className="text-xs flex items-center gap-1.5 py-1.5 px-3 rounded-xl border border-amber-400/20 text-amber-400 hover:bg-amber-400/10 transition-colors">
+                        <DocumentTextIcon className="w-3.5 h-3.5" /> Liquidación
+                      </button>
                     </div>
                   </div>
 
@@ -629,6 +703,49 @@ export default function PayrollDetailPage() {
           onSaved={onTxSaved}
         />
       )}
+
+      {/* Modal liquidación */}
+      {liqEmpId && (() => {
+        const empTx = txs.find((t) => (t.employee_id ?? t.empleado_id) === liqEmpId);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/75">
+            <div className="bg-zinc-900 border border-zinc-700 rounded-2xl w-full max-w-sm p-6 space-y-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-white font-bold text-base">Liquidación laboral</h2>
+                  <p className="text-zinc-500 text-xs mt-0.5">{empTx?.empleado_nombre ?? "Empleado"}</p>
+                </div>
+                <button onClick={() => setLiqEmpId(null)} className="text-zinc-400 hover:text-white">
+                  <XMarkIcon className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-zinc-400 text-xs mb-1">Fecha de retiro</label>
+                <input
+                  type="date"
+                  className="input-field w-full"
+                  value={liqDate}
+                  onChange={(e) => setLiqDate(e.target.value)}
+                />
+                <p className="text-zinc-600 text-xs mt-1">
+                  Incluye: Cesantías · Intereses · Prima · Vacaciones
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button onClick={() => setLiqEmpId(null)} className="btn-secondary px-4">Cancelar</button>
+                <button
+                  onClick={() => downloadLiquidacion(liqEmpId, empTx?.empleado_nombre)}
+                  className="flex items-center gap-2 px-5 py-2 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl text-sm transition-colors">
+                  <ArrowDownTrayIcon className="w-4 h-4" />
+                  Generar PDF
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

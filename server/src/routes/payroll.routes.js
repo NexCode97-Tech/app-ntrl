@@ -30,4 +30,8 @@ router.post("/:id/mark-paid",  ctrl.markAsPaid);
 router.get("/:id/export/banco",               ctrl.exportBanco);
 router.get("/:id/export/comprobante/:txId",   ctrl.getComprobante);
 
+// ── Liquidación por empleado ──────────────────────────────────
+// GET /payroll/employees/:empId/liquidacion?fecha_retiro=YYYY-MM-DD
+router.get("/employees/:empId/liquidacion",   ctrl.getLiquidacion);
+
 export default router;
