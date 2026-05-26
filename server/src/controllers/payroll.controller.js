@@ -2,6 +2,7 @@ import { pool } from "../config/database.js";
 import { AppError } from "../utils/AppError.js";
 import { calcularTransaccion } from "../validations/nomina.validation.js";
 import { generateComprobantePDF, generateLiquidacionPDF } from "../utils/payrollPdf.js";
+import { broadcastInvalidate } from "../utils/sseManager.js";
 
 function requireAdminOrVendedor(req) {
   if (!["admin", "vendedor"].includes(req.user.role))
@@ -116,6 +117,7 @@ export async function createPeriod(req, res, next) {
     }
 
     await client.query("COMMIT");
+    broadcastInvalidate("payroll-periods");
     res.status(201).json({
       status: "ok",
       data: { ...period, total_empleados: empleados.length },
@@ -136,6 +138,7 @@ export async function deletePeriod(req, res, next) {
     if (!rows.length) throw new AppError("Período no encontrado.", 404, "NOT_FOUND");
 
     await pool.query(`DELETE FROM payroll_periods WHERE id = $1`, [req.params.id]);
+    broadcastInvalidate("payroll-periods");
     res.json({ status: "ok", message: "Período eliminado." });
   } catch (err) { next(err); }
 }
@@ -265,6 +268,7 @@ export async function approvePeriod(req, res, next) {
     );
 
     await client.query("COMMIT");
+    broadcastInvalidate("payroll-periods");
     res.json({ status: "ok", data: updated });
   } catch (err) {
     await client.query("ROLLBACK");
@@ -288,6 +292,7 @@ export async function markAsPaid(req, res, next) {
        WHERE id=$2 RETURNING *`,
       [req.user.id, req.params.id]
     );
+    broadcastInvalidate("payroll-periods");
     res.json({ status: "ok", data: updated });
   } catch (err) { next(err); }
 }

@@ -60,6 +60,7 @@ export default function NotificationBell() {
         qc.invalidateQueries({ queryKey: ["order"] });
         qc.invalidateQueries({ queryKey: ["dashboard"] });
         qc.invalidateQueries({ queryKey: ["upcoming-deliveries"] });
+        qc.invalidateQueries({ queryKey: ["payroll-periods"] });
 
         // Solo actualizar contador si es una notificación real (no invalidate)
         if (msg.type !== "invalidate") {
