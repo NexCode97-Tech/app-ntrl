@@ -42,7 +42,8 @@ function EditModal({ tx, periodId, onClose, onSaved }) {
   // Fórmula hora extra: (SMMLV 2025 / 220) * 1.25 * N° horas
   // Base fija: $1.750.905 (salario mínimo legal vigente), independiente del salario individual
   const SALARIO_BASE_HORAS_EXTRAS = 1_750_905;
-  const valorHora = Math.round(SALARIO_BASE_HORAS_EXTRAS / 220);
+  const valorHora = SALARIO_BASE_HORAS_EXTRAS / 220;          // sin aproximar
+  const VALOR_HORA_EXTRA = Math.round(valorHora * 1.25);      // $9.948 — valor hora extra para descuentos
 
   const [form, setForm] = useState({
     dias_laborados:          tx.dias_laborados          ?? 15,
@@ -61,7 +62,7 @@ function EditModal({ tx, periodId, onClose, onSaved }) {
 
   function setHorasExtras(num) {
     const n = Math.max(0, Number(num) || 0);
-    const valor = Math.round(n * valorHora * 1.25);
+    const valor = Math.round(n * VALOR_HORA_EXTRA);
     setForm((p) => ({ ...p, num_horas_extras: num, horas_extras: valor }));
   }
 
