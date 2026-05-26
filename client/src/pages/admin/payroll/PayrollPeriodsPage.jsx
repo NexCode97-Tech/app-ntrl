@@ -12,14 +12,13 @@ import {
 } from "@heroicons/react/24/outline";
 
 const ESTADO_BADGE = {
-  borrador:  "bg-zinc-500/10 text-zinc-400 border border-zinc-500/20",
-  generado:  "bg-blue-500/10 text-blue-400 border border-blue-500/20",
-  aprobado:  "bg-brand-green/10 text-green-400 border border-brand-green/20",
-  pagado:    "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20",
+  borrador: "bg-zinc-500/10 text-zinc-400 border border-zinc-500/20",
+  aprobado: "bg-brand-green/10 text-green-400 border border-brand-green/20",
+  pagado:   "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20",
 };
 
 const ESTADO_LABEL = {
-  borrador: "Borrador", generado: "Generado", aprobado: "Aprobado", pagado: "Pagado",
+  borrador: "Borrador", aprobado: "Aprobado", pagado: "Pagado",
 };
 
 const fmt = (v) =>
@@ -46,12 +45,6 @@ export default function PayrollPeriodsPage() {
     mutationFn: (body) => api.post("/payroll", body),
     onSuccess: () => { qc.invalidateQueries(["payroll-periods"]); closeModal(); },
     onError: (e) => setError(e.response?.data?.message ?? "Error al crear período."),
-  });
-
-  const generateMut = useMutation({
-    mutationFn: (id) => api.post(`/payroll/${id}/generate`),
-    onSuccess: (_, id) => { qc.invalidateQueries(["payroll-periods"]); navigate(`/payroll/${id}`); },
-    onError: (e) => alert(e.response?.data?.message ?? "Error al generar nómina."),
   });
 
   const approveMut = useMutation({
@@ -148,15 +141,6 @@ export default function PayrollPeriodsPage() {
                 {/* Acciones */}
                 <div className="flex items-center gap-2 shrink-0 flex-wrap">
                   {p.estado === "borrador" && (
-                    <button
-                      onClick={() => generateMut.mutate(p.id)}
-                      disabled={generateMut.isPending}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-lg hover:bg-blue-500/20 transition-colors text-xs font-medium"
-                    >
-                      Generar nómina <ArrowRightIcon className="w-3 h-3" />
-                    </button>
-                  )}
-                  {p.estado === "generado" && (
                     <>
                       <button
                         onClick={() => navigate(`/payroll/${p.id}`)}
