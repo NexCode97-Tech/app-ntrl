@@ -39,8 +39,10 @@ function StatCard({ label, value, sub, accent }) {
 
 // ── Edit modal — formulario por empleado ──────────────────────
 function EditModal({ tx, periodId, onClose, onSaved }) {
-  // Fórmula hora extra: (Salario base / 220) * 1.25 * N° horas
-  const valorHora = Math.round(Number(tx.salario_base_snap) / 220);
+  // Fórmula hora extra: (SMMLV 2025 / 220) * 1.25 * N° horas
+  // Base fija: $1.750.905 (salario mínimo legal vigente), independiente del salario individual
+  const SALARIO_BASE_HORAS_EXTRAS = 1_750_905;
+  const valorHora = Math.round(SALARIO_BASE_HORAS_EXTRAS / 220);
 
   const [form, setForm] = useState({
     dias_laborados:          tx.dias_laborados          ?? 15,
@@ -139,7 +141,7 @@ function EditModal({ tx, periodId, onClose, onSaved }) {
                   placeholder="0" />
                 {form.horas_extras > 0 && (
                   <p className="text-zinc-500 text-xs mt-1">
-                    (Sal. ÷ 220) × 1.25 × {form.num_horas_extras} hrs = <span className="text-brand-green font-semibold">{fmt(form.horas_extras)}</span>
+                    ($1.750.905 ÷ 220) × 1.25 × {form.num_horas_extras} hrs = <span className="text-brand-green font-semibold">{fmt(form.horas_extras)}</span>
                   </p>
                 )}
               </div>
