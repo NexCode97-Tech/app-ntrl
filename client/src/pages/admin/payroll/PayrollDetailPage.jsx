@@ -39,64 +39,28 @@ function StatCard({ label, value, sub, accent }) {
 
 // ── Edit modal — formulario por empleado ──────────────────────
 function EditModal({ tx, periodId, onClose, onSaved }) {
-  // Recargos Colombia: diurna 25%, nocturna 75%, dominical/festiva diurna 75%, dominical nocturna 110%
-  // Ley 2466 + Ley 2101/2021 — vigente 2026 (nocturna: 7pm–6am; jornada: 44h/sem)
-  // Divisor: 44h × 4.333 semanas/mes = 190.67 ≈ 191
-  const RECARGOS = {
-    extra_diurna:             1.25,  // Hora extra diurna 6am–7pm (+25%)
-    recargo_nocturno:         1.35,  // Jornada ordinaria nocturna 7pm–6am (+35%)
-    extra_nocturna:           1.75,  // Hora extra nocturna 7pm–6am (+75%)
-    recargo_dominical:        1.90,  // Jornada ordinaria dominical/festivo (+90%)
-    recargo_dom_nocturno:     2.25,  // Jornada ordinaria dom/fest nocturna (+125%)
-    extra_diurna_dominical:   2.15,  // Hora extra diurna dom/fest (+25%+90%)
-    extra_nocturna_dominical: 2.65,  // Hora extra nocturna dom/fest (+75%+90%)
-  };
-  const RECARGO_LABEL = {
-    extra_diurna:             "H. extra diurna 6am–7pm (×1.25)",
-    recargo_nocturno:         "Recargo nocturno ordinario 7pm–6am (×1.35)",
-    extra_nocturna:           "H. extra nocturna 7pm–6am (×1.75)",
-    recargo_dominical:        "Recargo dominical/festivo diurno (×1.90)",
-    recargo_dom_nocturno:     "Recargo dominical/festivo nocturno (×2.25)",
-    extra_diurna_dominical:   "H. extra diurna dom/festivo (×2.15)",
-    extra_nocturna_dominical: "H. extra nocturna dom/festivo (×2.65)",
-  };
-
-  const VALOR_HORA_EXTRA = 9_948; // Valor fijo hora extra Natural Ropa Deportiva
-  // eslint-disable-next-line no-unused-vars
-  const valorHora = VALOR_HORA_EXTRA;
-
-  // Detectar tipo de hora extra según horario del empleado
-  // hora_salida guardada como "HH:MM" o "HH:MM:SS"
-  function detectarTipoHora(horaSalida) {
-    if (!horaSalida) return "extra_diurna";
-    const [h] = horaSalida.split(":").map(Number);
-    return h >= 19 ? "extra_nocturna" : "extra_diurna"; // 19:00 = 7pm inicio jornada nocturna
-  }
-
-  const tipoHoraDetectado = detectarTipoHora(tx.empleado_hora_salida);
+  // Fórmula hora extra: (Salario base / 220) * 1.25 * N° horas
+  const valorHora = Math.round(Number(tx.salario_base_snap) / 220);
 
   const [form, setForm] = useState({
     dias_laborados:          tx.dias_laborados          ?? 15,
     anticipo_prestaciones:   tx.anticipo_prestaciones   ?? 0,
     num_horas_extras:        0,
-    tipo_hora_extra:         tipoHoraDetectado,
     horas_extras:            tx.horas_extras            ?? 0,
     otros_ingresos:          tx.otros_ingresos          ?? 0,
     anticipo_adelanto:       tx.anticipo_adelanto       ?? 0,
     funeral:                 tx.funeral                 ?? 0,
     otros_descuentos:        tx.otros_descuentos        ?? 0,
-    num_horas_debe:          0,                              // horas que el empleado debe
+    num_horas_debe:          0,
     descuento_horas_extras:  tx.descuento_horas_extras  ?? 0,
     observaciones:           tx.observaciones           ?? "",
   });
   const [error, setError] = useState("");
 
-  // Recalcular valor horas extras al cambiar num o tipo
-  function setHorasExtras(num, tipo) {
+  function setHorasExtras(num) {
     const n = Math.max(0, Number(num) || 0);
-    const t = tipo ?? form.tipo_hora_extra;
-    const valor = Math.round(n * valorHora * RECARGOS[t]);
-    setForm((p) => ({ ...p, num_horas_extras: num, tipo_hora_extra: t, horas_extras: valor }));
+    const valor = Math.round(n * valorHora * 1.25);
+    setForm((p) => ({ ...p, num_horas_extras: num, horas_extras: valor }));
   }
 
   const esLaboral = tx.tipo_contrato_snap === "laboral";
@@ -169,22 +133,13 @@ function EditModal({ tx, periodId, onClose, onSaved }) {
               )}
               <div className="col-span-2">
                 <label className="block text-zinc-500 text-xs mb-2">Horas extras</label>
-                <div className="flex gap-2 items-center">
-                  <input type="number" min="0" step="0.5" className="input-field w-24"
-                    value={form.num_horas_extras}
-                    onChange={(e) => setHorasExtras(e.target.value, form.tipo_hora_extra)}
-                    placeholder="0" />
-                  <select className="input-field flex-1"
-                    value={form.tipo_hora_extra}
-                    onChange={(e) => setHorasExtras(form.num_horas_extras, e.target.value)}>
-                    {Object.entries(RECARGO_LABEL).map(([k, v]) => (
-                      <option key={k} value={k}>{v}</option>
-                    ))}
-                  </select>
-                </div>
+                <input type="number" min="0" step="0.5" className="input-field w-32"
+                  value={form.num_horas_extras}
+                  onChange={(e) => setHorasExtras(e.target.value)}
+                  placeholder="0" />
                 {form.horas_extras > 0 && (
                   <p className="text-zinc-500 text-xs mt-1">
-                    Valor h/ord: {fmt(valorHora)} → Total: <span className="text-brand-green font-semibold">{fmt(form.horas_extras)}</span>
+                    (Sal. ÷ 220) × 1.25 × {form.num_horas_extras} hrs = <span className="text-brand-green font-semibold">{fmt(form.horas_extras)}</span>
                   </p>
                 )}
               </div>
@@ -331,7 +286,7 @@ function EditModal({ tx, periodId, onClose, onSaved }) {
               onClick={() => {
                 setError("");
                 // eslint-disable-next-line no-unused-vars
-                const { num_horas_extras, tipo_hora_extra, num_horas_debe, ...body } = form;
+                const { num_horas_extras, num_horas_debe, ...body } = form;
                 saveMut.mutate(body);
               }}
               disabled={saveMut.isPending}
