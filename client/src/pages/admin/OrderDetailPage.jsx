@@ -629,7 +629,7 @@ function EditOrderModal({ order, onClose, onSaved }) {
 
             {/* Agregar nuevos archivos */}
             <>
-              <input type="file" accept=".jpg,.jpeg,.png,.pdf" multiple className="input-field text-sm"
+              <input type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.avif,.pdf" multiple className="input-field text-sm"
                 onChange={(e) => {
                   const picked = Array.from(e.target.files);
                   e.target.value = "";
@@ -862,7 +862,7 @@ function EditPaymentForm({ payment, orderId, onDone, onCancel }) {
       </div>
       <div>
         <label className="block text-xs text-zinc-400 mb-1">Reemplazar comprobante (opcional)</label>
-        <input type="file" accept=".jpg,.jpeg,.png,.pdf" className="input-field text-sm"
+        <input type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.avif,.pdf" className="input-field text-sm"
           onChange={(e) => setReceipt(e.target.files[0] || null)} />
       </div>
       {error && <div className="bg-red-950 border border-red-800 text-red-300 text-xs px-3 py-2 rounded-lg">{error}</div>}
@@ -1075,7 +1075,7 @@ function FinancialTab({ order, onRefresh, onPreviewImage, onPreviewPdf }) {
             </div>
             <div>
               <label className="block text-xs text-zinc-400 mb-1">Comprobante (opcional · JPG, PNG o PDF)</label>
-              <input type="file" accept=".jpg,.jpeg,.png,.pdf" className="input-field text-sm"
+              <input type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.avif,.pdf" className="input-field text-sm"
                 onChange={(e) => setReceipt(e.target.files[0] || null)} />
               {receipt && <p className="text-xs text-zinc-400 mt-1">{receipt.name}</p>}
             </div>

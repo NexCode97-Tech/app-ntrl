@@ -200,8 +200,8 @@ export default function OrderCreatePage() {
               <input type="date" className="input-field" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
             </div>
             <div>
-              <label className="block text-xs text-zinc-400 mb-1">Diseños (JPG/PNG/PDF)</label>
-              <input type="file" accept=".jpg,.jpeg,.png,.pdf" multiple className="input-field text-sm"
+              <label className="block text-xs text-zinc-400 mb-1">Diseños (JPG/PNG/WebP/HEIC/PDF)</label>
+              <input type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.avif,.pdf" multiple className="input-field text-sm"
                 onChange={(e) => {
                   const picked = Array.from(e.target.files);
                   e.target.value = "";
