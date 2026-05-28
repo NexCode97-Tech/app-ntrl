@@ -5,6 +5,7 @@ import { api } from "../../../config/api.js";
 import {
   BanknotesIcon, UserGroupIcon, PlusIcon, PencilIcon,
   TrashIcon, XMarkIcon, ChevronRightIcon,
+  PaperClipIcon, ArrowDownTrayIcon, ArrowUpTrayIcon,
 } from "@heroicons/react/24/outline";
 import TabBar from "../../../components/ui/TabBar.jsx";
 
@@ -423,6 +424,43 @@ function EmployeesTab() {
               {emp.tipo_contrato === "prestacion_servicios" && Number(emp.anticipo_prest_fijo) > 0 && (
                 <p className="text-xs text-purple-400">Anticipo prest: {fmt(emp.anticipo_prest_fijo)}</p>
               )}
+
+              {/* Hoja de vida */}
+              <div className="flex items-center justify-between pt-1 border-t border-zinc-800">
+                <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+                  <PaperClipIcon className="w-3.5 h-3.5" />
+                  {emp.cv_url ? (
+                    <span className="text-brand-green font-medium">HV adjunta</span>
+                  ) : (
+                    <span>Sin hoja de vida</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
+                  {emp.cv_url && (
+                    <a href={emp.cv_url} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-xs text-zinc-400 hover:text-white px-2 py-1 rounded hover:bg-zinc-800 transition-colors">
+                      <ArrowDownTrayIcon className="w-3.5 h-3.5" /> Ver
+                    </a>
+                  )}
+                  <label className="flex items-center gap-1 text-xs text-zinc-400 hover:text-brand-green px-2 py-1 rounded hover:bg-brand-green/10 transition-colors cursor-pointer">
+                    <ArrowUpTrayIcon className="w-3.5 h-3.5" />
+                    {emp.cv_url ? "Reemplazar" : "Subir HV"}
+                    <input type="file" className="hidden"
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const fd = new FormData();
+                        fd.append("cv", file);
+                        api.post(`/employees/${emp.id}/cv`, fd, { headers: { "Content-Type": "multipart/form-data" } })
+                          .then(() => qc.invalidateQueries({ queryKey: ["employees"] }))
+                          .catch((err) => alert(err.response?.data?.message ?? "Error al subir el archivo."));
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
 
               {/* Acciones */}
               <div className="flex items-center justify-end gap-2 pt-1 border-t border-zinc-800">

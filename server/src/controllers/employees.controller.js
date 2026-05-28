@@ -1,5 +1,6 @@
 import { pool } from "../config/database.js";
 import { AppError } from "../utils/AppError.js";
+import { saveFile, deleteFile } from "../utils/fileStorage.js";
 
 function requireAdminOrVendedor(req) {
   if (!["admin", "vendedor"].includes(req.user.role))
@@ -24,7 +25,7 @@ export async function listEmployees(req, res, next) {
       `SELECT e.id, e.nombre, e.email, e.cargo, e.salario_base,
               e.tipo_contrato, e.banco, e.tipo_cuenta, e.numero_cuenta,
               e.anticipo_prest_fijo, e.tipo_identificacion, e.numero_identificacion,
-              e.fecha_ingreso, e.estado_laboral, e.notas, e.created_at
+              e.fecha_ingreso, e.estado_laboral, e.notas, e.cv_url, e.created_at
        FROM employees e ${where} ORDER BY e.nombre ASC`,
       params
     );
@@ -108,6 +109,46 @@ export async function updateEmployee(req, res, next) {
     if (err.code === "23505") return next(new AppError("Ya existe un empleado con ese número de identificación.", 409, "CONFLICT"));
     next(err);
   }
+}
+
+// ── UPLOAD CV ──────────────────────────────────────────────────
+export async function uploadCV(req, res, next) {
+  try {
+    requireAdminOrVendedor(req);
+    if (!req.file) throw new AppError("No se recibió ningún archivo.", 400, "NO_FILE");
+
+    const { rows: [emp] } = await pool.query(`SELECT cv_url FROM employees WHERE id = $1`, [req.params.id]);
+    if (!emp) throw new AppError("Empleado no encontrado.", 404, "NOT_FOUND");
+
+    // Eliminar CV anterior si existe
+    if (emp.cv_url) {
+      await deleteFile(emp.cv_url).catch(() => {});
+    }
+
+    const url = await saveFile(req.file, "employees/cv");
+    const { rows: [updated] } = await pool.query(
+      `UPDATE employees SET cv_url = $1 WHERE id = $2 RETURNING *`,
+      [url, req.params.id]
+    );
+    res.json({ status: "ok", data: updated });
+  } catch (err) { next(err); }
+}
+
+// ── DELETE CV ──────────────────────────────────────────────────
+export async function deleteCV(req, res, next) {
+  try {
+    requireAdminOrVendedor(req);
+    const { rows: [emp] } = await pool.query(`SELECT cv_url FROM employees WHERE id = $1`, [req.params.id]);
+    if (!emp) throw new AppError("Empleado no encontrado.", 404, "NOT_FOUND");
+    if (!emp.cv_url) throw new AppError("El empleado no tiene hoja de vida registrada.", 404, "NOT_FOUND");
+
+    await deleteFile(emp.cv_url).catch(() => {});
+    const { rows: [updated] } = await pool.query(
+      `UPDATE employees SET cv_url = NULL WHERE id = $1 RETURNING *`,
+      [req.params.id]
+    );
+    res.json({ status: "ok", data: updated });
+  } catch (err) { next(err); }
 }
 
 // ── DELETE ─────────────────────────────────────────────────────
