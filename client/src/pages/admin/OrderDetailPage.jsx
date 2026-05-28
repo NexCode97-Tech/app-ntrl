@@ -938,6 +938,12 @@ function FinancialTab({ order, onRefresh, onPreviewImage, onPreviewPdf }) {
   return (
     <div className="card space-y-4">
       {/* Totales */}
+      {Number(order.descuento_porcentaje) > 0 && (
+        <div className="flex items-center justify-between px-1 text-sm">
+          <span className="text-zinc-500">Descuento aplicado</span>
+          <span className="text-red-400 font-medium">{Number(order.descuento_porcentaje)}%</span>
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-zinc-800 rounded-lg p-3 text-center">
           <p className="text-xs text-zinc-400 mb-1">Total</p>

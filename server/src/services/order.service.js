@@ -33,12 +33,13 @@ export async function createOrder(userId, data, designFiles = []) {
     const hasNameCol = colExists.length > 0;
 
     // Crear pedido
+    const descuento = Math.min(100, Math.max(0, Number(data.descuento_porcentaje) || 0));
     const insertCols = hasNameCol
-      ? `customer_id, created_by, name, delivery_date, description, design_file`
-      : `customer_id, created_by, delivery_date, description, design_file`;
+      ? `customer_id, created_by, name, delivery_date, description, design_file, descuento_porcentaje`
+      : `customer_id, created_by, delivery_date, description, design_file, descuento_porcentaje`;
     const insertVals = hasNameCol
-      ? [data.customer_id, userId, toTitleCase(data.name) || null, data.delivery_date || null, data.description || null, designValue]
-      : [data.customer_id, userId, data.delivery_date || null, data.description || null, designValue];
+      ? [data.customer_id, userId, toTitleCase(data.name) || null, data.delivery_date || null, data.description || null, designValue, descuento]
+      : [data.customer_id, userId, data.delivery_date || null, data.description || null, designValue, descuento];
     const insertPlaceholders = insertVals.map((_, i) => `$${i + 1}`).join(", ");
 
     const { rows: [order] } = await client.query(
@@ -221,6 +222,12 @@ export async function updateOrder(orderId, userId, data, newDesignFiles = []) {
     if (data.status === "delivered") {
       sets.push(`status = 'delivered'`);
       changes.status = { old: before.rows[0].status, new: "delivered" };
+    }
+    if (data.descuento_porcentaje !== undefined) {
+      const desc = Math.min(100, Math.max(0, Number(data.descuento_porcentaje) || 0));
+      vals.push(desc);
+      sets.push(`descuento_porcentaje = $${vals.length}`);
+      changes.descuento_porcentaje = { old: before.rows[0].descuento_porcentaje, new: desc };
     }
 
     // Actualizar archivos de diseño

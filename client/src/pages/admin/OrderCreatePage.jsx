@@ -56,6 +56,7 @@ export default function OrderCreatePage() {
   const [orderName,     setOrderName]     = useState("");
   const [deliveryDate,  setDeliveryDate]  = useState("");
   const [description,   setDescription]  = useState("");
+  const [descuento,     setDescuento]     = useState(0);
   const [designFiles,   setDesignFiles]   = useState([]);
   const [designPreviews, setDesignPreviews] = useState([]);
   const [items,         setItems]         = useState([]);
@@ -111,9 +112,10 @@ export default function OrderCreatePage() {
     try {
       const formData = new FormData();
       formData.append("customer_id", customerId);
-      if (orderName)    formData.append("name",          orderName);
-      if (deliveryDate) formData.append("delivery_date", deliveryDate);
-      if (description)  formData.append("description",   description);
+      if (orderName)    formData.append("name",                 orderName);
+      if (deliveryDate) formData.append("delivery_date",        deliveryDate);
+      if (description)  formData.append("description",          description);
+      formData.append("descuento_porcentaje", descuento ?? 0);
       formData.append("items", JSON.stringify(items.map(({ product_id, gender, sizes, unit_price, design_file_index }) => ({
         product_id, gender, sizes, unit_price: parseFloat(unit_price) || 0, design_file_index: design_file_index ?? null,
       }))));
@@ -315,9 +317,48 @@ export default function OrderCreatePage() {
           {items.length > 0 && (() => {
             const totalUnits = items.reduce((sum, item) =>
               sum + Object.values(item.sizes || {}).reduce((s, q) => s + (Number(q) || 0), 0), 0);
+            const subtotal = items.reduce((sum, item) => {
+              const qty = Object.values(item.sizes || {}).reduce((s, q) => s + (Number(q) || 0), 0);
+              return sum + qty * (Number(item.unit_price) || 0);
+            }, 0);
+            const descVal  = subtotal * (Number(descuento) / 100);
+            const total    = subtotal - descVal;
+            const fmt = (v) => v.toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
             return (
-              <div className="flex justify-end pt-2 border-t border-zinc-700">
-                <span className="text-zinc-400 text-sm">Total unidades: <span className="text-white font-semibold">{totalUnits}</span></span>
+              <div className="pt-3 border-t border-zinc-700 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-zinc-400">Total unidades</span>
+                  <span className="text-white font-semibold">{totalUnits}</span>
+                </div>
+                {subtotal > 0 && (
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-zinc-400">Subtotal</span>
+                      <span className="text-white">{fmt(subtotal)}</span>
+                    </div>
+                    {/* Campo descuento */}
+                    <div className="flex items-center justify-between gap-3">
+                      <label className="text-zinc-400 text-sm shrink-0">Descuento (%)</label>
+                      <input
+                        type="number" min="0" max="100" step="0.5"
+                        value={descuento}
+                        onChange={(e) => setDescuento(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                        className="input-field w-24 text-right"
+                        placeholder="0"
+                      />
+                    </div>
+                    {descuento > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-red-400">Descuento ({descuento}%)</span>
+                        <span className="text-red-400">–{fmt(descVal)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-sm font-bold border-t border-zinc-700 pt-2">
+                      <span className="text-zinc-300">Total</span>
+                      <span className="text-brand-green text-base">{fmt(total)}</span>
+                    </div>
+                  </>
+                )}
               </div>
             );
           })()}
