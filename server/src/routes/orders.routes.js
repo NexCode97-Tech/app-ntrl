@@ -29,6 +29,7 @@ router.get("/:id",       ctrl.getById);
 router.get("/:id/history", requireRole("admin", "vendedor"), ctrl.getHistory);
 router.get("/:id/invoice", requireRole("admin", "vendedor"), ctrl.downloadInvoice);
 router.post("/:id/send",   requireRole("admin", "vendedor"), ctrl.sendInvoiceByEmail);
+router.post("/:id/guia",   requireRole("admin", "vendedor"), ctrl.getGuia);
 
 router.post("/",
   requireRole("admin", "vendedor"),

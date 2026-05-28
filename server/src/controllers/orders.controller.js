@@ -6,6 +6,8 @@ import { config } from "../config/index.js";
 import { pushToWorkers } from "../utils/pushNotifications.js";
 import { broadcastInvalidate } from "../utils/sseManager.js";
 import { generateInvoicePDF } from "../utils/pdfGenerator.js";
+import { generateGuiaPDF } from "../utils/guiaPdf.js";
+import { pool } from "../config/database.js";
 import { sendMail } from "../utils/mailer.js";
 import { AppError } from "../utils/AppError.js";
 
@@ -75,6 +77,26 @@ export async function update(req, res, next) {
     await invalidateDashboard();
     broadcastInvalidate("orders", ["order", req.params.id], "dashboard");
     res.json({ status: "ok", data: order });
+  } catch (err) { next(err); }
+}
+
+// POST /orders/:id/guia — guarda datos y descarga PDF guía de despacho
+export async function getGuia(req, res, next) {
+  try {
+    const order = await orderService.getOrderDetail(req.params.id);
+    if (!["completed", "delivered"].includes(order.status))
+      throw new AppError("Solo se puede generar guía de pedidos completados.", 400, "BAD_REQUEST");
+
+    const guia = req.body ?? {};
+
+    // Persistir datos editados
+    await pool.query(`UPDATE orders SET guia_data = $1 WHERE id = $2`, [JSON.stringify(guia), order.id]);
+
+    const pdf = await generateGuiaPDF(order, guia);
+    const num = order.order_number_fmt ?? order.order_number;
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="guia-despacho-${num}.pdf"`);
+    res.send(pdf);
   } catch (err) { next(err); }
 }
 

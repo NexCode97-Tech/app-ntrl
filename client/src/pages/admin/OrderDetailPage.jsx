@@ -12,6 +12,7 @@ const IconEdit     = () => <svg xmlns="http://www.w3.org/2000/svg" width="14" he
 const IconInvoice  = () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>;
 const IconTrash    = () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>;
 const IconCheck    = () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
+const IconTruck    = () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>;
 const IconDocument = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>;
 const IconCalendar = () => <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
 const IconUser     = () => <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
@@ -80,6 +81,24 @@ export default function OrderDetailPage() {
   const [showEdit,   setShowEdit]   = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState(null);
   const [pdfSrc,     setPdfSrc]     = useState(null);
+  const [showGuia,   setShowGuia]   = useState(false);
+  const [guiaForm,   setGuiaForm]   = useState({ transportadora: "", numero_guia: "", direccion_destino: "", observaciones: "" });
+  const [guiaLoading, setGuiaLoading] = useState(false);
+
+  async function handleDownloadGuia() {
+    setGuiaLoading(true);
+    try {
+      const res = await api.post(`/orders/${id}/guia`, guiaForm, { responseType: "blob" });
+      const url = URL.createObjectURL(res.data);
+      const a   = document.createElement("a");
+      a.href     = url;
+      a.download = `Guia-Despacho-${data?.order_number_fmt || id}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setShowGuia(false);
+    } catch { alert("Error al generar la guía."); }
+    finally { setGuiaLoading(false); }
+  }
 
   async function handleDownloadInvoice() {
     try {
@@ -201,6 +220,20 @@ export default function OrderDetailPage() {
               <IconCheck /> Entregado
             </button>
           )}
+          {["completed", "delivered"].includes(data.status) && (
+            <button onClick={() => {
+                setGuiaForm({
+                  transportadora:    data.guia_data?.transportadora    ?? "",
+                  numero_guia:       data.guia_data?.numero_guia       ?? "",
+                  direccion_destino: data.guia_data?.direccion_destino ?? data.address ?? "",
+                  observaciones:     data.guia_data?.observaciones     ?? "",
+                });
+                setShowGuia(true);
+              }}
+              className="flex-1 flex items-center justify-center gap-1.5 text-sm btn-secondary">
+              <IconTruck /> Guía despacho
+            </button>
+          )}
           <button onClick={handleDownloadInvoice}
             className="flex-1 flex items-center justify-center gap-1.5 text-sm btn-secondary">
             <IconInvoice /> Factura
@@ -248,6 +281,54 @@ export default function OrderDetailPage() {
       </div>
 
       {/* Lightbox */}
+      {/* Modal guía de despacho */}
+      {showGuia && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-5 border-b border-zinc-800">
+              <div className="flex items-center gap-2">
+                <IconTruck />
+                <h2 className="text-white font-bold text-base">Guía de Despacho</h2>
+              </div>
+              <button onClick={() => setShowGuia(false)} className="text-zinc-400 hover:text-white text-xl leading-none">✕</button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-zinc-400 text-xs mb-1">Transportadora</label>
+                <input className="input-field w-full" placeholder="Ej: Servientrega, Coordinadora..."
+                  value={guiaForm.transportadora}
+                  onChange={(e) => setGuiaForm((p) => ({ ...p, transportadora: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-zinc-400 text-xs mb-1">Número de guía</label>
+                <input className="input-field w-full" placeholder="Ej: 9876543210"
+                  value={guiaForm.numero_guia}
+                  onChange={(e) => setGuiaForm((p) => ({ ...p, numero_guia: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-zinc-400 text-xs mb-1">Dirección de destino</label>
+                <input className="input-field w-full" placeholder="Calle, ciudad, departamento"
+                  value={guiaForm.direccion_destino}
+                  onChange={(e) => setGuiaForm((p) => ({ ...p, direccion_destino: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-zinc-400 text-xs mb-1">Observaciones</label>
+                <textarea className="input-field w-full resize-none" rows={3} placeholder="Indicaciones especiales para el transportador..."
+                  value={guiaForm.observaciones}
+                  onChange={(e) => setGuiaForm((p) => ({ ...p, observaciones: e.target.value }))} />
+              </div>
+              <div className="flex justify-end gap-3 pt-1">
+                <button onClick={() => setShowGuia(false)} className="btn-secondary px-4">Cancelar</button>
+                <button onClick={handleDownloadGuia} disabled={guiaLoading}
+                  className="btn-primary px-5 flex items-center gap-2 disabled:opacity-50">
+                  <IconTruck /> {guiaLoading ? "Generando..." : "Descargar PDF"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {lightboxSrc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
           onClick={() => setLightboxSrc(null)}>
