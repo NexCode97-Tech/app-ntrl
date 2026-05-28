@@ -6,6 +6,7 @@ import {
   BanknotesIcon, UserGroupIcon, PlusIcon, PencilIcon,
   TrashIcon, XMarkIcon, ChevronRightIcon,
   PaperClipIcon, ArrowDownTrayIcon, ArrowUpTrayIcon,
+  DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 import TabBar from "../../../components/ui/TabBar.jsx";
 
@@ -292,10 +293,28 @@ const EMPTY_EMP = {
 
 function EmployeesTab() {
   const qc = useQueryClient();
-  const [modal, setModal]   = useState(null); // null | { mode: "create"|"edit", data?: {} }
-  const [form, setForm]     = useState(EMPTY_EMP);
-  const [error, setError]   = useState("");
-  const [search, setSearch] = useState("");
+  const [modal, setModal]         = useState(null);
+  const [form, setForm]           = useState(EMPTY_EMP);
+  const [error, setError]         = useState("");
+  const [search, setSearch]       = useState("");
+  const [contratoEmp, setContratoEmp] = useState(null); // empleado seleccionado para contrato
+  const [contratoForm, setContratoForm] = useState({ lugar_trabajo: "", jornada: "", duracion: "", ciudad_contrato: "Bucaramanga", fecha_contrato: new Date().toISOString().slice(0, 10) });
+  const [contratoLoading, setContratoLoading] = useState(false);
+
+  async function handleDownloadContrato() {
+    setContratoLoading(true);
+    try {
+      const res = await api.post(`/employees/${contratoEmp.id}/contrato`, contratoForm, { responseType: "blob" });
+      const url = URL.createObjectURL(res.data);
+      const a   = document.createElement("a");
+      a.href     = url;
+      a.download = `Contrato_${contratoEmp.nombre.replace(/\s+/g, "_")}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setContratoEmp(null);
+    } catch { alert("Error al generar el contrato."); }
+    finally { setContratoLoading(false); }
+  }
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ["employees"],
@@ -463,19 +482,93 @@ function EmployeesTab() {
               </div>
 
               {/* Acciones */}
-              <div className="flex items-center justify-end gap-2 pt-1 border-t border-zinc-800">
-                <button onClick={() => openEdit(emp)}
-                  className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors px-2 py-1 rounded hover:bg-zinc-800">
-                  <PencilIcon className="w-3.5 h-3.5" /> Editar
-                </button>
+              <div className="flex items-center justify-between pt-1 border-t border-zinc-800">
                 <button
-                  onClick={() => { if (confirm(`¿Eliminar a ${emp.nombre}?`)) deleteMut.mutate(emp.id); }}
-                  className="flex items-center gap-1.5 text-xs text-zinc-600 hover:text-red-400 transition-colors px-2 py-1 rounded hover:bg-red-500/10">
-                  <TrashIcon className="w-3.5 h-3.5" /> Eliminar
+                  onClick={() => {
+                    setContratoEmp(emp);
+                    setContratoForm({ lugar_trabajo: "", jornada: "", duracion: "", ciudad_contrato: "Bucaramanga", fecha_contrato: new Date().toISOString().slice(0, 10) });
+                  }}
+                  className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-brand-green transition-colors px-2 py-1 rounded hover:bg-brand-green/10">
+                  <DocumentTextIcon className="w-3.5 h-3.5" /> Contrato
                 </button>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => openEdit(emp)}
+                    className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors px-2 py-1 rounded hover:bg-zinc-800">
+                    <PencilIcon className="w-3.5 h-3.5" /> Editar
+                  </button>
+                  <button
+                    onClick={() => { if (confirm(`¿Eliminar a ${emp.nombre}?`)) deleteMut.mutate(emp.id); }}
+                    className="flex items-center gap-1.5 text-xs text-zinc-600 hover:text-red-400 transition-colors px-2 py-1 rounded hover:bg-red-500/10">
+                    <TrashIcon className="w-3.5 h-3.5" /> Eliminar
+                  </button>
+                </div>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Modal contrato laboral */}
+      {contratoEmp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-5 border-b border-zinc-800">
+              <div>
+                <h2 className="text-white font-bold text-base flex items-center gap-2">
+                  <DocumentTextIcon className="w-5 h-5 text-brand-green" />
+                  Generar Contrato
+                </h2>
+                <p className="text-zinc-500 text-xs mt-0.5">{contratoEmp.nombre} · {contratoEmp.tipo_contrato === "prestacion_servicios" ? "Prestación de Servicios" : "Laboral"}</p>
+              </div>
+              <button onClick={() => setContratoEmp(null)} className="text-zinc-400 hover:text-white">
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-zinc-400 text-xs mb-1">Ciudad del contrato</label>
+                <input className="input-field w-full" placeholder="Ej: Bucaramanga"
+                  value={contratoForm.ciudad_contrato}
+                  onChange={(e) => setContratoForm((p) => ({ ...p, ciudad_contrato: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-zinc-400 text-xs mb-1">Fecha del contrato</label>
+                <input type="date" className="input-field w-full"
+                  value={contratoForm.fecha_contrato}
+                  onChange={(e) => setContratoForm((p) => ({ ...p, fecha_contrato: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-zinc-400 text-xs mb-1">Lugar de trabajo</label>
+                <input className="input-field w-full" placeholder="Ej: Calle 22#17-21, Bucaramanga"
+                  value={contratoForm.lugar_trabajo}
+                  onChange={(e) => setContratoForm((p) => ({ ...p, lugar_trabajo: e.target.value }))} />
+              </div>
+              {contratoEmp.tipo_contrato !== "prestacion_servicios" ? (
+                <div>
+                  <label className="block text-zinc-400 text-xs mb-1">Jornada laboral</label>
+                  <input className="input-field w-full" placeholder="Ej: lunes a sábado de 7:00 a.m. a 5:00 p.m."
+                    value={contratoForm.jornada}
+                    onChange={(e) => setContratoForm((p) => ({ ...p, jornada: e.target.value }))} />
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-zinc-400 text-xs mb-1">Duración del contrato</label>
+                  <input className="input-field w-full" placeholder="Ej: seis (6) meses"
+                    value={contratoForm.duracion}
+                    onChange={(e) => setContratoForm((p) => ({ ...p, duracion: e.target.value }))} />
+                </div>
+              )}
+              <p className="text-zinc-600 text-xs">Los campos vacíos usarán valores predeterminados.</p>
+              <div className="flex justify-end gap-3 pt-1">
+                <button onClick={() => setContratoEmp(null)} className="btn-secondary px-4">Cancelar</button>
+                <button onClick={handleDownloadContrato} disabled={contratoLoading}
+                  className="btn-primary px-5 flex items-center gap-2 disabled:opacity-50">
+                  <DocumentTextIcon className="w-4 h-4" />
+                  {contratoLoading ? "Generando..." : "Descargar PDF"}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

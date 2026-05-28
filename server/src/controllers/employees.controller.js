@@ -1,6 +1,7 @@
 import { pool } from "../config/database.js";
 import { AppError } from "../utils/AppError.js";
 import { saveFile, deleteFile } from "../utils/fileStorage.js";
+import { generateContratoPDF } from "../utils/contratoPdf.js";
 
 function requireAdminOrVendedor(req) {
   if (!["admin", "vendedor"].includes(req.user.role))
@@ -109,6 +110,22 @@ export async function updateEmployee(req, res, next) {
     if (err.code === "23505") return next(new AppError("Ya existe un empleado con ese número de identificación.", 409, "CONFLICT"));
     next(err);
   }
+}
+
+// ── CONTRATO ───────────────────────────────────────────────────
+export async function getContrato(req, res, next) {
+  try {
+    requireAdminOrVendedor(req);
+    const { rows: [emp] } = await pool.query(`SELECT * FROM employees WHERE id = $1`, [req.params.id]);
+    if (!emp) throw new AppError("Empleado no encontrado.", 404, "NOT_FOUND");
+
+    const extra = req.body ?? {};
+    const pdf   = await generateContratoPDF(emp, extra);
+    const nombre = emp.nombre.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, "_");
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="Contrato_${nombre}.pdf"`);
+    res.send(pdf);
+  } catch (err) { next(err); }
 }
 
 // ── UPLOAD CV ──────────────────────────────────────────────────
