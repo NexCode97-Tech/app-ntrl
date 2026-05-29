@@ -82,7 +82,7 @@ export default function OrderDetailPage() {
   const [lightboxSrc, setLightboxSrc] = useState(null);
   const [pdfSrc,     setPdfSrc]     = useState(null);
   const [showGuia,   setShowGuia]   = useState(false);
-  const [guiaForm,   setGuiaForm]   = useState({ transportadora: "", numero_guia: "", direccion_destino: "", observaciones: "" });
+  const [guiaForm,   setGuiaForm]   = useState({ transportadora: "", direccion_destino: "", observaciones: "" });
   const [guiaLoading, setGuiaLoading] = useState(false);
 
   async function handleDownloadGuia() {
@@ -224,7 +224,6 @@ export default function OrderDetailPage() {
             <button onClick={() => {
                 setGuiaForm({
                   transportadora:    data.guia_data?.transportadora    ?? "",
-                  numero_guia:       data.guia_data?.numero_guia       ?? "",
                   direccion_destino: data.guia_data?.direccion_destino ?? data.address ?? "",
                   observaciones:     data.guia_data?.observaciones     ?? "",
                 });
@@ -298,12 +297,6 @@ export default function OrderDetailPage() {
                 <input className="input-field w-full" placeholder="Ej: Servientrega, Coordinadora..."
                   value={guiaForm.transportadora}
                   onChange={(e) => setGuiaForm((p) => ({ ...p, transportadora: e.target.value }))} />
-              </div>
-              <div>
-                <label className="block text-zinc-400 text-xs mb-1">Número de guía</label>
-                <input className="input-field w-full" placeholder="Ej: 9876543210"
-                  value={guiaForm.numero_guia}
-                  onChange={(e) => setGuiaForm((p) => ({ ...p, numero_guia: e.target.value }))} />
               </div>
               <div>
                 <label className="block text-zinc-400 text-xs mb-1">Dirección de destino</label>

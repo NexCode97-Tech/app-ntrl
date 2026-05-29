@@ -119,12 +119,12 @@ export function generateGuiaPDF(order, guia = {}) {
     const chipW  = (CW - 12) / 4;
 
     const chips = [
-      { label: "PEDIDO",         value: `#${order.order_number_fmt ?? order.order_number}`,      highlight: true  },
-      { label: "FECHA",          value: fmtDate(order.created_at),                               highlight: false },
-      { label: "TRANSPORTADORA", value: (guia.transportadora || "—").toUpperCase(),              highlight: false },
-      { label: "N° GUÍA",        value: guia.numero_guia || "—",                                 highlight: false },
+      { label: "PEDIDO",         value: `#${order.order_number_fmt ?? order.order_number}`, highlight: true  },
+      { label: "FECHA",          value: fmtDate(order.created_at),                          highlight: false },
+      { label: "TRANSPORTADORA", value: (guia.transportadora || "—").toUpperCase(),         highlight: false },
     ];
 
+    const chipGap = (CW - chips.length * chipW - (chips.length - 1) * 4) / 2;
     chips.forEach((chip, i) => {
       const cx = M + i * (chipW + 4);
       const bg = chip.highlight ? GREEN : WHITE;
