@@ -6,7 +6,6 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   PieChart, Pie, Cell, Sector,
 } from "recharts";
-import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { api } from "../../config/api.js";
 
 /* ── Constantes ─────────────────────────────────────────────────────── */
@@ -73,7 +72,6 @@ function ActiveShape(props) {
    ReportsPage
 ═══════════════════════════════════════════════════════════════════════ */
 export default function ReportsPage() {
-  const [loadingExport,    setLoadingExport]    = useState({ pdf: false, excel: false });
   const [activePieIdx,     setActivePieIdx]     = useState(null);
   const [selectedMonth,    setSelectedMonth]    = useState(null);
   const [selectedSport,    setSelectedSport]    = useState(null);
@@ -194,23 +192,6 @@ export default function ReportsPage() {
       .sort((a, b) => Number(b.revenue) - Number(a.revenue));
   }, [geoData, selectedDepto]);
 
-  /* ── Exportar ────────────────────────────────────────────────────────── */
-  async function downloadReport(type) {
-    setLoadingExport((p) => ({ ...p, [type]: true }));
-    try {
-      const { data: blob } = await api.get(`/dashboard/report/${type}`, { responseType: "blob" });
-      const url = URL.createObjectURL(blob);
-      const a   = document.createElement("a");
-      a.href     = url;
-      a.download = `reporte-ntrl-${new Date().toISOString().slice(0, 10)}.${type === "pdf" ? "pdf" : "xlsx"}`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      alert("Error al generar el reporte.");
-    } finally {
-      setLoadingExport((p) => ({ ...p, [type]: false }));
-    }
-  }
 
   /* ── Loading ─────────────────────────────────────────────────────────── */
   if (isLoading) {
@@ -721,35 +702,6 @@ export default function ReportsPage() {
         )}
       </motion.div>
 
-      {/* ── Separador Exportar ──────────────────────────────────────────── */}
-      <motion.div variants={itemVariants}>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="h-px flex-1 bg-zinc-800" />
-          <span className="text-zinc-500 text-xs font-medium px-2">Exportar</span>
-          <div className="h-px flex-1 bg-zinc-800" />
-        </div>
-
-        <div className="card">
-          <div className="flex gap-3 flex-wrap">
-            <button
-              onClick={() => downloadReport("excel")}
-              disabled={loadingExport.excel}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-green hover:bg-[#b0f020] active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed text-black text-sm font-semibold transition-all duration-150 cursor-pointer"
-            >
-              <ArrowDownTrayIcon className="w-4 h-4 shrink-0" />
-              {loadingExport.excel ? "Generando..." : "Exportar Excel"}
-            </button>
-            <button
-              onClick={() => downloadReport("pdf")}
-              disabled={loadingExport.pdf}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium border border-zinc-700 hover:border-zinc-500 transition-all duration-150 cursor-pointer"
-            >
-              <ArrowDownTrayIcon className="w-4 h-4 shrink-0" />
-              {loadingExport.pdf ? "Generando..." : "Exportar PDF"}
-            </button>
-          </div>
-        </div>
-      </motion.div>
 
     </motion.div>
   );
