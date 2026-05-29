@@ -113,18 +113,16 @@ export function generateGuiaPDF(order, guia = {}) {
     let y = 14 + HDR_H + 12;
 
     // ══════════════════════════════════════════════════════════════════
-    // FRANJA DATOS CLAVE — 4 chips en fila
+    // FRANJA DATOS CLAVE — 3 chips en fila (ancho completo)
     // ══════════════════════════════════════════════════════════════════
     const CHIP_H = 44;
-    const chipW  = (CW - 12) / 4;
-
     const chips = [
       { label: "PEDIDO",         value: `#${order.order_number_fmt ?? order.order_number}`, highlight: true  },
       { label: "FECHA",          value: fmtDate(order.created_at),                          highlight: false },
       { label: "TRANSPORTADORA", value: (guia.transportadora || "—").toUpperCase(),         highlight: false },
     ];
+    const chipW = (CW - (chips.length - 1) * 4) / chips.length;
 
-    const chipGap = (CW - chips.length * chipW - (chips.length - 1) * 4) / 2;
     chips.forEach((chip, i) => {
       const cx = M + i * (chipW + 4);
       const bg = chip.highlight ? GREEN : WHITE;
@@ -200,10 +198,9 @@ export function generateGuiaPDF(order, guia = {}) {
     doc.fillColor(GRAY).font("Helvetica").fontSize(7)
       .text("prendas", M + 8, y + 54, { width: TUW - 16, align: "center" });
 
-    // Observaciones — centro
+    // Observaciones — ocupa todo el ancho restante
     const obsX = M + TUW + 10;
-    const sigX = PW - M - 180;
-    const obsW = sigX - obsX - 10;
+    const obsW = CW - TUW - 10;
     roundedRect(doc, obsX, y, obsW, BOT_H, 4, WHITE, BORDER);
     doc.fillColor(GRAY).font("Helvetica-Bold").fontSize(7)
       .text("OBSERVACIONES", obsX + 10, y + 10);
@@ -212,26 +209,6 @@ export function generateGuiaPDF(order, guia = {}) {
       doc.fillColor(SLATE).font("Helvetica").fontSize(8)
         .text(guia.observaciones, obsX + 10, y + 28, { width: obsW - 20, ellipsis: true });
     }
-
-    // Firma receptor — derecha
-    roundedRect(doc, sigX, y, 180, BOT_H, 4, WHITE, BORDER);
-    doc.fillColor(GRAY).font("Helvetica-Bold").fontSize(7)
-      .text("RECIBIDO POR", sigX + 10, y + 10, { width: 160 });
-    divider(doc, sigX + 10, y + 22, 160);
-
-    // Línea de firma
-    const sigLineY = y + BOT_H - 26;
-    doc.moveTo(sigX + 14, sigLineY).lineTo(sigX + 166, sigLineY)
-      .strokeColor(BORDER).lineWidth(0.8).stroke();
-    doc.fillColor(GRAY).font("Helvetica").fontSize(6.5)
-      .text("Firma y C.C.", sigX + 14, sigLineY + 4);
-
-    // Línea de fecha
-    const datLineY = sigLineY - 22;
-    doc.moveTo(sigX + 14, datLineY).lineTo(sigX + 166, datLineY)
-      .strokeColor(BORDER).lineWidth(0.8).stroke();
-    doc.fillColor(GRAY).font("Helvetica").fontSize(6.5)
-      .text("Fecha de recibo", sigX + 14, datLineY + 4);
 
     // ══════════════════════════════════════════════════════════════════
     // FOOTER
