@@ -1,6 +1,6 @@
 /**
  * Generador de Guía de Despacho en PDF — Natural Ropa Deportiva
- * Formato: A4 Horizontal (Landscape)
+ * Formato: A4 Landscape — diseño profesional, sin detalle de productos
  */
 import PDFDocument from "pdfkit";
 import { join, dirname } from "path";
@@ -9,16 +9,17 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const LOGO_PATH = join(__dirname, "../assets/logo.png");
 
-const GREEN   = "#22c55e";
-const GREEN_D = "#16a34a";  // verde oscuro para acentos
-const BLACK   = "#111111";
-const DARK    = "#1f2937";
-const GRAY    = "#6b7280";
-const LGRAY   = "#f9fafb";
-const MGRAY   = "#f3f4f6";
-const BORDER  = "#e5e7eb";
-const WHITE   = "#ffffff";
-const ACCENT  = "#f0fdf4";  // fondo verde muy suave
+// ── Paleta ─────────────────────────────────────────────────────────────
+const GREEN    = "#22c55e";
+const GREEN_LT = "#dcfce7";   // fondo suave
+const BLACK    = "#0f172a";
+const DARK     = "#1e293b";
+const SLATE    = "#334155";
+const GRAY     = "#64748b";
+const LGRAY    = "#f8fafc";
+const BORDER   = "#cbd5e1";
+const WHITE    = "#ffffff";
+const ACCENT   = "#f0fdf4";
 
 const EMPRESA = {
   nombre:    "Natural Ropa Deportiva",
@@ -30,225 +31,219 @@ const EMPRESA = {
 
 function fmtDate(d) {
   if (!d) return "—";
-  const str = typeof d === "string" ? d : d.toISOString();
+  const str  = typeof d === "string" ? d : d.toISOString();
   const date = new Date(str.slice(0, 10) + "T12:00:00");
   return date.toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" });
 }
 
-/**
- * Genera la guía de despacho en PDF (landscape A4) y retorna un Buffer.
- * @param {Object} order  - Datos del pedido (de getOrderDetail)
- * @param {Object} guia   - transportadora, direccion_destino, observaciones
- */
+function totalUnidades(items = []) {
+  return (items ?? []).reduce((sum, item) =>
+    sum + Object.values(item.sizes || {}).reduce((s, q) => s + (Number(q) || 0), 0), 0
+  );
+}
+
+// Dibuja un rectángulo con borde redondeado simulado (PDFKit no tiene border-radius)
+function roundedRect(doc, x, y, w, h, r, fillColor, strokeColor) {
+  doc.save()
+    .roundedRect(x, y, w, h, r)
+    .fillAndStroke(fillColor, strokeColor ?? fillColor)
+    .restore();
+}
+
+// Línea divisoria horizontal ligera
+function divider(doc, x, y, w, color = BORDER) {
+  doc.moveTo(x, y).lineTo(x + w, y).strokeColor(color).lineWidth(0.5).stroke();
+}
+
 export function generateGuiaPDF(order, guia = {}) {
   return new Promise((resolve, reject) => {
-    // ── Landscape A4: PW = 841.89, PH = 595.28
     const doc = new PDFDocument({
       size: "A4",
       layout: "landscape",
       margin: 0,
-      info: { Title: `Guía de Despacho — ${order.customer_name ?? ""}` },
+      info: { Title: `Guía de Despacho — Pedido ${order.order_number_fmt ?? order.order_number}` },
     });
+
     const chunks = [];
-    doc.on("data", (c) => chunks.push(c));
-    doc.on("end",  () => resolve(Buffer.concat(chunks)));
+    doc.on("data",  (c) => chunks.push(c));
+    doc.on("end",   () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
     const PW = 841.89;
     const PH = 595.28;
-    const M  = 36;
+    const M  = 40;        // margen lateral
     const CW = PW - M * 2;
 
-    // ════════════════════════════════════════════════════════════════
-    // HEADER — fondo blanco, borde inferior verde
-    // ════════════════════════════════════════════════════════════════
-    const HDR_H = 88;
+    // ══════════════════════════════════════════════════════════════════
+    // FONDO BASE — casi blanco con separaciones sutiles
+    // ══════════════════════════════════════════════════════════════════
+    doc.rect(0, 0, PW, PH).fill(LGRAY);
 
-    // Fondo blanco header
-    doc.rect(0, 0, PW, HDR_H).fill(WHITE);
+    // ══════════════════════════════════════════════════════════════════
+    // BARRA LATERAL IZQUIERDA — acento de marca
+    // ══════════════════════════════════════════════════════════════════
+    doc.rect(0, 0, 8, PH).fill(GREEN);
 
-    // Línea decorativa verde izquierda
-    doc.rect(0, 0, 6, HDR_H).fill(GREEN);
+    // ══════════════════════════════════════════════════════════════════
+    // HEADER — tarjeta blanca superior
+    // ══════════════════════════════════════════════════════════════════
+    const HDR_H = 82;
+    roundedRect(doc, M, 14, CW, HDR_H, 4, WHITE, BORDER);
 
     // Logo
     try {
-      doc.image(LOGO_PATH, M + 8, 16, { height: 52, fit: [130, 52] });
+      doc.image(LOGO_PATH, M + 16, 24, { height: 50, fit: [120, 50] });
     } catch { /* sin logo */ }
 
-    // Datos empresa (derecha del header)
-    const infoX = PW - M - 230;
-    doc.fillColor(BLACK).font("Helvetica-Bold").fontSize(12)
-      .text(EMPRESA.nombre, infoX, 18, { width: 230, align: "right" });
-    doc.font("Helvetica").fontSize(8).fillColor(GRAY)
-      .text(`NIT ${EMPRESA.nit}`, infoX, 36, { width: 230, align: "right" })
-      .text(EMPRESA.direccion,    infoX, 47, { width: 230, align: "right" })
-      .text(EMPRESA.ciudad,       infoX, 58, { width: 230, align: "right" });
+    // Título central
+    doc.fillColor(GREEN).font("Helvetica-Bold").fontSize(20)
+      .text("GUÍA DE DESPACHO", 0, 38, { width: PW, align: "center" });
+    doc.fillColor(GRAY).font("Helvetica").fontSize(8)
+      .text("DOCUMENTO DE ENVÍO", 0, 62, { width: PW, align: "center" });
 
-    // Título centrado en el header
-    doc.fillColor(GREEN_D).font("Helvetica-Bold").fontSize(18)
-      .text("GUÍA DE DESPACHO", 0, 30, { width: PW, align: "center" });
+    // Empresa — derecha
+    const infoX = PW - M - 220;
+    doc.fillColor(BLACK).font("Helvetica-Bold").fontSize(10)
+      .text(EMPRESA.nombre, infoX, 24, { width: 212, align: "right" });
+    doc.fillColor(GRAY).font("Helvetica").fontSize(7.5)
+      .text(`NIT: ${EMPRESA.nit}`,  infoX, 38, { width: 212, align: "right" })
+      .text(EMPRESA.direccion,       infoX, 49, { width: 212, align: "right" })
+      .text(EMPRESA.ciudad,          infoX, 60, { width: 212, align: "right" })
+      .text(EMPRESA.telefono,        infoX, 71, { width: 212, align: "right" });
 
-    // Borde inferior header
-    doc.rect(0, HDR_H - 3, PW, 3).fill(GREEN);
+    let y = 14 + HDR_H + 12;
 
-    let y = HDR_H + 10;
+    // ══════════════════════════════════════════════════════════════════
+    // FRANJA DATOS CLAVE — 4 chips en fila
+    // ══════════════════════════════════════════════════════════════════
+    const CHIP_H = 44;
+    const chipW  = (CW - 12) / 4;
 
-    // ════════════════════════════════════════════════════════════════
-    // FRANJA INFO PEDIDO — fondo oscuro con datos clave
-    // ════════════════════════════════════════════════════════════════
-    const INFO_H = 36;
-    doc.rect(0, y, PW, INFO_H).fill(DARK);
-
-    // Número de pedido
-    doc.fillColor(GREEN).font("Helvetica-Bold").fontSize(10)
-      .text("PEDIDO", M + 8, y + 6);
-    doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(13)
-      .text(order.order_number_fmt ?? `#${order.order_number}`, M + 8, y + 18);
-
-    // Fecha
-    const col2X = M + 200;
-    doc.fillColor(GREEN).font("Helvetica-Bold").fontSize(9)
-      .text("FECHA", col2X, y + 6);
-    doc.fillColor(WHITE).font("Helvetica").fontSize(10)
-      .text(fmtDate(order.created_at), col2X, y + 18);
-
-    // Transportadora
-    const col3X = M + 400;
-    doc.fillColor(GREEN).font("Helvetica-Bold").fontSize(9)
-      .text("TRANSPORTADORA", col3X, y + 6);
-    doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(10)
-      .text(guia.transportadora || "—", col3X, y + 18, { width: 200 });
-
-    // Estado
-    const col4X = PW - M - 120;
-    doc.fillColor(GREEN).font("Helvetica-Bold").fontSize(9)
-      .text("ESTADO", col4X, y + 6, { width: 120, align: "right" });
-    doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(10)
-      .text((order.status ?? "completado").toUpperCase(), col4X, y + 18, { width: 120, align: "right" });
-
-    y += INFO_H + 12;
-
-    // ════════════════════════════════════════════════════════════════
-    // DOS COLUMNAS: REMITENTE | DESTINATARIO
-    // ════════════════════════════════════════════════════════════════
-    const PARTY_H = 80;
-    const colW    = (CW - 14) / 2;
-
-    // ── Remitente
-    doc.rect(M, y, colW, PARTY_H).fill(ACCENT).stroke(BORDER);
-    // Encabezado remitente
-    doc.rect(M, y, colW, 18).fill(GREEN);
-    doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(8)
-      .text("▸  REMITENTE", M + 10, y + 5);
-
-    doc.fillColor(DARK).font("Helvetica-Bold").fontSize(9)
-      .text(EMPRESA.nombre, M + 10, y + 24);
-    doc.font("Helvetica").fontSize(8).fillColor(GRAY)
-      .text(`NIT: ${EMPRESA.nit}`,  M + 10, y + 37)
-      .text(EMPRESA.direccion,       M + 10, y + 49)
-      .text(EMPRESA.ciudad,          M + 10, y + 61);
-
-    // ── Destinatario
-    const dX = M + colW + 14;
-    doc.rect(dX, y, colW, PARTY_H).fill(MGRAY).stroke(BORDER);
-    doc.rect(dX, y, colW, 18).fill(DARK);
-    doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(8)
-      .text("▸  DESTINATARIO", dX + 10, y + 5);
-
-    doc.fillColor(DARK).font("Helvetica-Bold").fontSize(9)
-      .text(order.customer_name ?? "—", dX + 10, y + 24, { width: colW - 20 });
-    doc.font("Helvetica").fontSize(8).fillColor(GRAY)
-      .text(`Tel: ${order.phone ?? "—"}`, dX + 10, y + 37);
-
-    const destDir = guia.direccion_destino || order.address || "—";
-    doc.fillColor(BLACK).font("Helvetica").fontSize(8)
-      .text(destDir, dX + 10, y + 49, { width: colW - 20, ellipsis: true });
-
-    y += PARTY_H + 14;
-
-    // ════════════════════════════════════════════════════════════════
-    // TABLA DE PRODUCTOS
-    // ════════════════════════════════════════════════════════════════
-    // Etiqueta sección
-    doc.rect(M, y, 6, 14).fill(GREEN);
-    doc.fillColor(DARK).font("Helvetica-Bold").fontSize(9)
-      .text("DETALLE DEL ENVÍO", M + 12, y + 1);
-    y += 20;
-
-    // Cabecera tabla
-    const TH = 20;
-    const cols = [
-      { label: "PRODUCTO",    x: M + 8,        w: 210 },
-      { label: "REFERENCIA",  x: M + 222,      w: 90  },
-      { label: "GÉNERO",      x: M + 316,      w: 70  },
-      { label: "TALLAS / CANT.", x: M + 390,   w: 200 },
-      { label: "UDS",         x: M + CW - 50,  w: 50, align: "right" },
+    const chips = [
+      { label: "PEDIDO",         value: `#${order.order_number_fmt ?? order.order_number}`,      highlight: true  },
+      { label: "FECHA",          value: fmtDate(order.created_at),                               highlight: false },
+      { label: "TRANSPORTADORA", value: (guia.transportadora || "—").toUpperCase(),              highlight: false },
+      { label: "N° GUÍA",        value: guia.numero_guia || "—",                                 highlight: false },
     ];
 
-    doc.rect(M, y, CW, TH).fill(DARK);
-    cols.forEach(({ label, x, w, align }) => {
-      doc.fillColor(GREEN).font("Helvetica-Bold").fontSize(7.5)
-        .text(label, x, y + 6, { width: w, align: align ?? "left" });
-    });
-    y += TH;
-
-    // Filas
-    const items = order.items ?? [];
-    let totalUds = 0;
-    items.forEach((item, idx) => {
-      const qty = Object.values(item.sizes || {}).reduce((s, q) => s + (Number(q) || 0), 0);
-      totalUds += qty;
-      const tallas = Object.entries(item.sizes || {})
-        .filter(([, q]) => Number(q) > 0)
-        .map(([t, q]) => `${t}: ${q}`)
-        .join("   ");
-
-      const rowH = 20;
-      const bg = idx % 2 === 0 ? WHITE : LGRAY;
-      doc.rect(M, y, CW, rowH).fill(bg).stroke(BORDER);
-
-      doc.fillColor(DARK).font("Helvetica").fontSize(8)
-        .text(item.product_name ?? "—", cols[0].x, y + 6, { width: cols[0].w, ellipsis: true })
-        .text(item.reference ?? "—",    cols[1].x, y + 6, { width: cols[1].w, ellipsis: true })
-        .text(item.gender ?? "—",       cols[2].x, y + 6, { width: cols[2].w })
-        .text(tallas || "—",            cols[3].x, y + 6, { width: cols[3].w, ellipsis: true });
-      doc.font("Helvetica-Bold").fillColor(DARK)
-        .text(String(qty), cols[4].x, y + 6, { width: cols[4].w, align: "right" });
-      y += rowH;
+    chips.forEach((chip, i) => {
+      const cx = M + i * (chipW + 4);
+      const bg = chip.highlight ? GREEN : WHITE;
+      const fg = chip.highlight ? WHITE : SLATE;
+      const lc = chip.highlight ? WHITE : GRAY;
+      roundedRect(doc, cx, y, chipW, CHIP_H, 4, bg, chip.highlight ? GREEN : BORDER);
+      doc.fillColor(lc).font("Helvetica").fontSize(7)
+        .text(chip.label, cx + 10, y + 8, { width: chipW - 20 });
+      doc.fillColor(fg).font("Helvetica-Bold").fontSize(chip.highlight ? 14 : 10)
+        .text(chip.value, cx + 10, y + 20, { width: chipW - 20, ellipsis: true });
     });
 
-    // Fila totales
-    const TOTAL_H = 22;
-    doc.rect(M, y, CW, TOTAL_H).fill(GREEN);
-    doc.fillColor(BLACK).font("Helvetica-Bold").fontSize(9)
-      .text("TOTAL UNIDADES", M + 8, y + 6)
-      .text(String(totalUds), cols[4].x, y + 6, { width: cols[4].w, align: "right" });
-    y += TOTAL_H + 10;
+    y += CHIP_H + 10;
 
-    // ════════════════════════════════════════════════════════════════
-    // OBSERVACIONES (si hay)
-    // ════════════════════════════════════════════════════════════════
+    // ══════════════════════════════════════════════════════════════════
+    // DOS TARJETAS: REMITENTE | DESTINATARIO
+    // ══════════════════════════════════════════════════════════════════
+    const CARD_H = 120;
+    const cardW  = (CW - 12) / 2;
+
+    // ── Remitente
+    roundedRect(doc, M, y, cardW, CARD_H, 4, WHITE, BORDER);
+    // Badge header
+    roundedRect(doc, M + 10, y + 10, 90, 16, 3, GREEN, GREEN);
+    doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(7.5)
+      .text("REMITENTE", M + 18, y + 14);
+
+    doc.fillColor(BLACK).font("Helvetica-Bold").fontSize(10)
+      .text(EMPRESA.nombre, M + 14, y + 34, { width: cardW - 28 });
+    doc.fillColor(GRAY).font("Helvetica").fontSize(8)
+      .text(`NIT: ${EMPRESA.nit}`,   M + 14, y + 50)
+      .text(EMPRESA.direccion,        M + 14, y + 62)
+      .text(EMPRESA.ciudad,           M + 14, y + 74)
+      .text(EMPRESA.telefono,         M + 14, y + 86);
+
+    // ── Destinatario
+    const dX = M + cardW + 12;
+    roundedRect(doc, dX, y, cardW, CARD_H, 4, WHITE, BORDER);
+    // Badge header verde oscuro
+    roundedRect(doc, dX + 10, y + 10, 100, 16, 3, DARK, DARK);
+    doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(7.5)
+      .text("DESTINATARIO", dX + 18, y + 14);
+
+    doc.fillColor(BLACK).font("Helvetica-Bold").fontSize(12)
+      .text(order.customer_name ?? "—", dX + 14, y + 34, { width: cardW - 28 });
+
+    const phone  = order.phone   || guia.telefono_destino || "—";
+    const ciudad = order.ciudad  || guia.ciudad_destino   || "—";
+    const dirDst = guia.direccion_destino || order.address || "—";
+
+    doc.fillColor(SLATE).font("Helvetica").fontSize(8)
+      .text(`Tel: ${phone}`, dX + 14, y + 54, { width: cardW - 28 });
+    doc.fillColor(DARK).font("Helvetica-Bold").fontSize(8.5)
+      .text(ciudad.toUpperCase(), dX + 14, y + 66, { width: cardW - 28 });
+    doc.fillColor(SLATE).font("Helvetica").fontSize(8)
+      .text(dirDst, dX + 14, y + 80, { width: cardW - 28, ellipsis: true });
+
+    y += CARD_H + 10;
+
+    // ══════════════════════════════════════════════════════════════════
+    // FILA INFERIOR: TOTAL UNIDADES · OBSERVACIONES · FIRMA RECEPTOR
+    // ══════════════════════════════════════════════════════════════════
+    const BOT_H = Math.max(52, PH - y - 52);  // altura restante antes del footer
+    const totalUds = totalUnidades(order.items);
+
+    // Bloque TOTAL UNIDADES — izquierda
+    const TUW = 140;
+    roundedRect(doc, M, y, TUW, BOT_H, 4, GREEN_LT, GREEN);
+    doc.fillColor(GRAY).font("Helvetica-Bold").fontSize(7)
+      .text("TOTAL UNIDADES", M + 8, y + 10, { width: TUW - 16, align: "center" });
+    doc.fillColor(GREEN).font("Helvetica-Bold").fontSize(30)
+      .text(String(totalUds), M + 8, y + 22, { width: TUW - 16, align: "center" });
+    doc.fillColor(GRAY).font("Helvetica").fontSize(7)
+      .text("prendas", M + 8, y + 54, { width: TUW - 16, align: "center" });
+
+    // Observaciones — centro
+    const obsX = M + TUW + 10;
+    const sigX = PW - M - 180;
+    const obsW = sigX - obsX - 10;
+    roundedRect(doc, obsX, y, obsW, BOT_H, 4, WHITE, BORDER);
+    doc.fillColor(GRAY).font("Helvetica-Bold").fontSize(7)
+      .text("OBSERVACIONES", obsX + 10, y + 10);
+    divider(doc, obsX + 10, y + 22, obsW - 20);
     if (guia.observaciones) {
-      const obsH = 44;
-      doc.rect(M, y, CW, obsH).fill(MGRAY).stroke(BORDER);
-      doc.rect(M, y, 4, obsH).fill(GREEN);
-      doc.fillColor(GRAY).font("Helvetica-Bold").fontSize(7.5)
-        .text("OBSERVACIONES", M + 10, y + 6);
-      doc.fillColor(DARK).font("Helvetica").fontSize(8.5)
-        .text(guia.observaciones, M + 10, y + 18, { width: CW - 20, ellipsis: true });
-      y += obsH + 10;
+      doc.fillColor(SLATE).font("Helvetica").fontSize(8)
+        .text(guia.observaciones, obsX + 10, y + 28, { width: obsW - 20, ellipsis: true });
     }
 
-    // ════════════════════════════════════════════════════════════════
+    // Firma receptor — derecha
+    roundedRect(doc, sigX, y, 180, BOT_H, 4, WHITE, BORDER);
+    doc.fillColor(GRAY).font("Helvetica-Bold").fontSize(7)
+      .text("RECIBIDO POR", sigX + 10, y + 10, { width: 160 });
+    divider(doc, sigX + 10, y + 22, 160);
+
+    // Línea de firma
+    const sigLineY = y + BOT_H - 26;
+    doc.moveTo(sigX + 14, sigLineY).lineTo(sigX + 166, sigLineY)
+      .strokeColor(BORDER).lineWidth(0.8).stroke();
+    doc.fillColor(GRAY).font("Helvetica").fontSize(6.5)
+      .text("Firma y C.C.", sigX + 14, sigLineY + 4);
+
+    // Línea de fecha
+    const datLineY = sigLineY - 22;
+    doc.moveTo(sigX + 14, datLineY).lineTo(sigX + 166, datLineY)
+      .strokeColor(BORDER).lineWidth(0.8).stroke();
+    doc.fillColor(GRAY).font("Helvetica").fontSize(6.5)
+      .text("Fecha de recibo", sigX + 14, datLineY + 4);
+
+    // ══════════════════════════════════════════════════════════════════
     // FOOTER
-    // ════════════════════════════════════════════════════════════════
+    // ══════════════════════════════════════════════════════════════════
     const FTR_Y = PH - 28;
     doc.rect(0, FTR_Y, PW, 28).fill(DARK);
-    doc.rect(0, FTR_Y, PW, 3).fill(GREEN);
+    doc.rect(0, FTR_Y, PW, 2).fill(GREEN);
 
     doc.fillColor(GRAY).font("Helvetica").fontSize(7)
       .text(
-        `${EMPRESA.nombre}  ·  NIT ${EMPRESA.nit}  ·  ${EMPRESA.ciudad}  ·  Generado el ${fmtDate(new Date())}`,
+        `${EMPRESA.nombre}  ·  NIT ${EMPRESA.nit}  ·  ${EMPRESA.ciudad}  ·  ${EMPRESA.telefono}  ·  Generado el ${fmtDate(new Date())}`,
         0, FTR_Y + 10,
         { width: PW, align: "center" }
       );
