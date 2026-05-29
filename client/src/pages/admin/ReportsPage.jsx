@@ -95,6 +95,12 @@ export default function ReportsPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: topCustomers } = useQuery({
+    queryKey: ["top-customers"],
+    queryFn:  () => api.get("/dashboard/top-customers").then((r) => r.data.data),
+    staleTime: 5 * 60 * 1000,
+  });
+
   /* ── Datos derivados ─────────────────────────────────────────────────── */
   const selectedSnapshot = useMemo(() => {
     if (!selectedMonth) return null;
@@ -411,6 +417,55 @@ export default function ReportsPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* ── Top 5 Clientes ─────────────────────────────────────────────── */}
+      <motion.div variants={itemVariants} className="card">
+        <h2 className="text-white font-semibold mb-4 text-sm">
+          Top 5 clientes
+          <span className="text-zinc-600 font-normal text-xs ml-2">por facturación total</span>
+        </h2>
+        {!(topCustomers ?? []).length ? (
+          <p className="text-zinc-600 text-sm text-center py-8">Sin datos.</p>
+        ) : (
+          <div className="space-y-3">
+            {(topCustomers ?? []).map((c, i) => {
+              const max     = Number(topCustomers[0]?.revenue ?? 1);
+              const revenue = Number(c.revenue);
+              const pct     = Math.round((revenue / max) * 100);
+              return (
+                <motion.div
+                  key={c.id}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: 0.05 * i, ease: EASE_OUT }}
+                  className="flex items-center gap-3"
+                >
+                  {/* Posición */}
+                  <span className={`shrink-0 w-6 text-center text-xs font-black ${i === 0 ? "text-brand-green" : i === 1 ? "text-zinc-300" : i === 2 ? "text-yellow-600" : "text-zinc-600"}`}>
+                    {i + 1}
+                  </span>
+                  {/* Nombre + barra */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-zinc-200 text-sm truncate">{c.customer}</span>
+                      <div className="flex items-center gap-2 shrink-0 ml-2">
+                        <span className="text-zinc-500 text-xs">{c.orders} pedido{c.orders !== 1 ? "s" : ""}</span>
+                        <span className="text-white font-bold text-sm">{formatShort(revenue)}</span>
+                      </div>
+                    </div>
+                    <div className="w-full bg-zinc-800 rounded-full h-1.5">
+                      <div
+                        className="h-1.5 rounded-full transition-all duration-700"
+                        style={{ width: `${pct}%`, background: i === 0 ? "#98f909" : "#52525b" }}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </motion.div>
 
       {/* ── Separador Exportar ──────────────────────────────────────────── */}
       <motion.div variants={itemVariants}>
