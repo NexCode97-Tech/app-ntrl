@@ -188,8 +188,7 @@ export default function ReportsPage() {
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="flex-1">
-          <h1 className="lg:hidden text-white font-bold text-xl mb-0.5">Reportes</h1>
-          <p className="text-zinc-500 text-sm">Análisis de ventas, producción y cobros.</p>
+          <h1 className="lg:hidden text-white font-bold text-xl">Reportes</h1>
         </div>
 
         {/* Selector de mes */}
