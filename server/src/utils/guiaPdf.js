@@ -57,14 +57,19 @@ function divider(doc, x, y, w, color = BORDER) {
 
 export function generateGuiaPDF(order, guia = {}) {
   return new Promise((resolve, reject) => {
-    // Calculamos la altura necesaria antes de crear el doc:
-    // Header(96) + gap(12) + Chips(44) + gap(10) + Cards(120) + gap(10) + Bot(80) + gap(12) + Footer(28)
-    const PW      = 841.89;
-    const M       = 40;
-    const CW      = PW - M * 2;
-    const BOT_H   = 80;
-    const FTR_H   = 28;
-    const PH      = 14 + 82 + 12 + 44 + 10 + 120 + 10 + BOT_H + 12 + FTR_H + 6; // ≈ 432
+    // Altura exacta: y arranca en HDR_H+10, luego chips+cards+bot+footer
+    const PW    = 841.89;
+    const M     = 40;
+    const CW    = PW - M * 2;
+    const BOT_H = 80;
+    const FTR_H = 28;
+    const HDR_H_CONST  = 82;
+    const CHIP_H_CONST = 44;
+    const CARD_H_CONST = 120;
+    // y real después de cada bloque:
+    // start=HDR_H+10=92 → +chips(44+10)=146 → +cards(120+10)=276 → +bot+gap=276+80+12=368
+    const FTR_Y_CONST  = (HDR_H_CONST + 10) + (CHIP_H_CONST + 10) + (CARD_H_CONST + 10) + BOT_H + 12;
+    const PH           = FTR_Y_CONST + FTR_H + 2;
 
     const doc = new PDFDocument({
       size: [PW, PH],
