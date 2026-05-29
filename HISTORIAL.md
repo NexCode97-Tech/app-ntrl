@@ -234,4 +234,8 @@ El proyecto tiene una arquitectura completa y funcional. El código cubre fronte
 - **Feature:** Nombre de cliente y nombre de pedido se normalizan automáticamente a **Title Case** al guardar. Migración 034 + normalización en server.js corrige todos los clientes existentes en BD.
 - **Feature:** Módulo de clientes — acciones (Ver/Editar/Eliminar) reemplazadas por iconos SVG con tooltip. Documento mostrado como badge `[C.C.] número` en una sola línea limpia.
 
+### 2026-05-29 — Sesión completa
+- **Refactor:** Menú del sidebar reordenado por jerarquía operativa — Calendario ahora precede a Reportes (planificación antes de análisis). Orden final: Dashboard → Pedidos → Cotizaciones → Clientes → Catálogo → Suministros → Nómina → Calendario → Reportes → Mensajes → Usuarios.
+- **Feature:** `ReportsPage` completamente rediseñada — gráficas visibles como contenido principal en lugar de solo botones de exportación. Incluye: KPIs financieros con CountUp, dona Recaudado/Por cobrar, barras por deporte, barras de ventas mensuales (clic para filtrar período), y tarjetas de pedidos por estado. Animaciones stagger con Framer Motion usando curva ease-out fuerte `[0.23, 1, 0.32, 1]`. Selector de período sincronizado con todas las visualizaciones. Skeleton loader durante carga. Exportar PDF/Excel movido al final como acción secundaria.
+
 *Archivo mantenido manualmente. Actualizar al final de cada sesión de trabajo significativa.*
