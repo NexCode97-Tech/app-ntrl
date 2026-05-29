@@ -242,6 +242,29 @@ export async function getTopCustomers(req, res, next) {
   } catch (err) { next(err); }
 }
 
+export async function getGenderByMonth(req, res, next) {
+  try {
+    const { month } = req.query;
+    const dateFilter = month ? `${month}-01` : null;
+    const { rows } = await pool.query(`
+      SELECT oi.gender,
+             COUNT(DISTINCT o.id)                                                         AS orders,
+             COALESCE(SUM(oi.subtotal), 0)                                               AS revenue,
+             COALESCE(SUM((
+               SELECT SUM(v::numeric)
+               FROM jsonb_each_text(oi.sizes) AS t(k, v)
+             )), 0)                                                                       AS units
+      FROM order_items oi
+      JOIN orders o ON o.id = oi.order_id
+      WHERE ($1::date IS NULL
+             OR DATE_TRUNC('month', o.created_at) = DATE_TRUNC('month', $1::date))
+      GROUP BY oi.gender
+      ORDER BY revenue DESC
+    `, [dateFilter]);
+    res.json({ status: "ok", data: rows });
+  } catch (err) { next(err); }
+}
+
 export async function getUpcomingDeliveries(req, res, next) {
   try {
     const { rows } = await pool.query(

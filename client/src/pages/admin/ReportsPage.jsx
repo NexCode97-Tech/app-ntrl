@@ -10,6 +10,13 @@ import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { api } from "../../config/api.js";
 
 /* ── Constantes ─────────────────────────────────────────────────────── */
+const GENDER_META = {
+  hombre:  { label: "Hombre",   color: "#3b82f6" },
+  mujer:   { label: "Mujer",    color: "#ec4899" },
+  nino:    { label: "Niño/a",   color: "#f59e0b" },
+  unisex:  { label: "Unisex",   color: "#a78bfa" },
+};
+
 const STATUS_COLORS = {
   pending: "#71717a", in_progress: "#eab308", completed: "#22c55e", delivered: "#98f909",
 };
@@ -98,6 +105,12 @@ export default function ReportsPage() {
   const { data: topCustomers } = useQuery({
     queryKey: ["top-customers"],
     queryFn:  () => api.get("/dashboard/top-customers").then((r) => r.data.data),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: genderData } = useQuery({
+    queryKey: ["gender-by-month", selectedMonth ?? currentMonth],
+    queryFn:  () => api.get(`/dashboard/gender-by-month?month=${selectedMonth ?? currentMonth}`).then((r) => r.data.data),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -418,54 +431,107 @@ export default function ReportsPage() {
         </motion.div>
       </div>
 
-      {/* ── Top 5 Clientes ─────────────────────────────────────────────── */}
-      <motion.div variants={itemVariants} className="card">
-        <h2 className="text-white font-semibold mb-4 text-sm">
-          Top 5 clientes
-          <span className="text-zinc-600 font-normal text-xs ml-2">por facturación total</span>
-        </h2>
-        {!(topCustomers ?? []).length ? (
-          <p className="text-zinc-600 text-sm text-center py-8">Sin datos.</p>
-        ) : (
-          <div className="space-y-3">
-            {(topCustomers ?? []).map((c, i) => {
-              const max     = Number(topCustomers[0]?.revenue ?? 1);
-              const revenue = Number(c.revenue);
-              const pct     = Math.round((revenue / max) * 100);
-              return (
-                <motion.div
-                  key={c.id}
-                  initial={{ opacity: 0, x: -12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: 0.05 * i, ease: EASE_OUT }}
-                  className="flex items-center gap-3"
-                >
-                  {/* Posición */}
-                  <span className={`shrink-0 w-6 text-center text-xs font-black ${i === 0 ? "text-brand-green" : i === 1 ? "text-zinc-300" : i === 2 ? "text-yellow-600" : "text-zinc-600"}`}>
-                    {i + 1}
-                  </span>
-                  {/* Nombre + barra */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-zinc-200 text-sm truncate">{c.customer}</span>
-                      <div className="flex items-center gap-2 shrink-0 ml-2">
-                        <span className="text-zinc-500 text-xs">{c.orders} pedido{c.orders !== 1 ? "s" : ""}</span>
+      {/* ── Fila 4: Top 5 Clientes + Ventas por Género ─────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+
+        {/* Top 5 Clientes */}
+        <motion.div variants={itemVariants} className="card flex flex-col">
+          <h2 className="text-white font-semibold mb-4 text-sm">
+            Top 5 clientes
+            <span className="text-zinc-600 font-normal text-xs ml-2">por facturación total</span>
+          </h2>
+          {!(topCustomers ?? []).length ? (
+            <div className="flex-1 flex items-center justify-center py-8">
+              <p className="text-zinc-600 text-sm">Sin datos.</p>
+            </div>
+          ) : (
+            <div className="space-y-3 flex-1">
+              {(topCustomers ?? []).map((c, i) => {
+                const max     = Number(topCustomers[0]?.revenue ?? 1);
+                const revenue = Number(c.revenue);
+                const pct     = Math.round((revenue / max) * 100);
+                return (
+                  <motion.div
+                    key={c.id}
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.05 * i, ease: EASE_OUT }}
+                    className="flex items-center gap-3"
+                  >
+                    <span className={`shrink-0 w-6 text-center text-xs font-black ${i === 0 ? "text-brand-green" : i === 1 ? "text-zinc-300" : i === 2 ? "text-yellow-600" : "text-zinc-600"}`}>
+                      {i + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-zinc-200 text-sm truncate">{c.customer}</span>
+                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                          <span className="text-zinc-500 text-xs">{c.orders} pedido{c.orders !== 1 ? "s" : ""}</span>
+                          <span className="text-white font-bold text-sm">{formatShort(revenue)}</span>
+                        </div>
+                      </div>
+                      <div className="w-full bg-zinc-800 rounded-full h-1.5">
+                        <div
+                          className="h-1.5 rounded-full transition-all duration-700"
+                          style={{ width: `${pct}%`, background: i === 0 ? "#98f909" : "#52525b" }}
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </motion.div>
+
+        {/* Ventas por Género */}
+        <motion.div variants={itemVariants} className="card flex flex-col">
+          <h2 className="text-white font-semibold mb-4 text-sm">
+            Ventas por género
+            <span className="text-zinc-600 font-normal text-xs ml-2">{formatMonth(selectedMonth ?? currentMonth)}</span>
+          </h2>
+          {!(genderData ?? []).length ? (
+            <div className="flex-1 flex items-center justify-center py-8">
+              <p className="text-zinc-600 text-sm">Sin datos.</p>
+            </div>
+          ) : (
+            <div className="space-y-4 flex-1">
+              {(genderData ?? []).map((g, i) => {
+                const meta    = GENDER_META[g.gender] ?? { label: g.gender, color: "#71717a" };
+                const maxRev  = Number(genderData[0]?.revenue ?? 1);
+                const revenue = Number(g.revenue);
+                const units   = Number(g.units);
+                const pct     = Math.round((revenue / maxRev) * 100);
+                return (
+                  <motion.div
+                    key={g.gender}
+                    initial={{ opacity: 0, x: 12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.05 * i, ease: EASE_OUT }}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: meta.color }} />
+                        <span className="text-zinc-200 text-sm font-medium">{meta.label}</span>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0 ml-2">
+                        <span className="text-zinc-500 text-xs">{units.toLocaleString("es-CO")} uds</span>
                         <span className="text-white font-bold text-sm">{formatShort(revenue)}</span>
                       </div>
                     </div>
-                    <div className="w-full bg-zinc-800 rounded-full h-1.5">
+                    <div className="w-full bg-zinc-800 rounded-full h-2">
                       <div
-                        className="h-1.5 rounded-full transition-all duration-700"
-                        style={{ width: `${pct}%`, background: i === 0 ? "#98f909" : "#52525b" }}
+                        className="h-2 rounded-full transition-all duration-700"
+                        style={{ width: `${pct}%`, background: meta.color }}
                       />
                     </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
-      </motion.div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </motion.div>
+
+      </div>
 
       {/* ── Separador Exportar ──────────────────────────────────────────── */}
       <motion.div variants={itemVariants}>
