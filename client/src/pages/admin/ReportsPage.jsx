@@ -103,6 +103,12 @@ export default function ReportsPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: topProducts } = useQuery({
+    queryKey: ["top-products", selectedMonth ?? currentMonth],
+    queryFn:  () => api.get(`/dashboard/top-products?month=${selectedMonth ?? currentMonth}`).then((r) => r.data.data),
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: topCustomers } = useQuery({
     queryKey: ["top-customers"],
     queryFn:  () => api.get("/dashboard/top-customers").then((r) => r.data.data),
@@ -558,6 +564,54 @@ export default function ReportsPage() {
         </motion.div>
 
       </div>
+
+      {/* ── Top 5 Productos ────────────────────────────────────────────── */}
+      <motion.div variants={itemVariants} className="card">
+        <h2 className="text-white font-semibold mb-4 text-sm">
+          Top 5 productos
+          <span className="text-zinc-600 font-normal text-xs ml-2">por unidades vendidas · {formatMonth(selectedMonth ?? currentMonth)}</span>
+        </h2>
+        {!(topProducts ?? []).length ? (
+          <p className="text-zinc-600 text-sm text-center py-8">Sin datos.</p>
+        ) : (
+          <div className="space-y-3">
+            {(topProducts ?? []).map((p, i) => {
+              const maxUnits = Number(topProducts[0]?.units ?? 1);
+              const units    = Number(p.units);
+              const pct      = Math.round((units / maxUnits) * 100);
+              const COLORS   = ["#98f909","#06b6d4","#f97316","#e879f9","#34d399"];
+              return (
+                <motion.div
+                  key={p.product}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: 0.05 * i, ease: EASE_OUT }}
+                  className="flex items-center gap-3"
+                >
+                  <span className="shrink-0 w-5 text-center text-xs font-black" style={{ color: COLORS[i] }}>
+                    {i + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-zinc-200 text-sm truncate">{p.product}</span>
+                      <div className="flex items-center gap-3 shrink-0 ml-2">
+                        <span className="text-zinc-500 text-xs">{Number(units).toLocaleString("es-CO")} uds</span>
+                        <span className="text-white font-bold text-sm">{formatShort(Number(p.revenue))}</span>
+                      </div>
+                    </div>
+                    <div className="w-full bg-zinc-800 rounded-full h-1.5">
+                      <div
+                        className="h-1.5 rounded-full transition-all duration-700"
+                        style={{ width: `${pct}%`, background: COLORS[i] }}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </motion.div>
 
       {/* ── Fila 5: Distribución Geográfica ────────────────────────────── */}
       <motion.div variants={itemVariants} className="card">
