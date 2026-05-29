@@ -568,10 +568,13 @@ export default function ReportsPage() {
               <div className="flex flex-col lg:flex-row items-center gap-6">
                 {/* Gráfica — entra con scale desde 0.7 + fade */}
                 <motion.div
+                  key={`radial-chart-${selectedMonth ?? currentMonth}`}
                   className="w-full lg:w-72 h-64 shrink-0"
-                  initial={{ opacity: 0, scale: 0.7 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, ease: EASE_OUT, delay: 0.1 }}
+                  initial={{ opacity: 0, scale: 0.72, rotate: -8 }}
+                  whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                  viewport={{ once: false, amount: 0.4 }}
+                  transition={{ duration: 0.65, ease: EASE_OUT }}
+                  style={{ willChange: "transform, opacity" }}
                 >
                   <ResponsiveContainer width="100%" height="100%">
                     <RadialBarChart
@@ -607,32 +610,20 @@ export default function ReportsPage() {
                 <div className="space-y-3 flex-1 w-full">
                   {radialData.map((p, i) => (
                     <motion.div
-                      key={p.name}
-                      initial={{ opacity: 0, x: 24 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.35, delay: 0.25 + i * 0.08, ease: EASE_OUT }}
+                      key={`${p.name}-${selectedMonth ?? currentMonth}`}
+                      initial={{ opacity: 0, x: 32 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: false, amount: 0.5 }}
+                      transition={{ duration: 0.35, delay: i * 0.09, ease: EASE_OUT }}
+                      style={{ willChange: "transform, opacity" }}
                       className="flex items-center gap-3"
                     >
-                      <span className="w-3 h-3 rounded-full shrink-0 ring-2 ring-offset-1 ring-offset-zinc-900"
-                        style={{ background: p.fill, ringColor: p.fill }} />
+                      <span className="w-3 h-3 rounded-full shrink-0" style={{ background: p.fill }} />
                       <span className="text-zinc-200 text-sm flex-1 truncate font-medium">{p.name}</span>
-                      <motion.span
-                        className="text-zinc-500 text-xs shrink-0"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.4 + i * 0.08 }}
-                      >
-                        {p.units.toLocaleString("es-CO")} uds
-                      </motion.span>
-                      <motion.span
-                        className="font-bold text-sm shrink-0 w-16 text-right"
-                        style={{ color: p.fill }}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.45 + i * 0.08 }}
-                      >
+                      <span className="text-zinc-500 text-xs shrink-0">{p.units.toLocaleString("es-CO")} uds</span>
+                      <span className="font-bold text-sm shrink-0 w-16 text-right" style={{ color: p.fill }}>
                         {formatShort(p.revenue)}
-                      </motion.span>
+                      </span>
                     </motion.div>
                   ))}
                 </div>
