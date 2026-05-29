@@ -498,7 +498,7 @@ export default function ReportsPage() {
                       <div className="w-full bg-zinc-800 rounded-full h-1.5">
                         <div
                           className="h-1.5 rounded-full transition-all duration-700"
-                          style={{ width: `${pct}%`, background: ["#98f909","#3b82f6","#f59e0b","#ec4899","#a78bfa"][i] }}
+                          style={{ width: `${pct}%`, background: ["#98f909","#06b6d4","#f97316","#e879f9","#34d399"][i] }}
                         />
                       </div>
                     </div>
