@@ -676,9 +676,6 @@ export default function ReportsPage() {
         </div>
 
         <div className="card">
-          <p className="text-zinc-500 text-sm mb-4">
-            Descarga el reporte completo de pedidos y ventas para el período seleccionado.
-          </p>
           <div className="flex gap-3 flex-wrap">
             <button
               onClick={() => downloadReport("excel")}
