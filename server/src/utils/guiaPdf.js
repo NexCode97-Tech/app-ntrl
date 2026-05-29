@@ -69,7 +69,7 @@ export function generateGuiaPDF(order, guia = {}) {
     // y real después de cada bloque:
     // start=HDR_H+10=92 → +chips(44+10)=146 → +cards(120+10)=276 → +bot+gap=276+80+12=368
     const FTR_Y_CONST  = (HDR_H_CONST + 10) + (CHIP_H_CONST + 10) + (CARD_H_CONST + 10) + BOT_H + 12;
-    const PH           = FTR_Y_CONST + FTR_H + 2;
+    const PH           = FTR_Y_CONST + FTR_H + 20;
 
     const doc = new PDFDocument({
       size: [PW, PH],
