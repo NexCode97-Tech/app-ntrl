@@ -57,9 +57,17 @@ function divider(doc, x, y, w, color = BORDER) {
 
 export function generateGuiaPDF(order, guia = {}) {
   return new Promise((resolve, reject) => {
+    // Calculamos la altura necesaria antes de crear el doc:
+    // Header(96) + gap(12) + Chips(44) + gap(10) + Cards(120) + gap(10) + Bot(80) + gap(12) + Footer(28)
+    const PW      = 841.89;
+    const M       = 40;
+    const CW      = PW - M * 2;
+    const BOT_H   = 80;
+    const FTR_H   = 28;
+    const PH      = 14 + 82 + 12 + 44 + 10 + 120 + 10 + BOT_H + 12 + FTR_H + 6; // ≈ 432
+
     const doc = new PDFDocument({
-      size: "A4",
-      layout: "landscape",
+      size: [PW, PH],
       margin: 0,
       info: { Title: `Guía de Despacho — Pedido ${order.order_number_fmt ?? order.order_number}` },
     });
@@ -68,11 +76,6 @@ export function generateGuiaPDF(order, guia = {}) {
     doc.on("data",  (c) => chunks.push(c));
     doc.on("end",   () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
-
-    const PW = 841.89;
-    const PH = 595.28;
-    const M  = 40;        // margen lateral
-    const CW = PW - M * 2;
 
     // ══════════════════════════════════════════════════════════════════
     // FONDO BASE — casi blanco con separaciones sutiles
@@ -188,7 +191,7 @@ export function generateGuiaPDF(order, guia = {}) {
     // ══════════════════════════════════════════════════════════════════
     // FILA INFERIOR: TOTAL UNIDADES · OBSERVACIONES · FIRMA RECEPTOR
     // ══════════════════════════════════════════════════════════════════
-    const BOT_H = 80;
+    // BOT_H ya definido arriba
     const totalUds = totalUnidades(order.items);
 
     // Bloque TOTAL UNIDADES — izquierda
@@ -237,8 +240,8 @@ export function generateGuiaPDF(order, guia = {}) {
     // ══════════════════════════════════════════════════════════════════
     // FOOTER
     // ══════════════════════════════════════════════════════════════════
-    const FTR_Y = PH - 28;
-    doc.rect(0, FTR_Y, PW, 28).fill(DARK);
+    const FTR_Y = y + BOT_H + 12;
+    doc.rect(0, FTR_Y, PW, FTR_H).fill(DARK);
     doc.rect(0, FTR_Y, PW, 2).fill(GREEN);
 
     doc.fillColor(GRAY).font("Helvetica").fontSize(7)
