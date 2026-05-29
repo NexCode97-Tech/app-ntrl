@@ -42,8 +42,8 @@ const ADMIN_LINKS = [
   { to: "/catalog",   label: "Catálogo",     Icon: TagIcon },
   { to: "/supplies",  label: "Suministros",  Icon: ArchiveBoxIcon },
   { to: "/payroll",   label: "Nómina",       Icon: BanknotesIcon },
-  { to: "/reports",   label: "Reportes",     Icon: PresentationChartLineIcon },
   { to: "/calendar",  label: "Calendario",   Icon: CalendarDaysIcon },
+  { to: "/reports",   label: "Reportes",     Icon: PresentationChartLineIcon },
   { to: "/chat",      label: "Mensajes",     Icon: ChatBubbleLeftRightIcon },
   { to: "/users",     label: "Usuarios",     Icon: UserIcon },
 ];
