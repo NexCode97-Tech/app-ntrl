@@ -5,6 +5,7 @@ import CountUp from "react-countup";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   PieChart, Pie, Cell, Sector,
+  RadialBarChart, RadialBar, Legend,
 } from "recharts";
 import { api } from "../../config/api.js";
 
@@ -546,53 +547,78 @@ export default function ReportsPage() {
 
       </div>
 
-      {/* ── Top 5 Productos ────────────────────────────────────────────── */}
-      <motion.div variants={itemVariants} className="card">
-        <h2 className="text-white font-semibold mb-4 text-sm">
-          Top 5 productos
-          <span className="text-zinc-600 font-normal text-xs ml-2">por unidades vendidas · {formatMonth(selectedMonth ?? currentMonth)}</span>
-        </h2>
-        {!(topProducts ?? []).length ? (
-          <p className="text-zinc-600 text-sm text-center py-8">Sin datos.</p>
-        ) : (
-          <div className="space-y-3">
-            {(topProducts ?? []).map((p, i) => {
-              const maxUnits = Number(topProducts[0]?.units ?? 1);
-              const units    = Number(p.units);
-              const pct      = Math.round((units / maxUnits) * 100);
-              const COLORS   = ["#98f909","#06b6d4","#f97316","#e879f9","#34d399"];
-              return (
-                <motion.div
-                  key={p.product}
-                  initial={{ opacity: 0, x: -12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: 0.05 * i, ease: EASE_OUT }}
-                  className="flex items-center gap-3"
-                >
-                  <span className="shrink-0 w-5 text-center text-xs font-black" style={{ color: COLORS[i] }}>
-                    {i + 1}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-zinc-200 text-sm truncate">{p.product}</span>
-                      <div className="flex items-center gap-3 shrink-0 ml-2">
-                        <span className="text-zinc-500 text-xs">{Number(units).toLocaleString("es-CO")} uds</span>
-                        <span className="text-white font-bold text-sm">{formatShort(Number(p.revenue))}</span>
-                      </div>
-                    </div>
-                    <div className="w-full bg-zinc-800 rounded-full h-1.5">
-                      <div
-                        className="h-1.5 rounded-full transition-all duration-700"
-                        style={{ width: `${pct}%`, background: COLORS[i] }}
+      {/* ── Top 5 Productos — RadialBarChart ───────────────────────────── */}
+      {(() => {
+        const PROD_COLORS = ["#98f909","#06b6d4","#f97316","#e879f9","#34d399"];
+        const radialData  = (topProducts ?? []).map((p, i) => ({
+          name:  p.product.length > 22 ? p.product.slice(0, 20) + "…" : p.product,
+          units: Number(p.units),
+          revenue: Number(p.revenue),
+          fill:  PROD_COLORS[i] ?? "#71717a",
+        }));
+        return (
+          <motion.div variants={itemVariants} className="card">
+            <h2 className="text-white font-semibold mb-1 text-sm">
+              Top 5 productos
+              <span className="text-zinc-600 font-normal text-xs ml-2">por unidades vendidas · {formatMonth(selectedMonth ?? currentMonth)}</span>
+            </h2>
+            {!radialData.length ? (
+              <p className="text-zinc-600 text-sm text-center py-8">Sin datos.</p>
+            ) : (
+              <div className="flex flex-col lg:flex-row items-center gap-4">
+                {/* Gráfica */}
+                <div className="w-full lg:w-72 h-64 shrink-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadialBarChart
+                      cx="50%" cy="50%"
+                      innerRadius="20%" outerRadius="90%"
+                      data={radialData}
+                      startAngle={180} endAngle={-180}
+                    >
+                      <RadialBar
+                        dataKey="units"
+                        background={{ fill: "#27272a" }}
+                        isAnimationActive
+                        animationBegin={200}
+                        animationDuration={900}
+                        animationEasing="ease-out"
+                        cornerRadius={4}
+                        label={false}
                       />
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
-      </motion.div>
+                      <Tooltip
+                        contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 8, fontSize: 12 }}
+                        labelStyle={{ color: "#a1a1aa" }}
+                        itemStyle={{ color: "#fff" }}
+                        formatter={(v, _, props) => [
+                          `${Number(v).toLocaleString("es-CO")} uds · ${formatShort(props.payload.revenue)}`,
+                          "Ventas",
+                        ]}
+                      />
+                    </RadialBarChart>
+                  </ResponsiveContainer>
+                </div>
+                {/* Leyenda manual */}
+                <div className="space-y-2.5 flex-1 w-full">
+                  {radialData.map((p, i) => (
+                    <motion.div
+                      key={p.name}
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.25, delay: 0.06 * i, ease: EASE_OUT }}
+                      className="flex items-center gap-3"
+                    >
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: p.fill }} />
+                      <span className="text-zinc-300 text-sm flex-1 truncate">{p.name}</span>
+                      <span className="text-zinc-500 text-xs shrink-0">{p.units.toLocaleString("es-CO")} uds</span>
+                      <span className="text-white font-bold text-sm shrink-0 w-16 text-right">{formatShort(p.revenue)}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        );
+      })()}
 
       {/* ── Fila 5: Distribución Geográfica ────────────────────────────── */}
       <motion.div variants={itemVariants} className="card">
