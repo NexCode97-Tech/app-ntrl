@@ -556,6 +556,7 @@ function EditOrderModal({ order, onClose, onSaved }) {
       design_file_index:   item.design_file_index ?? null,
     }))
   );
+  const [descuento,  setDescuento]  = useState(Number(order.descuento_porcentaje) || 0);
   const [error,  setError]  = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -596,6 +597,7 @@ function EditOrderModal({ order, onClose, onSaved }) {
         product_id, gender, sizes, unit_price: parseFloat(unit_price) || 0, design_file_index: design_file_index ?? null,
       }))));
       formData.append("design_files_keep", JSON.stringify(keptFiles));
+      formData.append("descuento_porcentaje", descuento ?? 0);
       newFiles.forEach((f) => formData.append("design", f));
 
       await api.put(`/orders/${order.id}`, formData, {
@@ -749,6 +751,25 @@ function EditOrderModal({ order, onClose, onSaved }) {
                 onClick={(e) => e.stopPropagation()} />
             </div>
           )}
+
+          {/* Descuento */}
+          <div>
+            <label className="block text-xs text-zinc-400 mb-1">Descuento (%)</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                min={0}
+                max={100}
+                className="input-field w-28"
+                value={descuento}
+                onChange={(e) => setDescuento(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                placeholder="0"
+              />
+              {descuento > 0 && (
+                <span className="text-red-400 text-sm font-medium">−{descuento}% sobre el total</span>
+              )}
+            </div>
+          </div>
 
           {/* Observaciones */}
           <div>
