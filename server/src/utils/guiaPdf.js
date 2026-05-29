@@ -188,7 +188,7 @@ export function generateGuiaPDF(order, guia = {}) {
     // ══════════════════════════════════════════════════════════════════
     // FILA INFERIOR: TOTAL UNIDADES · OBSERVACIONES · FIRMA RECEPTOR
     // ══════════════════════════════════════════════════════════════════
-    const BOT_H = Math.max(52, PH - y - 52);  // altura restante antes del footer
+    const BOT_H = 80;
     const totalUds = totalUnidades(order.items);
 
     // Bloque TOTAL UNIDADES — izquierda
