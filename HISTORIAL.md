@@ -238,4 +238,11 @@ El proyecto tiene una arquitectura completa y funcional. El código cubre fronte
 - **Refactor:** Menú del sidebar reordenado por jerarquía operativa — Calendario ahora precede a Reportes (planificación antes de análisis). Orden final: Dashboard → Pedidos → Cotizaciones → Clientes → Catálogo → Suministros → Nómina → Calendario → Reportes → Mensajes → Usuarios.
 - **Feature:** `ReportsPage` completamente rediseñada — gráficas visibles como contenido principal en lugar de solo botones de exportación. Incluye: KPIs financieros con CountUp, dona Recaudado/Por cobrar, barras por deporte, barras de ventas mensuales (clic para filtrar período), y tarjetas de pedidos por estado. Animaciones stagger con Framer Motion usando curva ease-out fuerte `[0.23, 1, 0.32, 1]`. Selector de período sincronizado con todas las visualizaciones. Skeleton loader durante carga. Exportar PDF/Excel movido al final como acción secundaria.
 
+### 2026-05-29 (continuación) — Guía de despacho + Reportes
+- **Refactor:** Guía de despacho completamente rediseñada — layout profesional con tarjetas redondeadas, barra lateral verde de marca, chips de datos clave, secciones Remitente/Destinatario y fila inferior compacta. Eliminados: tabla de productos, datos duplicados de empresa en header, N° Guía, Recibido Por. Chips ajustados a ancho completo. Altura de página dinámica para evitar página en blanco.
+- **Feature:** `ReportsPage` — gráfica Top 5 Clientes (barras de progreso con ranking) y gráfica Ventas por Género (Hombre/Mujer/Niño/Unisex con colores). Ambas con animación stagger.
+- **Feature:** Distribución Geográfica — vista de departamentos clickeable que abre ranking de ciudades, sincronizada con selector de período. Endpoint `GET /dashboard/geo-by-month`.
+- **Fix:** Descuento en modal de edición de pedido — estado inicializado con valor actual, campo visible y envío en formData.
+- **Fix:** Menú sidebar reordenado por jerarquía operativa (Calendario antes de Reportes).
+
 *Archivo mantenido manualmente. Actualizar al final de cada sesión de trabajo significativa.*
