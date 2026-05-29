@@ -109,15 +109,6 @@ export function generateGuiaPDF(order, guia = {}) {
     doc.fillColor(GRAY).font("Helvetica").fontSize(8)
       .text("DOCUMENTO DE ENVÍO", 0, 62, { width: PW, align: "center" });
 
-    // Empresa — derecha
-    const infoX = PW - M - 220;
-    doc.fillColor(BLACK).font("Helvetica-Bold").fontSize(10)
-      .text(EMPRESA.nombre, infoX, 24, { width: 212, align: "right" });
-    doc.fillColor(GRAY).font("Helvetica").fontSize(7.5)
-      .text(`NIT: ${EMPRESA.nit}`,  infoX, 38, { width: 212, align: "right" })
-      .text(EMPRESA.direccion,       infoX, 49, { width: 212, align: "right" })
-      .text(EMPRESA.ciudad,          infoX, 60, { width: 212, align: "right" })
-      .text(EMPRESA.telefono,        infoX, 71, { width: 212, align: "right" });
 
     let y = 14 + HDR_H + 12;
 
