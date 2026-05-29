@@ -242,6 +242,28 @@ export async function getTopCustomers(req, res, next) {
   } catch (err) { next(err); }
 }
 
+export async function getGeoByMonth(req, res, next) {
+  try {
+    const { month } = req.query;
+    const dateFilter = month ? `${month}-01` : null;
+    const { rows } = await pool.query(`
+      SELECT
+        COALESCE(NULLIF(TRIM(c.department), ''), 'Sin departamento') AS department,
+        COALESCE(NULLIF(TRIM(c.city),       ''), 'Sin ciudad')       AS city,
+        COUNT(DISTINCT o.id)                                          AS orders,
+        COALESCE(SUM(o.total), 0)                                     AS revenue
+      FROM orders o
+      JOIN customers c ON c.id = o.customer_id
+      WHERE ($1::date IS NULL
+             OR DATE_TRUNC('month', o.created_at) = DATE_TRUNC('month', $1::date))
+      GROUP BY department, city
+      ORDER BY revenue DESC
+      LIMIT 20
+    `, [dateFilter]);
+    res.json({ status: "ok", data: rows });
+  } catch (err) { next(err); }
+}
+
 export async function getGenderByMonth(req, res, next) {
   try {
     const { month } = req.query;

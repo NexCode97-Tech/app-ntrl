@@ -73,10 +73,11 @@ function ActiveShape(props) {
    ReportsPage
 ═══════════════════════════════════════════════════════════════════════ */
 export default function ReportsPage() {
-  const [loadingExport, setLoadingExport] = useState({ pdf: false, excel: false });
-  const [activePieIdx,  setActivePieIdx]  = useState(null);
-  const [selectedMonth, setSelectedMonth] = useState(null);
-  const [selectedSport, setSelectedSport] = useState(null);
+  const [loadingExport,    setLoadingExport]    = useState({ pdf: false, excel: false });
+  const [activePieIdx,     setActivePieIdx]     = useState(null);
+  const [selectedMonth,    setSelectedMonth]    = useState(null);
+  const [selectedSport,    setSelectedSport]    = useState(null);
+  const [selectedDepto,    setSelectedDepto]    = useState(null);
 
   const currentMonth = useMemo(() => {
     const now = new Date();
@@ -105,6 +106,12 @@ export default function ReportsPage() {
   const { data: topCustomers } = useQuery({
     queryKey: ["top-customers"],
     queryFn:  () => api.get("/dashboard/top-customers").then((r) => r.data.data),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: geoData } = useQuery({
+    queryKey: ["geo-by-month", selectedMonth ?? currentMonth],
+    queryFn:  () => api.get(`/dashboard/geo-by-month?month=${selectedMonth ?? currentMonth}`).then((r) => r.data.data),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -161,6 +168,25 @@ export default function ReportsPage() {
 
   const onPieEnter  = useCallback((_, i) => setActivePieIdx(i), []);
   const onPieLeave  = useCallback(() => setActivePieIdx(null), []);
+
+  // Geo: agrupar por departamento y calcular totales
+  const deptoTotals = useMemo(() => {
+    const map = {};
+    (geoData ?? []).forEach(({ department, orders, revenue }) => {
+      if (!map[department]) map[department] = { department, orders: 0, revenue: 0 };
+      map[department].orders  += Number(orders);
+      map[department].revenue += Number(revenue);
+    });
+    return Object.values(map).sort((a, b) => b.revenue - a.revenue);
+  }, [geoData]);
+
+  // Ciudades del departamento seleccionado
+  const ciudadesDepto = useMemo(() => {
+    if (!selectedDepto) return [];
+    return (geoData ?? [])
+      .filter((r) => r.department === selectedDepto)
+      .sort((a, b) => Number(b.revenue) - Number(a.revenue));
+  }, [geoData, selectedDepto]);
 
   /* ── Exportar ────────────────────────────────────────────────────────── */
   async function downloadReport(type) {
@@ -532,6 +558,114 @@ export default function ReportsPage() {
         </motion.div>
 
       </div>
+
+      {/* ── Fila 5: Distribución Geográfica ────────────────────────────── */}
+      <motion.div variants={itemVariants} className="card">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
+          <h2 className="text-white font-semibold text-sm flex-1">
+            Distribución geográfica
+            <span className="text-zinc-600 font-normal text-xs ml-2">{formatMonth(selectedMonth ?? currentMonth)}</span>
+          </h2>
+          {/* Selector departamento */}
+          {deptoTotals.length > 0 && (
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-zinc-500 text-xs">Departamento:</span>
+              <select
+                value={selectedDepto ?? ""}
+                onChange={(e) => setSelectedDepto(e.target.value || null)}
+                className="bg-zinc-800 border border-zinc-700 hover:border-zinc-500 text-white text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-brand-green cursor-pointer transition-colors"
+              >
+                <option value="">Todos</option>
+                {deptoTotals.map((d) => (
+                  <option key={d.department} value={d.department}>{d.department}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        {!deptoTotals.length ? (
+          <p className="text-zinc-600 text-sm text-center py-8">
+            Sin datos geográficos — asegúrate de registrar ciudad y departamento en los clientes.
+          </p>
+        ) : !selectedDepto ? (
+          /* Vista: ranking de departamentos */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {deptoTotals.map((d, i) => {
+              const maxRev = Number(deptoTotals[0]?.revenue ?? 1);
+              const pct    = Math.round((Number(d.revenue) / maxRev) * 100);
+              return (
+                <motion.button
+                  key={d.department}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: i * 0.04, ease: EASE_OUT }}
+                  onClick={() => setSelectedDepto(d.department)}
+                  className="text-left bg-zinc-800/50 hover:bg-zinc-800 border border-zinc-700/50 hover:border-zinc-500 rounded-xl p-4 cursor-pointer transition-all active:scale-[0.98] group"
+                >
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <span className="text-white font-semibold text-sm leading-tight group-hover:text-brand-green transition-colors">
+                      {d.department}
+                    </span>
+                    <span className="text-zinc-500 text-xs shrink-0">{d.orders} ped.</span>
+                  </div>
+                  <p className="text-brand-green font-bold text-base mb-2">{formatShort(d.revenue)}</p>
+                  <div className="w-full bg-zinc-700 rounded-full h-1">
+                    <div
+                      className="h-1 rounded-full transition-all duration-700 bg-brand-green"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </motion.button>
+              );
+            })}
+          </div>
+        ) : (
+          /* Vista: ciudades del departamento seleccionado */
+          <div>
+            <button
+              onClick={() => setSelectedDepto(null)}
+              className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white mb-4 transition-colors cursor-pointer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+              Todos los departamentos
+            </button>
+            <p className="text-brand-green font-semibold text-sm mb-3">{selectedDepto}</p>
+            <div className="space-y-3">
+              {ciudadesDepto.map((c, i) => {
+                const maxRev = Number(ciudadesDepto[0]?.revenue ?? 1);
+                const pct    = Math.round((Number(c.revenue) / maxRev) * 100);
+                return (
+                  <motion.div
+                    key={c.city}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.25, delay: i * 0.05, ease: EASE_OUT }}
+                    className="flex items-center gap-3"
+                  >
+                    <span className="text-zinc-600 text-xs w-5 text-right shrink-0">{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-zinc-200 text-sm truncate">{c.city}</span>
+                        <div className="flex items-center gap-3 shrink-0 ml-2">
+                          <span className="text-zinc-500 text-xs">{c.orders} ped.</span>
+                          <span className="text-white font-bold text-sm">{formatShort(Number(c.revenue))}</span>
+                        </div>
+                      </div>
+                      <div className="w-full bg-zinc-800 rounded-full h-1.5">
+                        <div
+                          className="h-1.5 rounded-full transition-all duration-700 bg-brand-green"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </motion.div>
 
       {/* ── Separador Exportar ──────────────────────────────────────────── */}
       <motion.div variants={itemVariants}>
