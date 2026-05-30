@@ -173,21 +173,180 @@ export function generateComprobantePDF(data, MESES) {
   });
 }
 
-/* ─── NÓMINA COMPLETA (todos los empleados, una tirilla por página) */
+/* ─── NÓMINA COMPLETA — planilla resumen en una sola página ────── */
 export function generateNominaCompletaPDF(employees, MESES) {
   return new Promise((resolve, reject) => {
-    const W = 255;
-    const m = 14;
-    const doc = new PDFDocument({ margin: m, size: [W, 900], autoFirstPage: false });
+    if (!employees.length) return reject(new Error("Sin empleados"));
+
+    // Usamos el primer empleado para obtener datos del período
+    const periodo   = employees[0];
+    const mesNombre = (MESES || [])[periodo.mes] || "";
+    const quincena  = periodo.quincena === 1 ? "Primera" : "Segunda";
+
+    // Hoja carta apaisada: 792 × 612 pt
+    const PW = 792;
+    const PH = 612;
+    const M  = 32;
+    const CW = PW - M * 2;
+
+    const doc = new PDFDocument({ size: "LETTER", layout: "landscape", margin: 0 });
     const chunks = [];
     doc.on("data",  (c) => chunks.push(c));
     doc.on("end",   () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
-    for (const emp of employees) {
-      doc.addPage({ size: [W, 900], margin: m });
-      _renderComprobante(doc, emp, MESES);
-    }
+    // ── Fondo
+    doc.rect(0, 0, PW, PH).fill("#f8fafc");
+    doc.rect(0, 0, 6, PH).fill(GREEN);
+
+    // ── Logo
+    let y = M;
+    try {
+      doc.image(LOGO_PATH, M + 4, y, { height: 38, fit: [80, 38] });
+    } catch { /* sin logo */ }
+
+    // ── Encabezado
+    doc.fontSize(18).fillColor(BLACK).font("Helvetica-Bold")
+       .text("PLANILLA DE NÓMINA", 0, y + 2, { width: PW, align: "center" });
+    doc.fontSize(9).fillColor(GRAY).font("Helvetica")
+       .text(`${quincena} Quincena · ${mesNombre} ${periodo.anio}`, 0, y + 24, { width: PW, align: "center" });
+    doc.fontSize(8).fillColor(GRAY)
+       .text(`${EMPRESA.nombre}  ·  NIT ${EMPRESA.nit}  ·  ${EMPRESA.ciudad}`, 0, y + 36, { width: PW, align: "center" });
+
+    y += 58;
+    doc.moveTo(M, y).lineTo(PW - M, y).lineWidth(1.5).strokeColor(GREEN).stroke();
+    y += 10;
+
+    // ── Definición de columnas
+    const COLS = [
+      { label: "N°",              w: 22,  align: "center" },
+      { label: "EMPLEADO",        w: 130, align: "left"   },
+      { label: "CARGO",           w: 80,  align: "left"   },
+      { label: "DÍAS",            w: 28,  align: "center" },
+      { label: "BÁSICO",          w: 68,  align: "right"  },
+      { label: "OTROS ING.",      w: 60,  align: "right"  },
+      { label: "DEVENGADO",       w: 72,  align: "right"  },
+      { label: "DEDUCCIONES",     w: 72,  align: "right"  },
+      { label: "NETO A PAGAR",    w: 80,  align: "right"  },
+      { label: "CUENTA",          w: 76,  align: "left"   },
+    ];
+
+    // ── Cabecera de tabla
+    const ROW_H = 18;
+    const HDR_H = 20;
+    doc.rect(M, y, CW, HDR_H).fill(BLACK);
+
+    let cx = M;
+    COLS.forEach((col) => {
+      doc.fontSize(7).fillColor(WHITE).font("Helvetica-Bold")
+         .text(col.label, cx + 3, y + 6, { width: col.w - 6, align: col.align, lineBreak: false });
+      cx += col.w;
+    });
+    y += HDR_H;
+
+    // ── Filas de empleados
+    let totalDev = 0, totalDed = 0, totalNeto = 0;
+
+    employees.forEach((emp, idx) => {
+      const isEven   = idx % 2 === 0;
+      const devengado = Number(emp.total_devengado  || 0);
+      const deducido  = Number(emp.total_deducido   || 0);
+      const neto      = Number(emp.neto_pagable     || 0);
+      const otrosIng  = Number(emp.aux_transporte   || 0)
+                      + Number(emp.horas_extras      || 0)
+                      + Number(emp.otros_ingresos    || 0)
+                      + Number(emp.anticipo_prestaciones || 0);
+
+      totalDev  += devengado;
+      totalDed  += deducido;
+      totalNeto += neto;
+
+      doc.rect(M, y, CW, ROW_H).fill(isEven ? "#f1f5f9" : WHITE);
+      // línea separadora
+      doc.moveTo(M, y + ROW_H).lineTo(M + CW, y + ROW_H)
+         .lineWidth(0.3).strokeColor("#e2e8f0").stroke();
+
+      const cuenta = emp.empleado_numero_cuenta ?? emp.numero_cuenta ?? "";
+      const banco  = (emp.empleado_tipo_cuenta  ?? emp.tipo_cuenta  ?? "").toUpperCase();
+      const cuentaStr = banco && cuenta ? `${banco} ${cuenta}` : (cuenta || "—");
+
+      const cells = [
+        { val: String(idx + 1),           align: "center" },
+        { val: emp.nombre ?? "—",          align: "left"   },
+        { val: emp.cargo  ?? "—",          align: "left"   },
+        { val: String(emp.dias_laborados), align: "center" },
+        { val: fmt(emp.basico),            align: "right"  },
+        { val: otrosIng > 0 ? fmt(otrosIng) : "—", align: "right" },
+        { val: fmt(devengado),             align: "right"  },
+        { val: deducido > 0 ? fmt(deducido) : "—", align: "right" },
+        { val: fmt(neto),                  align: "right", bold: true, color: "#166534" },
+        { val: cuentaStr,                  align: "left"   },
+      ];
+
+      let cellX = M;
+      cells.forEach((cell, ci) => {
+        doc.fontSize(7)
+           .fillColor(cell.color ?? BLACK)
+           .font(cell.bold ? "Helvetica-Bold" : "Helvetica")
+           .text(cell.val, cellX + 3, y + 5,
+             { width: COLS[ci].w - 6, align: cell.align, lineBreak: false, ellipsis: true });
+        cellX += COLS[ci].w;
+      });
+
+      y += ROW_H;
+    });
+
+    // ── Fila totales
+    const TOT_H = 22;
+    doc.rect(M, y, CW, TOT_H).fill(BLACK);
+
+    const totales = [
+      { val: "",              align: "center" },
+      { val: `TOTAL  (${employees.length} empleados)`, align: "left"   },
+      { val: "",              align: "left"   },
+      { val: "",              align: "center" },
+      { val: "",              align: "right"  },
+      { val: "",              align: "right"  },
+      { val: fmt(totalDev),   align: "right"  },
+      { val: fmt(totalDed),   align: "right"  },
+      { val: fmt(totalNeto),  align: "right", color: GREEN },
+      { val: "",              align: "left"   },
+    ];
+
+    let totX = M;
+    totales.forEach((cell, ci) => {
+      doc.fontSize(7.5).fillColor(cell.color ?? WHITE).font("Helvetica-Bold")
+         .text(cell.val, totX + 3, y + 7,
+           { width: COLS[ci].w - 6, align: cell.align, lineBreak: false });
+      totX += COLS[ci].w;
+    });
+    y += TOT_H + 14;
+
+    // ── Firmas
+    const sigW = 110;
+    const gap  = (CW - sigW * 3) / 2;
+    const sig1X = M;
+    const sig2X = M + sigW + gap;
+    const sig3X = M + (sigW + gap) * 2;
+
+    [sig1X, sig2X, sig3X].forEach((sx) => {
+      doc.moveTo(sx, y).lineTo(sx + sigW, y).lineWidth(0.5).strokeColor("#aaaaaa").stroke();
+    });
+    y += 5;
+    doc.fontSize(7).fillColor(GRAY).font("Helvetica");
+    doc.text("Elaboró",  sig1X, y, { width: sigW, align: "center" });
+    doc.text("Revisó",   sig2X, y, { width: sigW, align: "center" });
+    doc.text("Aprobó",   sig3X, y, { width: sigW, align: "center" });
+
+    // ── Footer
+    const FY = PH - 22;
+    doc.rect(0, FY, PW, 22).fill("#1e293b");
+    doc.moveTo(0, FY).lineTo(PW, FY).lineWidth(2).strokeColor(GREEN).stroke();
+    doc.fontSize(7).fillColor(GRAY).font("Helvetica")
+       .text(
+         `${EMPRESA.nombre}  ·  NIT ${EMPRESA.nit}  ·  ${EMPRESA.tel}  ·  Generado: ${new Date().toLocaleDateString("es-CO")}`,
+         0, FY + 7, { width: PW, align: "center" }
+       );
 
     doc.end();
   });
