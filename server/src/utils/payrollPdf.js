@@ -220,15 +220,16 @@ export function generateNominaCompletaPDF(employees, MESES) {
     // ── Definición de columnas
     const COLS = [
       { label: "N°",              w: 22,  align: "center" },
-      { label: "EMPLEADO",        w: 130, align: "left"   },
-      { label: "CARGO",           w: 80,  align: "left"   },
-      { label: "DÍAS",            w: 28,  align: "center" },
-      { label: "BÁSICO",          w: 68,  align: "right"  },
-      { label: "OTROS ING.",      w: 60,  align: "right"  },
-      { label: "DEVENGADO",       w: 72,  align: "right"  },
-      { label: "DEDUCCIONES",     w: 72,  align: "right"  },
+      { label: "EMPLEADO",        w: 124, align: "left"   },
+      { label: "CARGO",           w: 74,  align: "left"   },
+      { label: "DÍAS",            w: 26,  align: "center" },
+      { label: "BÁSICO",          w: 66,  align: "right"  },
+      { label: "H. EXTRAS",       w: 58,  align: "right"  },
+      { label: "OTROS ING.",      w: 56,  align: "right"  },
+      { label: "DEVENGADO",       w: 70,  align: "right"  },
+      { label: "DEDUCCIONES",     w: 70,  align: "right"  },
       { label: "NETO A PAGAR",    w: 80,  align: "right"  },
-      { label: "CUENTA",          w: 76,  align: "left"   },
+      { label: "CUENTA",          w: 82,  align: "left"   },
     ];
 
     // ── Cabecera de tabla
@@ -249,13 +250,14 @@ export function generateNominaCompletaPDF(employees, MESES) {
 
     employees.forEach((emp, idx) => {
       const isEven   = idx % 2 === 0;
-      const devengado = Number(emp.total_devengado  || 0);
-      const deducido  = Number(emp.total_deducido   || 0);
-      const neto      = Number(emp.neto_pagable     || 0);
-      const otrosIng  = Number(emp.aux_transporte   || 0)
-                      + Number(emp.horas_extras      || 0)
-                      + Number(emp.otros_ingresos    || 0)
-                      + Number(emp.anticipo_prestaciones || 0);
+      const devengado  = Number(emp.total_devengado        || 0);
+      const deducido   = Number(emp.total_deducido          || 0);
+      const neto       = Number(emp.neto_pagable            || 0);
+      const horasExt   = Number(emp.horas_extras            || 0);
+      // "Otros ingresos" = aux transporte + prestaciones + otros (SIN horas extras)
+      const otrosIng   = Number(emp.aux_transporte          || 0)
+                       + Number(emp.otros_ingresos           || 0)
+                       + Number(emp.anticipo_prestaciones    || 0);
 
       totalDev  += devengado;
       totalDed  += deducido;
@@ -271,16 +273,17 @@ export function generateNominaCompletaPDF(employees, MESES) {
       const cuentaStr = banco && cuenta ? `${banco} ${cuenta}` : (cuenta || "—");
 
       const cells = [
-        { val: String(idx + 1),           align: "center" },
-        { val: emp.nombre ?? "—",          align: "left"   },
-        { val: emp.cargo  ?? "—",          align: "left"   },
-        { val: String(emp.dias_laborados), align: "center" },
-        { val: fmt(emp.basico),            align: "right"  },
-        { val: otrosIng > 0 ? fmt(otrosIng) : "—", align: "right" },
-        { val: fmt(devengado),             align: "right"  },
-        { val: deducido > 0 ? fmt(deducido) : "—", align: "right" },
-        { val: fmt(neto),                  align: "right", bold: true, color: "#166534" },
-        { val: cuentaStr,                  align: "left"   },
+        { val: String(idx + 1),                          align: "center" },
+        { val: emp.nombre ?? "—",                         align: "left"   },
+        { val: emp.cargo  ?? "—",                         align: "left"   },
+        { val: String(emp.dias_laborados),               align: "center" },
+        { val: fmt(emp.basico),                           align: "right"  },
+        { val: horasExt > 0 ? fmt(horasExt) : "—",       align: "right"  },
+        { val: otrosIng > 0 ? fmt(otrosIng) : "—",       align: "right"  },
+        { val: fmt(devengado),                            align: "right"  },
+        { val: deducido > 0 ? fmt(deducido) : "—",       align: "right"  },
+        { val: fmt(neto),  align: "right", bold: true, color: "#166534"  },
+        { val: cuentaStr,                                 align: "left"   },
       ];
 
       let cellX = M;
@@ -302,9 +305,10 @@ export function generateNominaCompletaPDF(employees, MESES) {
 
     const totales = [
       { val: "",              align: "center" },
-      { val: `TOTAL  (${employees.length} empleados)`, align: "left"   },
+      { val: `TOTAL  (${employees.length} empleados)`, align: "left" },
       { val: "",              align: "left"   },
       { val: "",              align: "center" },
+      { val: "",              align: "right"  },
       { val: "",              align: "right"  },
       { val: "",              align: "right"  },
       { val: fmt(totalDev),   align: "right"  },
