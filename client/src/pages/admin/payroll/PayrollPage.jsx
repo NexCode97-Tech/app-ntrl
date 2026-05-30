@@ -87,9 +87,28 @@ export default function PayrollPage() {
 function PeriodsTab() {
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const [showModal, setShowModal] = useState(false);
-  const [form, setForm]           = useState({ quincena: 1, mes: new Date().getMonth() + 1, anio: 2026 });
-  const [error, setError]         = useState("");
+  const [showModal,     setShowModal]     = useState(false);
+  const [form,          setForm]          = useState({ quincena: 1, mes: new Date().getMonth() + 1, anio: 2026 });
+  const [error,         setError]         = useState("");
+  const [downloadingId, setDownloadingId] = useState(null);
+
+  async function handleDownloadCompleta(e, period) {
+    e.stopPropagation();
+    setDownloadingId(period.id);
+    try {
+      const res = await api.get(`/payroll/${period.id}/export/nomina-completa`, { responseType: "blob" });
+      const url = URL.createObjectURL(res.data);
+      const a   = document.createElement("a");
+      a.href     = url;
+      a.download = `Nomina_${period.nombre.replace(/\s+/g, "_")}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Error al generar la nómina completa.");
+    } finally {
+      setDownloadingId(null);
+    }
+  }
 
   const { data: periods = [], isLoading } = useQuery({
     queryKey: ["payroll-periods"],
@@ -181,8 +200,26 @@ function PeriodsTab() {
                   <p className="text-zinc-600 text-xs">neto total</p>
                 </div>
 
-                {/* Flecha + eliminar */}
+                {/* Acciones */}
                 <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={(e) => handleDownloadCompleta(e, p)}
+                    disabled={downloadingId === p.id}
+                    title="Descargar nómina completa"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-800 text-zinc-300 border border-zinc-700 rounded-lg hover:bg-zinc-700 hover:text-white transition-colors text-xs font-medium disabled:opacity-50"
+                  >
+                    {downloadingId === p.id ? (
+                      <svg className="w-3.5 h-3.5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                      </svg>
+                    ) : (
+                      <ArrowDownTrayIcon className="w-3.5 h-3.5" />
+                    )}
+                    <span className="hidden sm:inline">
+                      {downloadingId === p.id ? "Generando..." : "PDF completo"}
+                    </span>
+                  </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
