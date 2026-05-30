@@ -282,174 +282,295 @@ export default function OrderDetailPage() {
         )}
       </div>
 
-      {/* Lightbox */}
       {/* Modal guía de despacho */}
       <AnimatePresence>
         {showGuia && (
           <motion.div
             className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
             initial={{ backgroundColor: "rgba(0,0,0,0)" }}
-            animate={{ backgroundColor: "rgba(0,0,0,0.75)" }}
+            animate={{ backgroundColor: "rgba(0,0,0,0.82)" }}
             exit={{ backgroundColor: "rgba(0,0,0,0)" }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: 0.28 }}
             onClick={() => setShowGuia(false)}
           >
             <motion.div
-              className="bg-zinc-900 border border-zinc-800 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md overflow-hidden shadow-2xl"
-              initial={{ opacity: 0, y: 60, scale: 0.97 }}
+              className="bg-zinc-900 w-full sm:max-w-md overflow-hidden shadow-2xl rounded-t-3xl sm:rounded-2xl border border-zinc-800/60"
+              initial={{ opacity: 0, y: 80, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 40, scale: 0.97 }}
-              transition={{ duration: 0.32, ease: [0.23, 1, 0.32, 1] }}
+              exit={{ opacity: 0, y: 60, scale: 0.96 }}
+              transition={{ duration: 0.38, ease: [0.23, 1, 0.32, 1] }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
-              <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-zinc-800">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-brand-green/10 border border-brand-green/30 flex items-center justify-center text-brand-green">
-                    <IconTruck />
-                  </div>
-                  <div>
-                    <h2 className="text-white font-bold text-sm leading-tight">Guía de Despacho</h2>
-                    <p className="text-zinc-500 text-xs">Pedido #{data?.order_number_fmt}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowGuia(false)}
-                  className="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
-                >✕</button>
+              {/* Drag handle — solo mobile */}
+              <div className="flex justify-center pt-3 sm:hidden">
+                <div className="w-9 h-1 rounded-full bg-zinc-700" />
               </div>
 
-              <div className="p-5 space-y-4">
+              {/* ── Header ─────────────────────────────────── */}
+              <div className="relative px-5 pt-4 pb-5">
+                <div className="absolute inset-0 bg-gradient-to-b from-zinc-800/60 to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-green/5 to-transparent pointer-events-none" />
 
-                {/* Toggles de destino especial */}
-                <div className="space-y-2">
-                  {/* Toggle Cúcuta */}
+                <div className="relative flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {/* Ícono con glow */}
+                    <div className="relative">
+                      <div className="absolute inset-0 rounded-xl bg-brand-green/20 blur-md" />
+                      <div className="relative w-10 h-10 rounded-xl bg-zinc-800 border border-brand-green/30 flex items-center justify-center text-brand-green">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                      </div>
+                    </div>
+                    <div>
+                      <h2 className="text-white font-bold text-[15px] leading-tight">Guía de Despacho</h2>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-zinc-500 text-xs">Pedido</span>
+                        <span className="font-mono text-brand-green text-xs font-bold">#{data?.order_number_fmt}</span>
+                      </div>
+                    </div>
+                  </div>
                   <motion.button
-                    type="button"
-                    layout
-                    onClick={() => setGuiaForm((p) => ({ ...p, punto_cucuta: !p.punto_cucuta, punto_bucaramanga: false }))}
-                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-colors duration-200 cursor-pointer text-left
-                      ${guiaForm.punto_cucuta
-                        ? "bg-brand-green/10 border-brand-green"
-                        : "bg-zinc-800/40 border-zinc-700 hover:border-zinc-600"}`}
+                    onClick={() => setShowGuia(false)}
+                    whileTap={{ scale: 0.92 }}
+                    transition={{ duration: 0.1 }}
+                    className="w-8 h-8 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                   >
-                    <div className={`w-9 h-9 rounded-lg shrink-0 flex items-center justify-center transition-colors duration-200
-                      ${guiaForm.punto_cucuta ? "bg-brand-green text-black" : "bg-zinc-700 text-zinc-400"}`}>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-semibold leading-tight transition-colors duration-200
-                        ${guiaForm.punto_cucuta ? "text-brand-green" : "text-zinc-200"}`}>
-                        Punto de Venta Cúcuta
-                      </p>
-                      <p className="text-zinc-500 text-xs mt-0.5 truncate">Av 0#19-53 L3 · Barrio Blanco · M. Teran</p>
-                    </div>
-                    <div className={`w-11 h-6 rounded-full shrink-0 relative transition-colors duration-300
-                      ${guiaForm.punto_cucuta ? "bg-brand-green" : "bg-zinc-700"}`}>
-                      <motion.span
-                        className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
-                        animate={{ left: guiaForm.punto_cucuta ? "calc(100% - 20px)" : "4px" }}
-                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                      />
-                    </div>
-                  </motion.button>
-
-                  {/* Toggle Bucaramanga (Cúcuta → BGA) */}
-                  <motion.button
-                    type="button"
-                    layout
-                    onClick={() => setGuiaForm((p) => ({ ...p, punto_bucaramanga: !p.punto_bucaramanga, punto_cucuta: false }))}
-                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-colors duration-200 cursor-pointer text-left
-                      ${guiaForm.punto_bucaramanga
-                        ? "bg-blue-500/10 border-blue-500"
-                        : "bg-zinc-800/40 border-zinc-700 hover:border-zinc-600"}`}
-                  >
-                    <div className={`w-9 h-9 rounded-lg shrink-0 flex items-center justify-center transition-colors duration-200
-                      ${guiaForm.punto_bucaramanga ? "bg-blue-500 text-white" : "bg-zinc-700 text-zinc-400"}`}>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-semibold leading-tight transition-colors duration-200
-                        ${guiaForm.punto_bucaramanga ? "text-blue-400" : "text-zinc-200"}`}>
-                        Almacén Bucaramanga
-                      </p>
-                      <p className="text-zinc-500 text-xs mt-0.5 truncate">Cúcuta → BGA · Natural Ropa Deportiva</p>
-                    </div>
-                    <div className={`w-11 h-6 rounded-full shrink-0 relative transition-colors duration-300
-                      ${guiaForm.punto_bucaramanga ? "bg-blue-500" : "bg-zinc-700"}`}>
-                      <motion.span
-                        className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
-                        animate={{ left: guiaForm.punto_bucaramanga ? "calc(100% - 20px)" : "4px" }}
-                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                      />
-                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                   </motion.button>
                 </div>
 
-                {/* Transportadora */}
-                <motion.div layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, duration: 0.25, ease: [0.23,1,0.32,1] }}>
-                  <label className="block text-zinc-400 text-xs mb-1.5 font-medium">Transportadora</label>
-                  <input
-                    className="input-field w-full"
-                    placeholder="Ej: Servientrega, Coordinadora, Envia..."
-                    value={guiaForm.transportadora}
-                    onChange={(e) => setGuiaForm((p) => ({ ...p, transportadora: e.target.value }))}
-                  />
+                {/* Separador con gradiente */}
+                <div className="relative mt-4 h-px">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-zinc-700/80 to-transparent" />
+                </div>
+              </div>
+
+              {/* ── Cuerpo ─────────────────────────────────── */}
+              <div className="px-5 pb-6 space-y-5">
+
+                {/* Sección: Destino especial */}
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.07, duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+                >
+                  <p className="text-zinc-600 text-[10px] font-semibold uppercase tracking-widest mb-2.5">
+                    Destino especial
+                  </p>
+                  <div className="space-y-2">
+
+                    {/* ── Toggle Cúcuta ── */}
+                    <div className={`rounded-xl border overflow-hidden transition-colors duration-250
+                      ${guiaForm.punto_cucuta ? "border-brand-green/60 bg-brand-green/5" : "border-zinc-800 bg-zinc-800/30"}`}>
+                      <button
+                        type="button"
+                        onClick={() => setGuiaForm((p) => ({ ...p, punto_cucuta: !p.punto_cucuta, punto_bucaramanga: false }))}
+                        className="w-full flex items-center gap-3.5 px-4 py-3 cursor-pointer text-left"
+                      >
+                        <div className={`w-9 h-9 rounded-lg shrink-0 flex items-center justify-center transition-all duration-250
+                          ${guiaForm.punto_cucuta ? "bg-brand-green text-black shadow-[0_0_12px_rgba(34,197,94,0.4)]" : "bg-zinc-700/80 text-zinc-400"}`}>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-semibold leading-tight transition-colors duration-200
+                            ${guiaForm.punto_cucuta ? "text-brand-green" : "text-zinc-200"}`}>
+                            Punto de Venta Cúcuta
+                          </p>
+                          <p className="text-zinc-500 text-xs mt-0.5">M. Teran · Av 0#19-53 L3</p>
+                        </div>
+                        {/* Switch */}
+                        <div className={`w-11 h-6 rounded-full shrink-0 relative transition-colors duration-300
+                          ${guiaForm.punto_cucuta ? "bg-brand-green" : "bg-zinc-700"}`}>
+                          <motion.span
+                            className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-md"
+                            animate={{ left: guiaForm.punto_cucuta ? "calc(100% - 20px)" : "4px" }}
+                            transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                          />
+                        </div>
+                      </button>
+
+                      {/* Expansión de detalles — Cúcuta */}
+                      <AnimatePresence>
+                        {guiaForm.punto_cucuta && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+                            style={{ overflow: "hidden" }}
+                          >
+                            <div className="mx-4 mb-3 px-3 py-2.5 rounded-lg bg-zinc-900/70 border border-brand-green/20">
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-brand-green shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                                  <span className="text-zinc-300 text-xs">Avenida 0#19-53 Local 3, Barrio Blanco · Cúcuta</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-brand-green shrink-0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.93 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 5.61 5.61l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                  <span className="text-zinc-300 text-xs">+57 322 279 5244 · C.C. 1153483</span>
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* ── Toggle Bucaramanga ── */}
+                    <div className={`rounded-xl border overflow-hidden transition-colors duration-250
+                      ${guiaForm.punto_bucaramanga ? "border-blue-500/60 bg-blue-500/5" : "border-zinc-800 bg-zinc-800/30"}`}>
+                      <button
+                        type="button"
+                        onClick={() => setGuiaForm((p) => ({ ...p, punto_bucaramanga: !p.punto_bucaramanga, punto_cucuta: false }))}
+                        className="w-full flex items-center gap-3.5 px-4 py-3 cursor-pointer text-left"
+                      >
+                        <div className={`w-9 h-9 rounded-lg shrink-0 flex items-center justify-center transition-all duration-250
+                          ${guiaForm.punto_bucaramanga ? "bg-blue-500 text-white shadow-[0_0_12px_rgba(59,130,246,0.4)]" : "bg-zinc-700/80 text-zinc-400"}`}>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-semibold leading-tight transition-colors duration-200
+                            ${guiaForm.punto_bucaramanga ? "text-blue-400" : "text-zinc-200"}`}>
+                            Almacén Bucaramanga
+                          </p>
+                          <p className="text-zinc-500 text-xs mt-0.5">Cúcuta → BGA · Natural Ropa Deportiva</p>
+                        </div>
+                        {/* Switch */}
+                        <div className={`w-11 h-6 rounded-full shrink-0 relative transition-colors duration-300
+                          ${guiaForm.punto_bucaramanga ? "bg-blue-500" : "bg-zinc-700"}`}>
+                          <motion.span
+                            className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-md"
+                            animate={{ left: guiaForm.punto_bucaramanga ? "calc(100% - 20px)" : "4px" }}
+                            transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                          />
+                        </div>
+                      </button>
+
+                      {/* Expansión de detalles — Bucaramanga */}
+                      <AnimatePresence>
+                        {guiaForm.punto_bucaramanga && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+                            style={{ overflow: "hidden" }}
+                          >
+                            <div className="mx-4 mb-3 px-3 py-2.5 rounded-lg bg-zinc-900/70 border border-blue-500/20">
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400 shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                                  <span className="text-zinc-300 text-xs">Calle 22#17-21 · Bucaramanga, Santander</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400 shrink-0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.93 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 5.61 5.61l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                  <span className="text-zinc-300 text-xs">+57 315 123 4567 · NIT 91156614-3</span>
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                  </div>
                 </motion.div>
 
-                {/* Dirección destino — solo si no es ningún punto especial */}
-                <AnimatePresence>
-                  {!guiaForm.punto_cucuta && !guiaForm.punto_bucaramanga && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
-                      style={{ overflow: "hidden" }}
-                    >
-                      <label className="block text-zinc-400 text-xs mb-1.5 font-medium">Dirección de destino</label>
-                      <input
-                        className="input-field w-full"
-                        placeholder="Calle, ciudad, departamento"
-                        value={guiaForm.direccion_destino}
-                        onChange={(e) => setGuiaForm((p) => ({ ...p, direccion_destino: e.target.value }))}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {/* Sección: Envío */}
+                <motion.div
+                  className="space-y-3"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.13, duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+                >
+                  <p className="text-zinc-600 text-[10px] font-semibold uppercase tracking-widest">
+                    Detalles del envío
+                  </p>
 
-                {/* Observaciones */}
-                <motion.div layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.25, ease: [0.23,1,0.32,1] }}>
-                  <label className="block text-zinc-400 text-xs mb-1.5 font-medium">Observaciones</label>
-                  <textarea
-                    className="input-field w-full resize-none"
-                    rows={3}
-                    placeholder="Indicaciones especiales para el transportador..."
-                    value={guiaForm.observaciones}
-                    onChange={(e) => setGuiaForm((p) => ({ ...p, observaciones: e.target.value }))}
-                  />
+                  {/* Transportadora */}
+                  <div>
+                    <label className="block text-zinc-400 text-xs mb-1.5 font-medium">Transportadora</label>
+                    <input
+                      className="input-field w-full"
+                      placeholder="Ej: Servientrega, Coordinadora, Envia..."
+                      value={guiaForm.transportadora}
+                      onChange={(e) => setGuiaForm((p) => ({ ...p, transportadora: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* Dirección destino — solo si no es ningún punto especial */}
+                  <AnimatePresence>
+                    {!guiaForm.punto_cucuta && !guiaForm.punto_bucaramanga && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+                        style={{ overflow: "hidden" }}
+                      >
+                        <div className="pt-0.5">
+                          <label className="block text-zinc-400 text-xs mb-1.5 font-medium">Dirección de destino</label>
+                          <input
+                            className="input-field w-full"
+                            placeholder="Calle, ciudad, departamento"
+                            value={guiaForm.direccion_destino}
+                            onChange={(e) => setGuiaForm((p) => ({ ...p, direccion_destino: e.target.value }))}
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Observaciones */}
+                  <div>
+                    <label className="block text-zinc-400 text-xs mb-1.5 font-medium">Observaciones</label>
+                    <textarea
+                      className="input-field w-full resize-none"
+                      rows={3}
+                      placeholder="Indicaciones especiales para el transportador..."
+                      value={guiaForm.observaciones}
+                      onChange={(e) => setGuiaForm((p) => ({ ...p, observaciones: e.target.value }))}
+                    />
+                  </div>
                 </motion.div>
+
+                {/* Separador */}
+                <div className="h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
 
                 {/* Acciones */}
-                <div className="flex gap-3 pt-1">
-                  <button
+                <motion.div
+                  className="flex gap-3"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+                >
+                  <motion.button
                     onClick={() => setShowGuia(false)}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ duration: 0.1 }}
                     className="flex-1 btn-secondary cursor-pointer"
                   >
                     Cancelar
-                  </button>
+                  </motion.button>
                   <motion.button
                     onClick={handleDownloadGuia}
                     disabled={guiaLoading}
                     whileTap={{ scale: guiaLoading ? 1 : 0.97 }}
                     transition={{ duration: 0.1 }}
-                    className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                    className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer relative overflow-hidden"
                   >
+                    {/* Shimmer en hover */}
+                    {!guiaLoading && (
+                      <motion.span
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full"
+                        whileHover={{ translateX: "200%" }}
+                        transition={{ duration: 0.6, ease: "linear" }}
+                      />
+                    )}
                     {guiaLoading ? (
                       <>
                         <motion.span
                           animate={{ rotate: 360 }}
-                          transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
+                          transition={{ repeat: Infinity, duration: 0.75, ease: "linear" }}
                           className="inline-block"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -457,10 +578,14 @@ export default function OrderDetailPage() {
                         Generando...
                       </>
                     ) : (
-                      <><IconTruck /> Descargar PDF</>
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Descargar PDF
+                      </>
                     )}
                   </motion.button>
-                </div>
+                </motion.div>
+
               </div>
             </motion.div>
           </motion.div>
