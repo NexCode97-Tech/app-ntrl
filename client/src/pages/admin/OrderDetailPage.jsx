@@ -928,6 +928,25 @@ function EditOrderModal({ order, onClose, onSaved }) {
               onChange={(e) => setDeliveryDate(e.target.value)} />
           </div>
 
+          {/* Descuento */}
+          <div>
+            <label className="block text-xs text-zinc-400 mb-1">Descuento (%)</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                min={0}
+                max={100}
+                className="input-field w-28"
+                value={descuento}
+                onChange={(e) => setDescuento(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                placeholder="0"
+              />
+              {descuento > 0 && (
+                <span className="text-red-400 text-sm font-medium">−{descuento}% sobre el total</span>
+              )}
+            </div>
+          </div>
+
           {/* Diseños */}
           <div>
             <label className="block text-xs text-zinc-400 mb-2">
@@ -1014,25 +1033,6 @@ function EditOrderModal({ order, onClose, onSaved }) {
                 onClick={(e) => e.stopPropagation()} />
             </div>
           )}
-
-          {/* Descuento */}
-          <div>
-            <label className="block text-xs text-zinc-400 mb-1">Descuento (%)</label>
-            <div className="flex items-center gap-3">
-              <input
-                type="number"
-                min={0}
-                max={100}
-                className="input-field w-28"
-                value={descuento}
-                onChange={(e) => setDescuento(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
-                placeholder="0"
-              />
-              {descuento > 0 && (
-                <span className="text-red-400 text-sm font-medium">−{descuento}% sobre el total</span>
-              )}
-            </div>
-          </div>
 
           {/* Observaciones */}
           <div>
