@@ -224,9 +224,9 @@ export function generateNominaCompletaPDF(employees, MESES) {
       { label: "CARGO",        w: 68,  align: "left"   },
       { label: "DÍAS",         w: 24,  align: "center" },
       { label: "BÁSICO",       w: 62,  align: "right"  },
-      { label: "H. EXTRAS",    w: 52,  align: "right"  },
-      { label: "ANTICIPO",     w: 52,  align: "right"  },
-      { label: "OTROS ING.",   w: 48,  align: "right"  },
+      { label: "H. EXTRAS",      w: 52,  align: "right"  },
+      { label: "AUX / ANTICIPO", w: 60,  align: "right"  },
+      { label: "OTROS ING.",     w: 40,  align: "right"  },
       { label: "DEVENGADO",    w: 66,  align: "right"  },
       { label: "DEDUCCIONES",  w: 66,  align: "right"  },
       { label: "NETO A PAGAR", w: 76,  align: "right"  },
@@ -255,10 +255,11 @@ export function generateNominaCompletaPDF(employees, MESES) {
       const deducido   = Number(emp.total_deducido          || 0);
       const neto       = Number(emp.neto_pagable            || 0);
       const horasExt   = Number(emp.horas_extras            || 0);
-      const anticipo   = Number(emp.anticipo_prestaciones   || 0);
-      // "Otros ingresos" = aux transporte + otros (SIN horas extras NI anticipo prestaciones)
-      const otrosIng   = Number(emp.aux_transporte          || 0)
-                       + Number(emp.otros_ingresos           || 0);
+      // AUX / ANTICIPO = aux transporte (laboral) + anticipo prestaciones (prestación servicios)
+      const auxAnticipo = Number(emp.aux_transporte         || 0)
+                        + Number(emp.anticipo_prestaciones   || 0);
+      // Otros ingresos = solo el campo otros_ingresos
+      const otrosIng    = Number(emp.otros_ingresos          || 0);
 
       totalDev  += devengado;
       totalDed  += deducido;
@@ -279,9 +280,9 @@ export function generateNominaCompletaPDF(employees, MESES) {
         { val: emp.cargo  ?? "—",                       align: "left"   },
         { val: String(emp.dias_laborados),             align: "center" },
         { val: fmt(emp.basico),                         align: "right"  },
-        { val: horasExt > 0 ? fmt(horasExt) : "—",     align: "right"  },
-        { val: anticipo  > 0 ? fmt(anticipo)  : "—",   align: "right"  },
-        { val: otrosIng  > 0 ? fmt(otrosIng)  : "—",   align: "right"  },
+        { val: horasExt   > 0 ? fmt(horasExt)   : "—",  align: "right"  },
+        { val: auxAnticipo > 0 ? fmt(auxAnticipo) : "—", align: "right" },
+        { val: otrosIng   > 0 ? fmt(otrosIng)   : "—",  align: "right"  },
         { val: fmt(devengado),                          align: "right"  },
         { val: deducido  > 0 ? fmt(deducido)  : "—",   align: "right"  },
         { val: fmt(neto), align: "right", bold: true, color: "#166534" },
