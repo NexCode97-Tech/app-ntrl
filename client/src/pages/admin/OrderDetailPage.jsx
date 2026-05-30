@@ -83,7 +83,7 @@ export default function OrderDetailPage() {
   const [lightboxSrc, setLightboxSrc] = useState(null);
   const [pdfSrc,     setPdfSrc]     = useState(null);
   const [showGuia,   setShowGuia]   = useState(false);
-  const [guiaForm,   setGuiaForm]   = useState({ transportadora: "", direccion_destino: "", observaciones: "", punto_cucuta: false });
+  const [guiaForm,   setGuiaForm]   = useState({ transportadora: "", direccion_destino: "", observaciones: "", punto_cucuta: false, punto_bucaramanga: false });
   const [guiaLoading, setGuiaLoading] = useState(false);
 
   async function handleDownloadGuia() {
@@ -227,6 +227,7 @@ export default function OrderDetailPage() {
                   transportadora:    data.guia_data?.transportadora    ?? "",
                   direccion_destino: data.guia_data?.direccion_destino ?? data.address ?? "",
                   punto_cucuta:      data.guia_data?.punto_cucuta      ?? false,
+                  punto_bucaramanga: data.guia_data?.punto_bucaramanga ?? false,
                   observaciones:     data.guia_data?.observaciones     ?? "",
                 });
                 setShowGuia(true);
@@ -320,38 +321,70 @@ export default function OrderDetailPage() {
 
               <div className="p-5 space-y-4">
 
-                {/* Toggle Cúcuta */}
-                <motion.button
-                  type="button"
-                  layout
-                  onClick={() => setGuiaForm((p) => ({ ...p, punto_cucuta: !p.punto_cucuta }))}
-                  className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-colors duration-200 cursor-pointer text-left
-                    ${guiaForm.punto_cucuta
-                      ? "bg-brand-green/10 border-brand-green"
-                      : "bg-zinc-800/40 border-zinc-700 hover:border-zinc-600"}`}
-                >
-                  {/* Ícono ubicación */}
-                  <div className={`w-9 h-9 rounded-lg shrink-0 flex items-center justify-center transition-colors duration-200
-                    ${guiaForm.punto_cucuta ? "bg-brand-green text-black" : "bg-zinc-700 text-zinc-400"}`}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-semibold leading-tight transition-colors duration-200
-                      ${guiaForm.punto_cucuta ? "text-brand-green" : "text-zinc-200"}`}>
-                      Punto de Venta Cúcuta
-                    </p>
-                    <p className="text-zinc-500 text-xs mt-0.5 truncate">Av 0#19-53 L3 · Barrio Blanco · M. Teran</p>
-                  </div>
-                  {/* Switch */}
-                  <div className={`w-11 h-6 rounded-full shrink-0 relative transition-colors duration-300
-                    ${guiaForm.punto_cucuta ? "bg-brand-green" : "bg-zinc-700"}`}>
-                    <motion.span
-                      className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
-                      animate={{ left: guiaForm.punto_cucuta ? "calc(100% - 20px)" : "4px" }}
-                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                    />
-                  </div>
-                </motion.button>
+                {/* Toggles de destino especial */}
+                <div className="space-y-2">
+                  {/* Toggle Cúcuta */}
+                  <motion.button
+                    type="button"
+                    layout
+                    onClick={() => setGuiaForm((p) => ({ ...p, punto_cucuta: !p.punto_cucuta, punto_bucaramanga: false }))}
+                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-colors duration-200 cursor-pointer text-left
+                      ${guiaForm.punto_cucuta
+                        ? "bg-brand-green/10 border-brand-green"
+                        : "bg-zinc-800/40 border-zinc-700 hover:border-zinc-600"}`}
+                  >
+                    <div className={`w-9 h-9 rounded-lg shrink-0 flex items-center justify-center transition-colors duration-200
+                      ${guiaForm.punto_cucuta ? "bg-brand-green text-black" : "bg-zinc-700 text-zinc-400"}`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-semibold leading-tight transition-colors duration-200
+                        ${guiaForm.punto_cucuta ? "text-brand-green" : "text-zinc-200"}`}>
+                        Punto de Venta Cúcuta
+                      </p>
+                      <p className="text-zinc-500 text-xs mt-0.5 truncate">Av 0#19-53 L3 · Barrio Blanco · M. Teran</p>
+                    </div>
+                    <div className={`w-11 h-6 rounded-full shrink-0 relative transition-colors duration-300
+                      ${guiaForm.punto_cucuta ? "bg-brand-green" : "bg-zinc-700"}`}>
+                      <motion.span
+                        className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
+                        animate={{ left: guiaForm.punto_cucuta ? "calc(100% - 20px)" : "4px" }}
+                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                      />
+                    </div>
+                  </motion.button>
+
+                  {/* Toggle Bucaramanga (Cúcuta → BGA) */}
+                  <motion.button
+                    type="button"
+                    layout
+                    onClick={() => setGuiaForm((p) => ({ ...p, punto_bucaramanga: !p.punto_bucaramanga, punto_cucuta: false }))}
+                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-colors duration-200 cursor-pointer text-left
+                      ${guiaForm.punto_bucaramanga
+                        ? "bg-blue-500/10 border-blue-500"
+                        : "bg-zinc-800/40 border-zinc-700 hover:border-zinc-600"}`}
+                  >
+                    <div className={`w-9 h-9 rounded-lg shrink-0 flex items-center justify-center transition-colors duration-200
+                      ${guiaForm.punto_bucaramanga ? "bg-blue-500 text-white" : "bg-zinc-700 text-zinc-400"}`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-semibold leading-tight transition-colors duration-200
+                        ${guiaForm.punto_bucaramanga ? "text-blue-400" : "text-zinc-200"}`}>
+                        Almacén Bucaramanga
+                      </p>
+                      <p className="text-zinc-500 text-xs mt-0.5 truncate">Cúcuta → BGA · Natural Ropa Deportiva</p>
+                    </div>
+                    <div className={`w-11 h-6 rounded-full shrink-0 relative transition-colors duration-300
+                      ${guiaForm.punto_bucaramanga ? "bg-blue-500" : "bg-zinc-700"}`}>
+                      <motion.span
+                        className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
+                        animate={{ left: guiaForm.punto_bucaramanga ? "calc(100% - 20px)" : "4px" }}
+                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                      />
+                    </div>
+                  </motion.button>
+                </div>
 
                 {/* Transportadora */}
                 <motion.div layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, duration: 0.25, ease: [0.23,1,0.32,1] }}>
@@ -364,9 +397,9 @@ export default function OrderDetailPage() {
                   />
                 </motion.div>
 
-                {/* Dirección destino — solo si no es Cúcuta */}
+                {/* Dirección destino — solo si no es ningún punto especial */}
                 <AnimatePresence>
-                  {!guiaForm.punto_cucuta && (
+                  {!guiaForm.punto_cucuta && !guiaForm.punto_bucaramanga && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}

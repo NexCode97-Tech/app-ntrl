@@ -136,6 +136,11 @@ export function generateGuiaPDF(order, guia = {}) {
     const CARD_H = 152;
     const cardW  = (CW - 12) / 2;
 
+    // Determinar remitente: en flujo Cúcuta→BGA el remitente es el Punto Cúcuta
+    const rem = guia.punto_bucaramanga
+      ? { nombre: PUNTO_CUCUTA.nombre, sub: PUNTO_CUCUTA.cc, phone: PUNTO_CUCUTA.telefono, ciudad: PUNTO_CUCUTA.ciudad, dir: PUNTO_CUCUTA.direccion }
+      : { nombre: EMPRESA.nombre, sub: `NIT: ${EMPRESA.nit}`, phone: EMPRESA.telefono, ciudad: EMPRESA.ciudad, dir: EMPRESA.direccion };
+
     // ── Remitente
     roundedRect(doc, M, y, cardW, CARD_H, 5, WHITE, BORDER);
     roundedRect(doc, M + 12, y + 12, 110, 22, 4, GREEN, GREEN);
@@ -143,12 +148,12 @@ export function generateGuiaPDF(order, guia = {}) {
       .text("REMITENTE", M + 22, y + 17);
 
     doc.fillColor(BLACK).font("Helvetica-Bold").fontSize(12)
-      .text(EMPRESA.nombre, M + 16, y + 44, { width: cardW - 32 });
+      .text(rem.nombre, M + 16, y + 44, { width: cardW - 32 });
     doc.fillColor(GRAY).font("Helvetica").fontSize(10)
-      .text(`NIT: ${EMPRESA.nit}`, M + 16, y + 64)
-      .text(EMPRESA.direccion,     M + 16, y + 80)
-      .text(EMPRESA.ciudad,        M + 16, y + 96)
-      .text(EMPRESA.telefono,      M + 16, y + 112);
+      .text(rem.sub,    M + 16, y + 64)
+      .text(rem.dir,    M + 16, y + 80)
+      .text(rem.ciudad, M + 16, y + 96)
+      .text(rem.phone,  M + 16, y + 112);
 
     // ── Destinatario
     const dX = M + cardW + 12;
@@ -157,8 +162,11 @@ export function generateGuiaPDF(order, guia = {}) {
     doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(9)
       .text("DESTINATARIO", dX + 22, y + 17);
 
+    // punto_cucuta → Punto Cúcuta | punto_bucaramanga → Empresa BGA | default → cliente
     const dest = guia.punto_cucuta
       ? { nombre: PUNTO_CUCUTA.nombre, sub: PUNTO_CUCUTA.cc, phone: PUNTO_CUCUTA.telefono, ciudad: PUNTO_CUCUTA.ciudad, dir: PUNTO_CUCUTA.direccion }
+      : guia.punto_bucaramanga
+      ? { nombre: EMPRESA.nombre, sub: `NIT: ${EMPRESA.nit}`, phone: EMPRESA.telefono, ciudad: EMPRESA.ciudad, dir: EMPRESA.direccion }
       : { nombre: order.customer_name ?? "—", sub: null, phone: order.phone || guia.telefono_destino || "—", ciudad: order.ciudad || guia.ciudad_destino || "—", dir: guia.direccion_destino || order.address || "—" };
 
     doc.fillColor(BLACK).font("Helvetica-Bold").fontSize(13)
