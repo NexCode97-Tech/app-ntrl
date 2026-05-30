@@ -1,7 +1,7 @@
 import { pool } from "../config/database.js";
 import { AppError } from "../utils/AppError.js";
 import { calcularTransaccion } from "../validations/nomina.validation.js";
-import { generateComprobantePDF, generateLiquidacionPDF } from "../utils/payrollPdf.js";
+import { generateComprobantePDF, generateLiquidacionPDF, generateNominaCompletaPDF } from "../utils/payrollPdf.js";
 import { broadcastInvalidate } from "../utils/sseManager.js";
 
 function requireAdminOrVendedor(req) {
@@ -368,6 +368,43 @@ export async function getComprobante(req, res, next) {
 
     const pdfBuffer = await generateComprobantePDF(data, MESES);
     const filename  = `comprobante_${data.nombre.replace(/\s+/g, "_")}_${data.periodo_nombre?.replace(/\s+/g, "_") ?? periodId}.pdf`;
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.send(pdfBuffer);
+  } catch (err) { next(err); }
+}
+
+// GET /payroll/:id/export/nomina-completa
+// Descarga un PDF con los comprobantes de TODOS los empleados del período
+export async function getNominaCompleta(req, res, next) {
+  try {
+    requireAdminOrVendedor(req);
+    const { id: periodId } = req.params;
+
+    const { rows: [period] } = await pool.query(
+      `SELECT * FROM payroll_periods WHERE id = $1`, [periodId]
+    );
+    if (!period) throw new AppError("Período no encontrado.", 404, "NOT_FOUND");
+
+    const { rows: employees } = await pool.query(`
+      SELECT
+        pt.*,
+        e.nombre, e.cargo, e.numero_identificacion, e.tipo_identificacion,
+        e.banco, e.tipo_cuenta, e.numero_cuenta,
+        p.nombre AS periodo_nombre, p.quincena, p.mes, p.anio,
+        p.fecha_inicio, p.fecha_fin
+      FROM payroll_transactions pt
+      JOIN employees e ON e.id = pt.employee_id
+      JOIN payroll_periods p ON p.id = pt.period_id
+      WHERE pt.period_id = $1
+      ORDER BY e.nombre ASC
+    `, [periodId]);
+
+    if (!employees.length)
+      throw new AppError("No hay empleados en este período.", 404, "NOT_FOUND");
+
+    const pdfBuffer = await generateNominaCompletaPDF(employees, MESES);
+    const filename  = `nomina_completa_${period.nombre.replace(/\s+/g, "_")}.pdf`;
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     res.send(pdfBuffer);

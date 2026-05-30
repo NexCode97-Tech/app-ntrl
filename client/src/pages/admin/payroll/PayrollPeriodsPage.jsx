@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { api } from "../../../config/api.js";
+import { api, API_BASE } from "../../../config/api.js";
 import {
   BanknotesIcon,
   PlusIcon,
@@ -9,6 +9,7 @@ import {
   ArrowRightIcon,
   XMarkIcon,
   CheckCircleIcon,
+  ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
 
 const ESTADO_BADGE = {
@@ -29,9 +30,27 @@ const fmtDate = (d) => d ? new Date(d).toLocaleDateString("es-CO", { day: "2-dig
 export default function PayrollPeriodsPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ nombre: "", fecha_inicio: "", fecha_fin: "" });
-  const [error, setError] = useState("");
+  const [showModal,     setShowModal]     = useState(false);
+  const [form,          setForm]          = useState({ nombre: "", fecha_inicio: "", fecha_fin: "" });
+  const [error,         setError]         = useState("");
+  const [downloadingId, setDownloadingId] = useState(null);
+
+  async function handleDownloadCompleta(period) {
+    setDownloadingId(period.id);
+    try {
+      const res = await api.get(`/payroll/${period.id}/export/nomina-completa`, { responseType: "blob" });
+      const url = URL.createObjectURL(res.data);
+      const a   = document.createElement("a");
+      a.href     = url;
+      a.download = `Nomina_${period.nombre.replace(/\s+/g, "_")}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Error al generar la nómina completa.");
+    } finally {
+      setDownloadingId(null);
+    }
+  }
 
   const { data, isLoading } = useQuery({
     queryKey: ["payroll-periods"],
@@ -182,6 +201,22 @@ export default function PayrollPeriodsPage() {
                       Ver detalle <ArrowRightIcon className="w-3 h-3" />
                     </button>
                   )}
+                  <button
+                    onClick={() => handleDownloadCompleta(p)}
+                    disabled={downloadingId === p.id}
+                    title="Descargar nómina completa"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 text-zinc-300 border border-zinc-700 rounded-lg hover:bg-zinc-700 hover:text-white transition-colors text-xs font-medium disabled:opacity-50"
+                  >
+                    {downloadingId === p.id ? (
+                      <svg className="w-3.5 h-3.5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                      </svg>
+                    ) : (
+                      <ArrowDownTrayIcon className="w-3.5 h-3.5" />
+                    )}
+                    {downloadingId === p.id ? "Generando..." : "Nómina completa"}
+                  </button>
                   <button
                     onClick={() => {
                       const msg = ["aprobado","pagado"].includes(p.estado)

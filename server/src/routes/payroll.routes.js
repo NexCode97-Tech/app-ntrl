@@ -28,6 +28,7 @@ router.post("/:id/mark-paid",  ctrl.markAsPaid);
 
 // ── Exportaciones ────────────────────────────────────────────
 router.get("/:id/export/banco",               ctrl.exportBanco);
+router.get("/:id/export/nomina-completa",     ctrl.getNominaCompleta);
 router.get("/:id/export/comprobante/:txId",   ctrl.getComprobante);
 
 // ── Liquidación por empleado ──────────────────────────────────
