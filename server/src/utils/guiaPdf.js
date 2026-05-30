@@ -28,6 +28,14 @@ const EMPRESA = {
   telefono:  "+57 315 123 4567",
 };
 
+const PUNTO_CUCUTA = {
+  nombre:    "Maria Alessandra Teran Moyetones",
+  cc:        "C.C. 1153483",
+  direccion: "Avenida 0#19-53 Local 3 - Barrio Blanco",
+  ciudad:    "Cúcuta, Norte de Santander",
+  telefono:  "+57 322 279 5244",
+};
+
 function fmtDate(d) {
   if (!d) return "—";
   const str  = typeof d === "string" ? d : d.toISOString();
@@ -149,19 +157,25 @@ export function generateGuiaPDF(order, guia = {}) {
     doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(9)
       .text("DESTINATARIO", dX + 22, y + 17);
 
+    const dest = guia.punto_cucuta
+      ? { nombre: PUNTO_CUCUTA.nombre, sub: PUNTO_CUCUTA.cc, phone: PUNTO_CUCUTA.telefono, ciudad: PUNTO_CUCUTA.ciudad, dir: PUNTO_CUCUTA.direccion }
+      : { nombre: order.customer_name ?? "—", sub: null, phone: order.phone || guia.telefono_destino || "—", ciudad: order.ciudad || guia.ciudad_destino || "—", dir: guia.direccion_destino || order.address || "—" };
+
     doc.fillColor(BLACK).font("Helvetica-Bold").fontSize(13)
-      .text(order.customer_name ?? "—", dX + 16, y + 44, { width: cardW - 32 });
+      .text(dest.nombre, dX + 16, y + 44, { width: cardW - 32 });
 
-    const phone  = order.phone   || guia.telefono_destino || "—";
-    const ciudad = order.ciudad  || guia.ciudad_destino   || "—";
-    const dirDst = guia.direccion_destino || order.address || "—";
-
+    let destY = y + 68;
+    if (dest.sub) {
+      doc.fillColor(GRAY).font("Helvetica").fontSize(10)
+        .text(dest.sub, dX + 16, destY, { width: cardW - 32 });
+      destY += 16;
+    }
     doc.fillColor(SLATE).font("Helvetica").fontSize(10)
-      .text(`Tel: ${phone}`, dX + 16, y + 68, { width: cardW - 32 });
+      .text(`Tel: ${dest.phone}`, dX + 16, destY, { width: cardW - 32 });
     doc.fillColor(DARK).font("Helvetica-Bold").fontSize(10.5)
-      .text(ciudad.toUpperCase(), dX + 16, y + 86, { width: cardW - 32 });
+      .text(dest.ciudad.toUpperCase(), dX + 16, destY + 18, { width: cardW - 32 });
     doc.fillColor(SLATE).font("Helvetica").fontSize(10)
-      .text(dirDst, dX + 16, y + 104, { width: cardW - 32, ellipsis: true });
+      .text(dest.dir, dX + 16, destY + 36, { width: cardW - 32, ellipsis: true });
 
     y += CARD_H + 14;
 

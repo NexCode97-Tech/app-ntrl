@@ -82,7 +82,7 @@ export default function OrderDetailPage() {
   const [lightboxSrc, setLightboxSrc] = useState(null);
   const [pdfSrc,     setPdfSrc]     = useState(null);
   const [showGuia,   setShowGuia]   = useState(false);
-  const [guiaForm,   setGuiaForm]   = useState({ transportadora: "", direccion_destino: "", observaciones: "" });
+  const [guiaForm,   setGuiaForm]   = useState({ transportadora: "", direccion_destino: "", observaciones: "", punto_cucuta: false });
   const [guiaLoading, setGuiaLoading] = useState(false);
 
   async function handleDownloadGuia() {
@@ -225,6 +225,7 @@ export default function OrderDetailPage() {
                 setGuiaForm({
                   transportadora:    data.guia_data?.transportadora    ?? "",
                   direccion_destino: data.guia_data?.direccion_destino ?? data.address ?? "",
+                  punto_cucuta:      data.guia_data?.punto_cucuta      ?? false,
                   observaciones:     data.guia_data?.observaciones     ?? "",
                 });
                 setShowGuia(true);
@@ -292,18 +293,41 @@ export default function OrderDetailPage() {
               <button onClick={() => setShowGuia(false)} className="text-zinc-400 hover:text-white text-xl leading-none">✕</button>
             </div>
             <div className="p-5 space-y-4">
+
+              {/* Toggle punto de venta Cúcuta */}
+              <button
+                type="button"
+                onClick={() => setGuiaForm((p) => ({ ...p, punto_cucuta: !p.punto_cucuta }))}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all cursor-pointer
+                  ${guiaForm.punto_cucuta
+                    ? "bg-brand-green/10 border-brand-green text-white"
+                    : "bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:border-zinc-500"}`}
+              >
+                <div className="text-left">
+                  <p className={`text-sm font-semibold ${guiaForm.punto_cucuta ? "text-brand-green" : "text-zinc-300"}`}>
+                    Enviar a Punto de Venta Cúcuta
+                  </p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Maria Alessandra Teran · Av 0#19-53 L3 · Barrio Blanco</p>
+                </div>
+                <div className={`w-10 h-5 rounded-full transition-all shrink-0 relative ${guiaForm.punto_cucuta ? "bg-brand-green" : "bg-zinc-700"}`}>
+                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${guiaForm.punto_cucuta ? "left-5" : "left-0.5"}`} />
+                </div>
+              </button>
+
               <div>
                 <label className="block text-zinc-400 text-xs mb-1">Transportadora</label>
                 <input className="input-field w-full" placeholder="Ej: Servientrega, Coordinadora..."
                   value={guiaForm.transportadora}
                   onChange={(e) => setGuiaForm((p) => ({ ...p, transportadora: e.target.value }))} />
               </div>
-              <div>
-                <label className="block text-zinc-400 text-xs mb-1">Dirección de destino</label>
-                <input className="input-field w-full" placeholder="Calle, ciudad, departamento"
-                  value={guiaForm.direccion_destino}
-                  onChange={(e) => setGuiaForm((p) => ({ ...p, direccion_destino: e.target.value }))} />
-              </div>
+              {!guiaForm.punto_cucuta && (
+                <div>
+                  <label className="block text-zinc-400 text-xs mb-1">Dirección de destino</label>
+                  <input className="input-field w-full" placeholder="Calle, ciudad, departamento"
+                    value={guiaForm.direccion_destino}
+                    onChange={(e) => setGuiaForm((p) => ({ ...p, direccion_destino: e.target.value }))} />
+                </div>
+              )}
               <div>
                 <label className="block text-zinc-400 text-xs mb-1">Observaciones</label>
                 <textarea className="input-field w-full resize-none" rows={3} placeholder="Indicaciones especiales para el transportador..."
