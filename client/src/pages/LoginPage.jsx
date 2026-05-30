@@ -83,7 +83,7 @@ export default function LoginPage() {
           )}
 
           <button type="submit" className="btn-primary w-full py-3 text-base" disabled={loading}>
-            {loading ? "Entrando..." : "Entrar"}
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
 
