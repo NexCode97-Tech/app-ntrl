@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, API_BASE } from "../../config/api.js";
@@ -282,69 +283,156 @@ export default function OrderDetailPage() {
 
       {/* Lightbox */}
       {/* Modal guía de despacho */}
-      {showGuia && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl w-full max-w-md">
-            <div className="flex items-center justify-between p-5 border-b border-zinc-800">
-              <div className="flex items-center gap-2">
-                <IconTruck />
-                <h2 className="text-white font-bold text-base">Guía de Despacho</h2>
+      <AnimatePresence>
+        {showGuia && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+            initial={{ backgroundColor: "rgba(0,0,0,0)" }}
+            animate={{ backgroundColor: "rgba(0,0,0,0.75)" }}
+            exit={{ backgroundColor: "rgba(0,0,0,0)" }}
+            transition={{ duration: 0.25 }}
+            onClick={() => setShowGuia(false)}
+          >
+            <motion.div
+              className="bg-zinc-900 border border-zinc-800 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md overflow-hidden shadow-2xl"
+              initial={{ opacity: 0, y: 60, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 40, scale: 0.97 }}
+              transition={{ duration: 0.32, ease: [0.23, 1, 0.32, 1] }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-zinc-800">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-brand-green/10 border border-brand-green/30 flex items-center justify-center text-brand-green">
+                    <IconTruck />
+                  </div>
+                  <div>
+                    <h2 className="text-white font-bold text-sm leading-tight">Guía de Despacho</h2>
+                    <p className="text-zinc-500 text-xs">Pedido #{data?.order_number_fmt}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowGuia(false)}
+                  className="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
+                >✕</button>
               </div>
-              <button onClick={() => setShowGuia(false)} className="text-zinc-400 hover:text-white text-xl leading-none">✕</button>
-            </div>
-            <div className="p-5 space-y-4">
 
-              {/* Toggle punto de venta Cúcuta */}
-              <button
-                type="button"
-                onClick={() => setGuiaForm((p) => ({ ...p, punto_cucuta: !p.punto_cucuta }))}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all cursor-pointer
-                  ${guiaForm.punto_cucuta
-                    ? "bg-brand-green/10 border-brand-green text-white"
-                    : "bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:border-zinc-500"}`}
-              >
-                <div className="text-left">
-                  <p className={`text-sm font-semibold ${guiaForm.punto_cucuta ? "text-brand-green" : "text-zinc-300"}`}>
-                    Enviar a Punto de Venta Cúcuta
-                  </p>
-                  <p className="text-xs text-zinc-500 mt-0.5">Maria Alessandra Teran · Av 0#19-53 L3 · Barrio Blanco</p>
-                </div>
-                <div className={`w-10 h-5 rounded-full transition-all shrink-0 relative ${guiaForm.punto_cucuta ? "bg-brand-green" : "bg-zinc-700"}`}>
-                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${guiaForm.punto_cucuta ? "left-5" : "left-0.5"}`} />
-                </div>
-              </button>
+              <div className="p-5 space-y-4">
 
-              <div>
-                <label className="block text-zinc-400 text-xs mb-1">Transportadora</label>
-                <input className="input-field w-full" placeholder="Ej: Servientrega, Coordinadora..."
-                  value={guiaForm.transportadora}
-                  onChange={(e) => setGuiaForm((p) => ({ ...p, transportadora: e.target.value }))} />
-              </div>
-              {!guiaForm.punto_cucuta && (
-                <div>
-                  <label className="block text-zinc-400 text-xs mb-1">Dirección de destino</label>
-                  <input className="input-field w-full" placeholder="Calle, ciudad, departamento"
-                    value={guiaForm.direccion_destino}
-                    onChange={(e) => setGuiaForm((p) => ({ ...p, direccion_destino: e.target.value }))} />
+                {/* Toggle Cúcuta */}
+                <motion.button
+                  type="button"
+                  layout
+                  onClick={() => setGuiaForm((p) => ({ ...p, punto_cucuta: !p.punto_cucuta }))}
+                  className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-colors duration-200 cursor-pointer text-left
+                    ${guiaForm.punto_cucuta
+                      ? "bg-brand-green/10 border-brand-green"
+                      : "bg-zinc-800/40 border-zinc-700 hover:border-zinc-600"}`}
+                >
+                  {/* Ícono ubicación */}
+                  <div className={`w-9 h-9 rounded-lg shrink-0 flex items-center justify-center transition-colors duration-200
+                    ${guiaForm.punto_cucuta ? "bg-brand-green text-black" : "bg-zinc-700 text-zinc-400"}`}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-semibold leading-tight transition-colors duration-200
+                      ${guiaForm.punto_cucuta ? "text-brand-green" : "text-zinc-200"}`}>
+                      Punto de Venta Cúcuta
+                    </p>
+                    <p className="text-zinc-500 text-xs mt-0.5 truncate">Av 0#19-53 L3 · Barrio Blanco · M. Teran</p>
+                  </div>
+                  {/* Switch */}
+                  <div className={`w-11 h-6 rounded-full shrink-0 relative transition-colors duration-300
+                    ${guiaForm.punto_cucuta ? "bg-brand-green" : "bg-zinc-700"}`}>
+                    <motion.span
+                      className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
+                      animate={{ left: guiaForm.punto_cucuta ? "calc(100% - 20px)" : "4px" }}
+                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                    />
+                  </div>
+                </motion.button>
+
+                {/* Transportadora */}
+                <motion.div layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, duration: 0.25, ease: [0.23,1,0.32,1] }}>
+                  <label className="block text-zinc-400 text-xs mb-1.5 font-medium">Transportadora</label>
+                  <input
+                    className="input-field w-full"
+                    placeholder="Ej: Servientrega, Coordinadora, Envia..."
+                    value={guiaForm.transportadora}
+                    onChange={(e) => setGuiaForm((p) => ({ ...p, transportadora: e.target.value }))}
+                  />
+                </motion.div>
+
+                {/* Dirección destino — solo si no es Cúcuta */}
+                <AnimatePresence>
+                  {!guiaForm.punto_cucuta && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+                      style={{ overflow: "hidden" }}
+                    >
+                      <label className="block text-zinc-400 text-xs mb-1.5 font-medium">Dirección de destino</label>
+                      <input
+                        className="input-field w-full"
+                        placeholder="Calle, ciudad, departamento"
+                        value={guiaForm.direccion_destino}
+                        onChange={(e) => setGuiaForm((p) => ({ ...p, direccion_destino: e.target.value }))}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Observaciones */}
+                <motion.div layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.25, ease: [0.23,1,0.32,1] }}>
+                  <label className="block text-zinc-400 text-xs mb-1.5 font-medium">Observaciones</label>
+                  <textarea
+                    className="input-field w-full resize-none"
+                    rows={3}
+                    placeholder="Indicaciones especiales para el transportador..."
+                    value={guiaForm.observaciones}
+                    onChange={(e) => setGuiaForm((p) => ({ ...p, observaciones: e.target.value }))}
+                  />
+                </motion.div>
+
+                {/* Acciones */}
+                <div className="flex gap-3 pt-1">
+                  <button
+                    onClick={() => setShowGuia(false)}
+                    className="flex-1 btn-secondary cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <motion.button
+                    onClick={handleDownloadGuia}
+                    disabled={guiaLoading}
+                    whileTap={{ scale: guiaLoading ? 1 : 0.97 }}
+                    transition={{ duration: 0.1 }}
+                    className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  >
+                    {guiaLoading ? (
+                      <>
+                        <motion.span
+                          animate={{ rotate: 360 }}
+                          transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
+                          className="inline-block"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                        </motion.span>
+                        Generando...
+                      </>
+                    ) : (
+                      <><IconTruck /> Descargar PDF</>
+                    )}
+                  </motion.button>
                 </div>
-              )}
-              <div>
-                <label className="block text-zinc-400 text-xs mb-1">Observaciones</label>
-                <textarea className="input-field w-full resize-none" rows={3} placeholder="Indicaciones especiales para el transportador..."
-                  value={guiaForm.observaciones}
-                  onChange={(e) => setGuiaForm((p) => ({ ...p, observaciones: e.target.value }))} />
               </div>
-              <div className="flex justify-end gap-3 pt-1">
-                <button onClick={() => setShowGuia(false)} className="btn-secondary px-4">Cancelar</button>
-                <button onClick={handleDownloadGuia} disabled={guiaLoading}
-                  className="btn-primary px-5 flex items-center gap-2 disabled:opacity-50">
-                  <IconTruck /> {guiaLoading ? "Generando..." : "Descargar PDF"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {lightboxSrc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
