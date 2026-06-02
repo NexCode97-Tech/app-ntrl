@@ -69,12 +69,13 @@ function EditModal({ tx, periodId, onClose, onSaved }) {
   const esLaboral = tx.tipo_contrato_snap === "laboral";
 
   // Preview calculado en tiempo real (mismo algoritmo que backend)
-  const basico   = Math.round(Number(tx.salario_base_snap) * Number(form.dias_laborados) / 30);
-  const auxT     = esLaboral ? Math.round(249095 * Number(form.dias_laborados) / 30) : 0;
-  const antPrest = esLaboral ? 0 : Number(form.anticipo_prestaciones);
-  const hExt     = Number(form.horas_extras);
-  const otros_i  = Number(form.otros_ingresos);
-  const deveng   = basico + auxT + antPrest + hExt + otros_i;
+  const basico    = Math.round(Number(tx.salario_base_snap) * Number(form.dias_laborados) / 30);
+  const auxT      = esLaboral ? Math.round(249095 * Number(form.dias_laborados) / 30) : 0;
+  const antPrest  = esLaboral ? 0 : Number(form.anticipo_prestaciones);
+  const subtotal  = basico + auxT + antPrest;   // básico + aux/anticipo
+  const hExt      = Number(form.horas_extras);
+  const otros_i   = Number(form.otros_ingresos);
+  const deveng    = subtotal + hExt + otros_i;  // subtotal + horas extras + otros
   const salud    = esLaboral ? Math.round(basico * 0.04) : 0;
   const pension  = esLaboral ? Math.round(basico * 0.04) : 0;
   const antAdel  = Number(form.anticipo_adelanto);
@@ -230,9 +231,18 @@ function EditModal({ tx, periodId, onClose, onSaved }) {
                   <span>Anticipo prestaciones</span><span className="font-mono">{fmt(antPrest)}</span>
                 </div>
               )}
+              {/* Subtotal: básico + aux/anticipo */}
+              <div className="flex justify-between text-zinc-300 font-medium border-t border-zinc-800 pt-1 mt-1">
+                <span>Subtotal</span><span className="font-mono">{fmt(subtotal)}</span>
+              </div>
               {hExt > 0 && (
                 <div className="flex justify-between text-zinc-400">
                   <span>Horas extras</span><span className="font-mono">{fmt(hExt)}</span>
+                </div>
+              )}
+              {otros_i > 0 && (
+                <div className="flex justify-between text-zinc-400">
+                  <span>Otros ingresos</span><span className="font-mono">{fmt(otros_i)}</span>
                 </div>
               )}
               <div className="flex justify-between text-white font-semibold border-t border-zinc-800 pt-1 mt-1">

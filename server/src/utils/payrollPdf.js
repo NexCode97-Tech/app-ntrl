@@ -76,6 +76,9 @@ function _renderComprobante(doc, data, MESES) {
   y += 3;
 
   // ── Devengados ──
+  const subtotalDev = Number(data.basico)
+                    + (esLaboral ? Number(data.aux_transporte || 0) : Number(data.anticipo_prestaciones || 0));
+
   doc.moveTo(m, y).lineTo(W - m, y).lineWidth(0.3).strokeColor("#cccccc").stroke(); y += 5;
   doc.fontSize(7).fillColor(GREEN).font("Helvetica-Bold")
      .text("DEVENGADOS", m, y, { width: cW }); y += 11;
@@ -84,6 +87,7 @@ function _renderComprobante(doc, data, MESES) {
     row("Aux. transporte:", fmt(data.aux_transporte));
   if (!esLaboral && Number(data.anticipo_prestaciones) > 0)
     row("Anticipo prestaciones:", fmt(data.anticipo_prestaciones));
+  row("SUBTOTAL:", fmt(subtotalDev), { bold: true });
   if (Number(data.horas_extras) > 0)
     row("Horas extras:", fmt(data.horas_extras));
   if (Number(data.otros_ingresos) > 0)
