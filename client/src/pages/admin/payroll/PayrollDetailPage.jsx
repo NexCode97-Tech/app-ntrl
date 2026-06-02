@@ -495,6 +495,7 @@ export default function PayrollDetailPage() {
                   <th className="px-4 py-3 font-medium">Empleado</th>
                   <th className="px-3 py-3 font-medium text-right">Básico</th>
                   <th className="px-3 py-3 font-medium text-right">Aux.T / A.Prest</th>
+                  <th className="px-3 py-3 font-medium text-right text-zinc-300">Subtotal</th>
                   <th className="px-3 py-3 font-medium text-right">H.Extra</th>
                   <th className="px-3 py-3 font-medium text-right">Total Dev.</th>
                   <th className="px-3 py-3 font-medium text-right text-red-400/80">Salud</th>
@@ -526,6 +527,9 @@ export default function PayrollDetailPage() {
                           ? <span className="text-blue-400">{fmtShort(tx.aux_transporte)}</span>
                           : <span className="text-purple-400">{fmtShort(tx.anticipo_prestaciones)}</span>
                         }
+                      </td>
+                      <td className="px-3 py-3 text-right font-mono text-zinc-200 font-medium">
+                        {fmtShort(Number(tx.basico) + (esLaboral ? Number(tx.aux_transporte || 0) : Number(tx.anticipo_prestaciones || 0)))}
                       </td>
                       <td className="px-3 py-3 text-right font-mono text-zinc-400">{fmtShort(tx.horas_extras)}</td>
                       <td className="px-3 py-3 text-right font-mono text-white font-semibold">{fmtShort(tx.total_devengado)}</td>
@@ -564,7 +568,7 @@ export default function PayrollDetailPage() {
               <tfoot>
                 <tr className="bg-zinc-800/60 border-t border-zinc-700 font-semibold text-sm">
                   <td className="px-4 py-3 text-zinc-300">TOTALES</td>
-                  <td colSpan={3} />
+                  <td colSpan={4} />
                   <td className="px-3 py-3 text-right font-mono text-white">{fmt(totalDevengado)}</td>
                   <td colSpan={4} />
                   <td className="px-3 py-3 text-right font-mono text-brand-green font-bold">{fmt(totalNeto)}</td>
@@ -594,22 +598,32 @@ export default function PayrollDetailPage() {
                   </div>
 
                   {/* Devengados */}
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                    <div className="flex justify-between col-span-2 border-b border-zinc-800 pb-1 mb-1">
-                      <span className="text-zinc-500">DEVENGADOS</span>
-                      <span className="text-white font-semibold">{fmt(tx.total_devengado)}</span>
-                    </div>
-                    <div className="flex justify-between"><span className="text-zinc-500">Básico</span><span className="text-zinc-300 font-mono">{fmt(tx.basico)}</span></div>
-                    {esLaboral && Number(tx.aux_transporte) > 0 && (
-                      <div className="flex justify-between"><span className="text-zinc-500">Aux. transp.</span><span className="text-blue-400 font-mono">{fmt(tx.aux_transporte)}</span></div>
-                    )}
-                    {!esLaboral && Number(tx.anticipo_prestaciones) > 0 && (
-                      <div className="flex justify-between"><span className="text-zinc-500">A. prestaciones</span><span className="text-purple-400 font-mono">{fmt(tx.anticipo_prestaciones)}</span></div>
-                    )}
-                    {Number(tx.horas_extras) > 0 && (
-                      <div className="flex justify-between"><span className="text-zinc-500">H. extras</span><span className="text-zinc-300 font-mono">{fmt(tx.horas_extras)}</span></div>
-                    )}
-                  </div>
+                  {(() => {
+                    const esLab = tx.tipo_contrato_snap === "laboral";
+                    const sub   = Number(tx.basico) + (esLab ? Number(tx.aux_transporte || 0) : Number(tx.anticipo_prestaciones || 0));
+                    return (
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                        <div className="flex justify-between col-span-2 border-b border-zinc-800 pb-1 mb-1">
+                          <span className="text-zinc-500">DEVENGADOS</span>
+                          <span className="text-white font-semibold">{fmt(tx.total_devengado)}</span>
+                        </div>
+                        <div className="flex justify-between"><span className="text-zinc-500">Básico</span><span className="text-zinc-300 font-mono">{fmt(tx.basico)}</span></div>
+                        {esLab && Number(tx.aux_transporte) > 0 && (
+                          <div className="flex justify-between"><span className="text-zinc-500">Aux. transp.</span><span className="text-blue-400 font-mono">{fmt(tx.aux_transporte)}</span></div>
+                        )}
+                        {!esLab && Number(tx.anticipo_prestaciones) > 0 && (
+                          <div className="flex justify-between"><span className="text-zinc-500">A. prestaciones</span><span className="text-purple-400 font-mono">{fmt(tx.anticipo_prestaciones)}</span></div>
+                        )}
+                        <div className="flex justify-between col-span-2 border-t border-zinc-800 pt-1 mt-0.5">
+                          <span className="text-zinc-300 font-medium">Subtotal</span>
+                          <span className="text-zinc-200 font-mono font-medium">{fmt(sub)}</span>
+                        </div>
+                        {Number(tx.horas_extras) > 0 && (
+                          <div className="flex justify-between"><span className="text-zinc-500">H. extras</span><span className="text-zinc-300 font-mono">{fmt(tx.horas_extras)}</span></div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Deducidos */}
                   {Number(tx.total_deducido) > 0 && (
