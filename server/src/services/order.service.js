@@ -269,6 +269,16 @@ export async function updateOrder(orderId, userId, data, newDesignFiles = []) {
       changes.items = "actualizados";
     }
 
+    // Recalcular total aplicando descuento (siempre, para garantizar consistencia)
+    await client.query(
+      `UPDATE orders
+       SET total = (
+         SELECT COALESCE(SUM(subtotal), 0) FROM order_items WHERE order_id = $1
+       ) * (1 - COALESCE(descuento_porcentaje, 0) / 100)
+       WHERE id = $1`,
+      [orderId]
+    );
+
     if (Object.keys(changes).length) {
       await client.query(
         `INSERT INTO order_history (order_id, user_id, action, changes)
