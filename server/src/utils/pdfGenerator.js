@@ -384,6 +384,22 @@ export function generateInvoicePDF(order) {
 
     const items = Array.isArray(order.items) ? order.items : [];
     let rowY = tableY + hdrH;
+    const pageBottom = doc.page.height - m;
+    // Estimar altura del bloque inferior para reservar espacio en la última página
+    const paymentsHEst = order.payments?.length ? (order.payments.length * 12 + 16) : 0;
+    const bloqueReserva = paymentsHEst + 14 + 56 + 35 + 10;
+
+    function drawTableHeader(y) {
+      doc.rect(m, y, cW, hdrH).fill(BLACK);
+      doc.fontSize(8).fillColor(WHITE).font("Helvetica-Bold");
+      doc.text("CANT",     cols.cant.x,         y + 6, { width: cols.cant.w,     align: "center" });
+      doc.text("PRODUCTO", cols.producto.x + 4, y + 6, { width: cols.producto.w });
+      doc.text("TALLAS",   cols.tallas.x,       y + 6, { width: cols.tallas.w,   align: "center" });
+      doc.text("P. UNIT",  cols.precio.x,       y + 6, { width: cols.precio.w,   align: "center" });
+      doc.text("SUBTOTAL", cols.subtotal.x,     y + 6, { width: cols.subtotal.w, align: "center" });
+    }
+
+    let tableSegmentY = tableY; // inicio del segmento actual de tabla (para el borde)
 
     items.forEach((item, i) => {
       const sizes = (() => { try { return typeof item.sizes === "string" ? JSON.parse(item.sizes) : item.sizes; } catch { return {}; } })();
@@ -393,6 +409,18 @@ export function generateInvoicePDF(order) {
 
       const prodLines = doc.heightOfString(item.product_name || "", { width: cols.producto.w - 8, fontSize: 9 });
       const rowH = Math.max(prodLines + 28, 38);
+
+      // Si la fila no cabe en la página actual → nueva página
+      if (rowY + rowH > pageBottom - 10) {
+        // Cerrar borde del segmento actual
+        doc.rect(m, tableSegmentY, cW, rowY - tableSegmentY).lineWidth(0.5).strokeColor("#cccccc").stroke();
+        doc.addPage();
+        rowY = m;
+        drawTableHeader(rowY);
+        tableSegmentY = rowY;
+        rowY += hdrH;
+      }
+
       const midY = rowY + (rowH / 2) - 5;
 
       if (i % 2 === 0) doc.rect(m, rowY, cW, rowH).fill(LGRAY);
@@ -415,14 +443,11 @@ export function generateInvoicePDF(order) {
       rowY += rowH;
     });
 
-    doc.rect(m, tableY, cW, rowY - tableY).lineWidth(0.5).strokeColor("#cccccc").stroke();
+    // Borde del último segmento de tabla
+    doc.rect(m, tableSegmentY, cW, rowY - tableSegmentY).lineWidth(0.5).strokeColor("#cccccc").stroke();
 
     // ── SALTO DE PÁGINA si no hay espacio para el bloque inferior ──
-    // Estimar espacio necesario: abonos + emitido + totales + pie
-    const paymentsH  = order.payments?.length ? (order.payments.length * 12 + 16) : 0;
-    const bloqueNeed = paymentsH + 14 + 56 + 35; // emitido + totales + pie
-    const pageBottom = doc.page.height - m;
-    if (rowY + 6 + bloqueNeed > pageBottom) {
+    if (rowY + 6 + bloqueReserva > pageBottom) {
       doc.addPage();
       rowY = m;
     }
