@@ -231,13 +231,15 @@ export async function updateOrder(orderId, userId, data, newDesignFiles = []) {
     }
 
     // Actualizar archivos de diseño
-    const hasKeepList  = Array.isArray(data.design_files_keep);
+    const keepRaw      = data.design_files_keep;
+    const keepParsed   = typeof keepRaw === "string" ? (() => { try { return JSON.parse(keepRaw); } catch { return null; } })() : keepRaw;
+    const hasKeepList  = Array.isArray(keepParsed);
     const hasNewFiles  = newDesignFiles.length > 0;
     if (hasKeepList || hasNewFiles) {
       const existing = before.rows[0].design_file;
       let base = [];
       if (hasKeepList) {
-        base = data.design_files_keep; // el cliente indicó exactamente qué conservar
+        base = keepParsed; // el cliente indicó exactamente qué conservar
       } else if (existing) {
         try { base = JSON.parse(existing); if (!Array.isArray(base)) base = [existing]; }
         catch { base = [existing]; }
@@ -254,9 +256,10 @@ export async function updateOrder(orderId, userId, data, newDesignFiles = []) {
     }
 
     // Reemplazar items si se envían
-    if (data.items) {
+    const itemsParsed = typeof data.items === "string" ? (() => { try { return JSON.parse(data.items); } catch { return null; } })() : data.items;
+    if (Array.isArray(itemsParsed) && itemsParsed.length > 0) {
       await client.query("DELETE FROM order_items WHERE order_id = $1", [orderId]);
-      for (const item of data.items) {
+      for (const item of itemsParsed) {
         await client.query(
           `INSERT INTO order_items (order_id, product_id, gender, sizes, unit_price, design_file_index)
            VALUES ($1, $2, $3, $4, $5, $6)`,
