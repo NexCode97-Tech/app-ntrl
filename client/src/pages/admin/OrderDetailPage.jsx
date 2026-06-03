@@ -687,21 +687,38 @@ export default function OrderDetailPage() {
           {data.items?.length > 0 && (() => {
             const totalQty = data.items.reduce((s, item) =>
               s + Object.values(item.sizes).reduce((a, q) => a + (Number(q) || 0), 0), 0);
-            const totalPesos = data.items.reduce((s, item) => {
+            const subtotal = data.items.reduce((s, item) => {
               const qty = Object.values(item.sizes).reduce((a, q) => a + (Number(q) || 0), 0);
               return s + qty * (Number(item.unit_price) || 0);
             }, 0);
+            const descPct   = Number(data.descuento_porcentaje) || 0;
+            const descValor = subtotal * descPct / 100;
+            const totalFinal = subtotal - descValor;
             return (
               <div className="border-t border-zinc-700 pt-3 space-y-1 px-1">
                 <div className="flex justify-between items-center">
                   <span className="text-zinc-400 text-sm">Total unidades</span>
                   <span className="text-white font-bold text-lg">{totalQty}</span>
                 </div>
-                {totalPesos > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-zinc-400 text-sm">Total pedido</span>
-                    <span className="text-brand-green font-bold text-lg">${totalPesos.toLocaleString("es-CO")}</span>
-                  </div>
+                {subtotal > 0 && (
+                  <>
+                    {descPct > 0 && (
+                      <>
+                        <div className="flex justify-between items-center">
+                          <span className="text-zinc-400 text-sm">Subtotal</span>
+                          <span className="text-zinc-300 font-medium">${subtotal.toLocaleString("es-CO")}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-red-400 text-sm">Descuento ({descPct}%)</span>
+                          <span className="text-red-400 font-medium">−${descValor.toLocaleString("es-CO")}</span>
+                        </div>
+                      </>
+                    )}
+                    <div className="flex justify-between items-center">
+                      <span className="text-zinc-400 text-sm">Total pedido</span>
+                      <span className="text-brand-green font-bold text-lg">${totalFinal.toLocaleString("es-CO")}</span>
+                    </div>
+                  </>
                 )}
               </div>
             );
