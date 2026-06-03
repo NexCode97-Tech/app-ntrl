@@ -387,7 +387,8 @@ export function generateInvoicePDF(order) {
     const pageBottom = doc.page.height - m;
     // Estimar altura del bloque inferior para reservar espacio en la última página
     const paymentsHEst = order.payments?.length ? (order.payments.length * 12 + 16) : 0;
-    const bloqueReserva = paymentsHEst + 14 + 56 + 35 + 10;
+    const descuentoHEst = Number(order.descuento_porcentaje || 0) > 0 ? 14 : 0;
+    const bloqueReserva = paymentsHEst + 14 + descuentoHEst + 56 + 35 + 10;
 
     function drawTableHeader(y) {
       doc.rect(m, y, cW, hdrH).fill(BLACK);
@@ -482,12 +483,22 @@ export function generateInvoicePDF(order) {
 
     // — Columna derecha: totales —
     let rightY = bloqueY;
+    const descPct = Number(order.descuento_porcentaje || 0);
 
     doc.fontSize(9).fillColor(GRAY).font("Helvetica")
        .text("Total pedido:", cols.precio.x, rightY, { width: cols.precio.w, align: "center" });
     doc.fillColor(BLACK).font("Helvetica-Bold")
        .text(fmt(order.total), cols.subtotal.x, rightY, { width: cols.subtotal.w, align: "center" });
     rightY += 14;
+
+    if (descPct > 0) {
+      const descValor = Number(order.total || 0) * descPct / 100;
+      doc.fontSize(9).fillColor(GRAY).font("Helvetica")
+         .text(`Descuento (${descPct}%):`, cols.precio.x, rightY, { width: cols.precio.w, align: "center" });
+      doc.fillColor("#ef4444").font("Helvetica-Bold")
+         .text(`-${fmt(descValor)}`, cols.subtotal.x, rightY, { width: cols.subtotal.w, align: "center" });
+      rightY += 14;
+    }
 
     doc.fontSize(9).fillColor(GRAY).font("Helvetica")
        .text("Total abonado:", cols.precio.x, rightY, { width: cols.precio.w, align: "center" });
