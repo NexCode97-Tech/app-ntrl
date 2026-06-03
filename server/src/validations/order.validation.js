@@ -22,11 +22,12 @@ export const createOrderSchema = Joi.object({
 });
 
 export const updateOrderSchema = Joi.object({
-  customer_id:        Joi.string().uuid().optional(),
-  name:               Joi.string().max(255).optional().allow("", null),
-  delivery_date:      Joi.date().iso().optional().allow(null, ""),
-  description:        Joi.string().max(1000).optional().allow("", null),
-  status:             Joi.string().valid("delivered").optional(),
-  items:              Joi.array().items(orderItemSchema).min(1).optional(),
-  design_files_keep:  Joi.array().items(Joi.alternatives().try(Joi.string(), Joi.object())).optional(),
+  customer_id:           Joi.string().uuid().optional(),
+  name:                  Joi.string().max(255).optional().allow("", null),
+  delivery_date:         Joi.date().iso().optional().allow(null, ""),
+  description:           Joi.string().max(1000).optional().allow("", null),
+  status:                Joi.string().valid("delivered").optional(),
+  items:                 Joi.array().items(orderItemSchema).min(1).optional(),
+  design_files_keep:     Joi.array().items(Joi.alternatives().try(Joi.string(), Joi.object())).optional(),
+  descuento_porcentaje:  Joi.number().min(0).max(100).optional().default(0),
 });
