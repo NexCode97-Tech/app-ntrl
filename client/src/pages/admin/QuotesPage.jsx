@@ -174,6 +174,7 @@ function QuoteForm({ onClose, onSaved, initial }) {
               <input
                 className="input-field"
                 placeholder="Buscar por nombre o documento..."
+                autoCapitalize="off" autoCorrect="off"
                 value={customerQuery}
                 onChange={(e) => searchCustomers(e.target.value)}
                 autoComplete="off"

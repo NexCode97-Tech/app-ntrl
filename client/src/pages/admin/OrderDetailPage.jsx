@@ -905,7 +905,8 @@ function EditOrderModal({ order, onClose, onSaved }) {
             <div className="relative">
               <input className="input-field" placeholder="Buscar por nombre o documento..."
                 value={customerQuery}
-                onChange={(e) => searchCustomers(e.target.value)} />
+                onChange={(e) => searchCustomers(e.target.value)}
+                autoCapitalize="off" autoCorrect="off" />
               {customerId && customerId === order.customer_id && (
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500">actual</span>
               )}

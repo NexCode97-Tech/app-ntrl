@@ -626,7 +626,7 @@ function EmployeesTab() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2">
                   <label className="block text-zinc-400 text-xs mb-1">Nombre completo *</label>
-                  <input required className="input-field" value={form.nombre} onChange={f("nombre")} placeholder="Nombre completo" />
+                  <input required className="input-field" value={form.nombre} onChange={f("nombre")} placeholder="Nombre completo" autoCapitalize="off" autoCorrect="off" />
                 </div>
                 <div>
                   <label className="block text-zinc-400 text-xs mb-1">Cargo *</label>

@@ -247,7 +247,7 @@ export default function EmployeesPage() {
                 <div className="sm:col-span-2">
                   <label className="block text-zinc-400 text-xs mb-1">Nombre completo *</label>
                   <input required value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-brand-green" />
+                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-brand-green" autoCapitalize="off" autoCorrect="off" />
                 </div>
 
                 <div>

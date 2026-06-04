@@ -567,7 +567,7 @@ function CustomerModal({ form, onSave, onClose, saving }) {
               <p className="text-zinc-500 text-[10px] font-semibold uppercase tracking-wider">Identidad</p>
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">Nombre <span className="text-red-400">*</span></label>
-                <input className="input-field" value={data.name || ""} onChange={(e) => set("name", e.target.value)} placeholder="Nombre completo o razón social" />
+                <input className="input-field" value={data.name || ""} onChange={(e) => set("name", e.target.value)} placeholder="Nombre completo o razón social" autoCapitalize="off" autoCorrect="off" />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>

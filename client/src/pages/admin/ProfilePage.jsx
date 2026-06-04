@@ -194,6 +194,7 @@ export default function ProfilePage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Tu nombre"
+              autoCapitalize="off" autoCorrect="off"
               required
             />
           </div>

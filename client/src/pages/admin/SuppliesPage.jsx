@@ -407,7 +407,7 @@ function SupplierModal({ form, onSave, onClose, saving, error }) {
         <div className="space-y-3">
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Nombre *</label>
-            <input className="input-field" placeholder="Nombre de la empresa o persona" value={data.name} onChange={(e) => set("name", e.target.value)} />
+            <input className="input-field" placeholder="Nombre de la empresa o persona" value={data.name} onChange={(e) => set("name", e.target.value)} autoCapitalize="off" autoCorrect="off" />
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Contacto</label>
