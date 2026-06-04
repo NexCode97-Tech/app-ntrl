@@ -21,7 +21,7 @@ const AREA_LABELS = {
   ensamble: "Ensamble", terminados: "Terminados",
 };
 
-const UNITS = ["unidades", "metros", "kg", "litros", "rollos", "yardas", "piezas", "resma"];
+const UNITS = ["Unidades", "Metros", "Kg", "Litros", "Rollos", "Yardas", "Piezas", "Resma"];
 
 export default function SuppliesPage() {
   const [tab, setTab] = useState("requests");
