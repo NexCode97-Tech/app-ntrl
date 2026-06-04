@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useMemo, useState, useCallback } from "react";
 import { api } from "../../config/api.js";
 import { useAuthStore } from "../../stores/authStore.js";
+import MonthPicker from "../../components/ui/MonthPicker.jsx";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   PieChart, Pie, Cell, Sector,
@@ -522,16 +523,12 @@ export default function DashboardPage() {
       {/* Selector de mes */}
       <div className="flex items-center gap-2">
         <span className="text-zinc-500 text-xs shrink-0">Ver mes:</span>
-        <select
-          value={selectedMonth ?? ""}
-          onChange={(e) => { setSelectedMonth(e.target.value || null); setSelectedSport(null); }}
-          className="bg-zinc-800 border border-zinc-700 text-white text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-brand-green cursor-pointer"
-        >
-          <option value="">{formatMonth(currentMonth)} (actual)</option>
-          {(monthlyHistory ?? []).map((s) => (
-            <option key={s.month} value={s.month}>{formatMonth(s.month)}</option>
-          ))}
-        </select>
+        <MonthPicker
+          value={selectedMonth}
+          currentMonth={currentMonth}
+          availableMonths={(monthlyHistory ?? []).map((s) => s.month)}
+          onChange={(m) => { setSelectedMonth(m); setSelectedSport(null); }}
+        />
       </div>
 
       {/* FILA 1 — KPIs financieros */}
