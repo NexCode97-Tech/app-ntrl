@@ -6,10 +6,10 @@ import TabBar from "../../components/ui/TabBar.jsx";
 
 const STATUS_CARDS = [
   { value: "",            label: "Todos",      color: "text-zinc-300",      border: "border-zinc-600",    activeBg: "bg-zinc-700" },
-  { value: "pending",     label: "Pendiente",  color: "text-yellow-400",    border: "border-yellow-500/50", activeBg: "bg-yellow-500/10" },
+  { value: "pending",     label: "Pendiente",  color: "text-orange-400",    border: "border-orange-500/50", activeBg: "bg-orange-500/10" },
   { value: "in_progress", label: "En proceso", color: "text-blue-400",      border: "border-blue-500/50",   activeBg: "bg-blue-500/10" },
-  { value: "completed",   label: "Completado", color: "text-brand-green",   border: "border-brand-green/50",activeBg: "bg-brand-green/10" },
-  { value: "delivered",   label: "Entregado",  color: "text-zinc-400",      border: "border-zinc-600",      activeBg: "bg-zinc-700" },
+  { value: "completed",   label: "Completado", color: "text-green-400",     border: "border-green-700/50",  activeBg: "bg-green-900/30" },
+  { value: "delivered",   label: "Entregado",  color: "text-brand-green",   border: "border-brand-green/50",activeBg: "bg-brand-green/10" },
 ];
 
 const STATUS_LABELS = {

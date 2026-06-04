@@ -8,7 +8,7 @@ import TabBar from "../../components/ui/TabBar.jsx";
 import ColorPicker from "../../components/ui/ColorPicker.jsx";
 
 const STATUS_COLORS = {
-  pending:     "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30",
+  pending:     "bg-orange-500/20 text-orange-400 border border-orange-500/30",
   in_progress: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
   delivered:   "bg-brand-green/20 text-brand-green border border-brand-green/30",
 };

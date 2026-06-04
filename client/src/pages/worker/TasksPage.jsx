@@ -13,7 +13,7 @@ const AREA_LABELS = {
 };
 
 const STATUS_COLORS = {
-  pending:     "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30",
+  pending:     "bg-orange-500/20 text-orange-400 border border-orange-500/30",
   in_progress: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
   done:        "bg-brand-green/20 text-brand-green border border-brand-green/30",
 };
@@ -122,7 +122,7 @@ export default function TasksPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { label: "Pendientes",  value: pending,    color: "text-yellow-400",  status: "pending"     },
+          { label: "Pendientes",  value: pending,    color: "text-orange-400",  status: "pending"     },
           { label: "En proceso",  value: inProgress, color: "text-blue-400",    status: "in_progress" },
           { label: "Completadas", value: done,       color: "text-brand-green", status: "done"        },
           { label: "Suministros", value: supPending, color: "text-zinc-400",    status: null, sub: "pendientes" },

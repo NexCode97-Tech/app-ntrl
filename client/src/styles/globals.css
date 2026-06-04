@@ -105,8 +105,8 @@
     @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ring-1 ring-inset;
   }
 
-  .badge-pending    { @apply badge bg-zinc-700/60   text-zinc-300  ring-zinc-600; }
-  .badge-progress   { @apply badge bg-yellow-900/60 text-yellow-300 ring-yellow-700; }
+  .badge-pending    { @apply badge bg-orange-900/60  text-orange-300 ring-orange-700; }
+  .badge-progress   { @apply badge bg-blue-900/60   text-blue-300   ring-blue-700; }
   .badge-completed  { @apply badge bg-green-900/60  text-green-300  ring-green-700; }
   .badge-delivered  { @apply badge bg-brand-green   text-black      ring-brand-green; }
   .badge-info       { @apply badge bg-blue-900/60   text-blue-300   ring-blue-700; }
