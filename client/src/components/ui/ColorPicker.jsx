@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { HexColorPicker } from "react-colorful";
+import { useAuthStore } from "../../stores/authStore.js";
 
 const PALETTE = [
   { name: "Blanco",   hex: "#FFFFFF" },
@@ -9,19 +10,56 @@ const PALETTE = [
   { name: "Amarillo", hex: "#EAB308" },
 ];
 
+const MAX_RECENT = 8;
+
+function getRecentKey(userId) {
+  return `ntrl_recent_colors_${userId}`;
+}
+
+function loadRecent(userId) {
+  if (!userId) return [];
+  try { return JSON.parse(localStorage.getItem(getRecentKey(userId))) ?? []; }
+  catch { return []; }
+}
+
+function saveRecent(userId, hex) {
+  if (!userId || !hex) return;
+  const prev = loadRecent(userId).filter((c) => c.toLowerCase() !== hex.toLowerCase());
+  const next = [hex, ...prev].slice(0, MAX_RECENT);
+  localStorage.setItem(getRecentKey(userId), JSON.stringify(next));
+}
+
 export default function ColorPicker({ value, onChange }) {
-  const [open, setOpen]       = useState(false);
+  const user      = useAuthStore((s) => s.user);
+  const [open, setOpen]         = useState(false);
   const [hexInput, setHexInput] = useState("");
-  const ref = useRef(null);
+  const [openUp, setOpenUp]     = useState(false);
+  const [recent, setRecent]     = useState([]);
+  const ref        = useRef(null);
+  const triggerRef = useRef(null);
 
   const selected  = PALETTE.find((c) => c.name === value);
   const isHex     = value?.startsWith("#");
   const activeHex = selected ? selected.hex : isHex ? value : "#AAAAAA";
 
-  // Sincronizar input de hex con el valor activo
+  // Cargar recientes cuando abre
+  useEffect(() => {
+    if (open) setRecent(loadRecent(user?.id));
+  }, [open, user?.id]);
+
+  // Sincronizar hex input
   useEffect(() => {
     setHexInput(activeHex.replace("#", "").toUpperCase());
   }, [activeHex]);
+
+  // Detectar si abrir hacia arriba o abajo
+  useEffect(() => {
+    if (!open || !triggerRef.current) return;
+    const rect         = triggerRef.current.getBoundingClientRect();
+    const dropdownH    = recent.length > 0 ? 420 : 380; // estimado
+    const spaceBelow   = window.innerHeight - rect.bottom;
+    setOpenUp(spaceBelow < dropdownH && rect.top > dropdownH);
+  }, [open, recent.length]);
 
   // Cerrar al clic fuera
   useEffect(() => {
@@ -36,15 +74,27 @@ export default function ColorPicker({ value, onChange }) {
     if (raw.length === 6) onChange("#" + raw);
   }
 
-  function handlePickerChange(hex) {
-    // Deseleccionar preset si el usuario mueve el picker
+  function handleApply() {
+    if (value) {
+      const hex = selected ? selected.hex : isHex ? value : null;
+      if (hex) {
+        saveRecent(user?.id, hex);
+        setRecent(loadRecent(user?.id));
+      }
+    }
+    setOpen(false);
+  }
+
+  function handleSelectRecent(hex) {
     onChange(hex);
+    setHexInput(hex.replace("#", "").toUpperCase());
   }
 
   return (
     <div ref={ref} className="relative">
       {/* Trigger */}
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((p) => !p)}
         className="input-field flex items-center gap-2 w-full text-left"
@@ -70,10 +120,12 @@ export default function ColorPicker({ value, onChange }) {
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 mt-1 z-50 bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl p-4 w-64">
-
+        <div
+          className={`absolute left-0 z-[200] bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl p-4 w-64
+            ${openUp ? "bottom-full mb-1" : "top-full mt-1"}`}
+        >
           {/* Presets */}
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-3">
             {PALETTE.map((c) => {
               const isSelected = value === c.name;
               return (
@@ -109,12 +161,42 @@ export default function ColorPicker({ value, onChange }) {
             })}
           </div>
 
+          {/* Colores recientes */}
+          {recent.length > 0 && (
+            <div className="mb-3">
+              <p className="text-zinc-600 text-[10px] uppercase tracking-wider mb-1.5">Recientes</p>
+              <div className="flex flex-wrap gap-1.5">
+                {recent.map((hex) => {
+                  const isSelected = value === hex;
+                  return (
+                    <button
+                      key={hex}
+                      type="button"
+                      title={hex}
+                      onClick={() => handleSelectRecent(hex)}
+                      className="shrink-0 transition-transform hover:scale-110 focus:outline-none"
+                    >
+                      <span
+                        className="block rounded-full"
+                        style={{
+                          width: 22, height: 22,
+                          backgroundColor: hex,
+                          border: isSelected ? "2px solid #C5FF3A" : "1.5px solid #52525b",
+                        }}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* react-colorful picker */}
           <div className="color-picker-wrapper">
             <HexColorPicker
               color={activeHex}
-              onChange={handlePickerChange}
-              style={{ width: "100%", height: 160 }}
+              onChange={onChange}
+              style={{ width: "100%", height: 150 }}
             />
           </div>
 
@@ -139,12 +221,12 @@ export default function ColorPicker({ value, onChange }) {
           {/* Footer */}
           <div className="flex items-center justify-between mt-3">
             {value && (
-              <button type="button" onClick={() => { onChange(""); }}
+              <button type="button" onClick={() => { onChange(""); setOpen(false); }}
                 className="text-xs text-zinc-500 hover:text-red-400 transition-colors">
                 Quitar color
               </button>
             )}
-            <button type="button" onClick={() => setOpen(false)}
+            <button type="button" onClick={handleApply}
               className="text-xs bg-brand-green text-black font-medium px-3 py-1 rounded-lg ml-auto hover:bg-brand-green/90 transition-colors">
               Aplicar
             </button>
