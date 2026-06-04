@@ -675,6 +675,80 @@ function CatalogTab({ showForm, setShowForm }) {
   );
 }
 
+/** Input de precio con formato colombiano (puntos como separadores de miles) y flechas custom */
+function PriceInput({ value, onChange, placeholder = "0" }) {
+  const STEP = 100;
+
+  // Formatear número a string con puntos: 8400 → "8.400"
+  function fmt(n) {
+    if (!n && n !== 0) return "";
+    return Number(n).toLocaleString("es-CO", { maximumFractionDigits: 0 });
+  }
+
+  // Limpiar string con formato a número: "8.400" → 8400
+  function parse(str) {
+    return parseInt(String(str).replace(/\./g, "").replace(/,/g, ""), 10) || 0;
+  }
+
+  function handleChange(e) {
+    const raw = e.target.value.replace(/\./g, ""); // quitar puntos actuales
+    if (raw === "" || raw === "0") { onChange(""); return; }
+    const n = parseInt(raw, 10);
+    if (isNaN(n)) return;
+    onChange(n);
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === "ArrowUp")   { e.preventDefault(); onChange(Math.max(0, parse(value) + STEP)); }
+    if (e.key === "ArrowDown") { e.preventDefault(); onChange(Math.max(0, parse(value) - STEP)); }
+  }
+
+  const numVal = parse(value);
+
+  return (
+    <div className="flex rounded-lg overflow-hidden border border-zinc-700 focus-within:border-brand-green transition-colors bg-zinc-800">
+      {/* Prefijo $ */}
+      <span className="flex items-center px-2.5 text-zinc-500 text-sm select-none bg-zinc-800 border-r border-zinc-700">$</span>
+
+      {/* Input texto con formato */}
+      <input
+        type="text"
+        inputMode="numeric"
+        className="flex-1 bg-transparent text-white text-sm px-2 py-2 outline-none min-w-0"
+        placeholder={placeholder}
+        value={fmt(value)}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+      />
+
+      {/* Flechas custom */}
+      <div className="flex flex-col border-l border-zinc-700">
+        <button
+          type="button"
+          tabIndex={-1}
+          onClick={() => onChange(numVal + STEP)}
+          className="flex-1 flex items-center justify-center px-2.5 text-zinc-400 hover:text-brand-green hover:bg-zinc-700 transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="18 15 12 9 6 15"/>
+          </svg>
+        </button>
+        <div className="h-px bg-zinc-700" />
+        <button
+          type="button"
+          tabIndex={-1}
+          onClick={() => onChange(Math.max(0, numVal - STEP))}
+          className="flex-1 flex items-center justify-center px-2.5 text-zinc-400 hover:text-brand-green hover:bg-zinc-700 transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function CatalogItemModal({ item, onClose, onSave, saving }) {
   const [form, setForm] = useState({
     name:       item?.name       || "",
@@ -703,7 +777,7 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
             </div>
             <div>
               <label className="block text-xs text-zinc-400 mb-1">Precio por unidad (COP)</label>
-              <input className="input-field" type="number" min="0" step="1" placeholder="0" value={form.unit_price} onChange={(e) => set("unit_price", e.target.value)} />
+              <PriceInput value={form.unit_price} onChange={(v) => set("unit_price", v)} />
             </div>
           </div>
           <div>
