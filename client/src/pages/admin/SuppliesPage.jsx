@@ -735,13 +735,6 @@ function CatalogTab({ showForm, setShowForm }) {
 
   const createMut = useMutation({
     mutationFn: (d) => api.post("/supply-catalog", d),
-    onSuccess: (res) => {
-      qc.invalidateQueries({ queryKey: ["supply-catalog-all"] });
-      qc.invalidateQueries({ queryKey: ["supply-catalog"] });
-      setShowForm(false);
-      // Abrir inmediatamente en modo edición para que el usuario pueda asignar proveedores
-      setEditing(res.data.data);
-    },
   });
 
   const updateMut = useMutation({
@@ -828,7 +821,22 @@ function CatalogTab({ showForm, setShowForm }) {
           key={editing?.id || "new"}
           item={editing}
           onClose={() => { setShowForm(false); setEditing(null); }}
-          onSave={(d) => editing ? updateMut.mutate({ id: editing.id, ...d }) : createMut.mutate(d)}
+          onSave={async (d) => {
+            if (editing) {
+              updateMut.mutate({ id: editing.id, ...d });
+            } else {
+              try {
+                const res = await createMut.mutateAsync(d);
+                const newItem = res.data.data;
+                qc.invalidateQueries({ queryKey: ["supply-catalog-all"] });
+                qc.invalidateQueries({ queryKey: ["supply-catalog"] });
+                setShowForm(false);
+                setEditing(null);
+                // Micro-delay para que React procese el cierre antes de abrir el modal de edición
+                setTimeout(() => setEditing(newItem), 30);
+              } catch {}
+            }
+          }}
           saving={createMut.isPending || updateMut.isPending}
         />
       )}
