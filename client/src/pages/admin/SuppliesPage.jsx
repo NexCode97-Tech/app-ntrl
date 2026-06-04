@@ -704,7 +704,6 @@ function CatalogTab({ showForm, setShowForm }) {
               <div key={item.id} className={`flex items-center justify-between px-3 py-2 rounded-lg ${item.is_active ? "bg-zinc-800" : "bg-zinc-900 opacity-50"}`}>
                 <div className="min-w-0 flex-1">
                   <span className="text-white text-sm font-medium">{item.name}</span>
-                  <span className="text-zinc-500 text-xs ml-2">{item.unit}</span>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   <span className="text-brand-green text-sm">${Number(item.unit_price).toLocaleString("es-CO")}</span>
