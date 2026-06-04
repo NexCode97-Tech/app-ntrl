@@ -8,6 +8,7 @@ import {
   RadialBarChart, RadialBar, Legend,
 } from "recharts";
 import { api } from "../../config/api.js";
+import CustomSelect from "../../components/ui/CustomSelect.jsx";
 
 /* ── Constantes ─────────────────────────────────────────────────────── */
 const GENDER_META = {
@@ -227,16 +228,15 @@ export default function ReportsPage() {
         {/* Selector de mes */}
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-zinc-500 text-xs">Período:</span>
-          <select
+          <CustomSelect
             value={selectedMonth ?? ""}
             onChange={(e) => { setSelectedMonth(e.target.value || null); setSelectedSport(null); }}
-            className="bg-zinc-800 border border-zinc-700 hover:border-zinc-500 text-white text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-brand-green cursor-pointer transition-colors"
           >
             <option value="">{formatMonth(currentMonth)} (actual)</option>
             {(monthlyHistory ?? []).map((s) => (
               <option key={s.month} value={s.month}>{formatMonth(s.month)}</option>
             ))}
-          </select>
+          </CustomSelect>
         </div>
       </motion.div>
 
@@ -644,16 +644,15 @@ export default function ReportsPage() {
           {deptoTotals.length > 0 && (
             <div className="flex items-center gap-2 shrink-0">
               <span className="text-zinc-500 text-xs">Departamento:</span>
-              <select
+              <CustomSelect
                 value={selectedDepto ?? ""}
                 onChange={(e) => setSelectedDepto(e.target.value || null)}
-                className="bg-zinc-800 border border-zinc-700 hover:border-zinc-500 text-white text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-brand-green cursor-pointer transition-colors"
               >
                 <option value="">Todos</option>
                 {deptoTotals.map((d) => (
                   <option key={d.department} value={d.department}>{d.department}</option>
                 ))}
-              </select>
+              </CustomSelect>
             </div>
           )}
         </div>

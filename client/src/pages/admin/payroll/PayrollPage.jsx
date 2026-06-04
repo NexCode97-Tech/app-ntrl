@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../../config/api.js";
+import CustomSelect from "../../../components/ui/CustomSelect.jsx";
 import {
   BanknotesIcon, UserGroupIcon, PlusIcon, PencilIcon,
   TrashIcon, XMarkIcon, ChevronRightIcon,
@@ -60,10 +61,10 @@ export default function PayrollPage() {
     <div className="space-y-5">
       {/* Mobile select */}
       <div className="md:hidden">
-        <select className="input-field w-full" value={tab} onChange={(e) => setTab(e.target.value)}>
+        <CustomSelect value={tab} onChange={(e) => setTab(e.target.value)}>
           <option value="periodos">Períodos</option>
           <option value="empleados">Empleados</option>
-        </select>
+        </CustomSelect>
       </div>
 
       {/* Desktop tabs */}
@@ -267,27 +268,24 @@ function PeriodsTab() {
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-zinc-400 text-xs mb-1">Quincena *</label>
-                  <select required value={form.quincena} onChange={(e) => setForm({ ...form, quincena: e.target.value })}
-                    className="input-field w-full">
+                  <CustomSelect value={form.quincena} onChange={(e) => setForm({ ...form, quincena: e.target.value })}>
                     <option value={1}>1ª</option>
                     <option value={2}>2ª</option>
-                  </select>
+                  </CustomSelect>
                 </div>
                 <div>
                   <label className="block text-zinc-400 text-xs mb-1">Mes *</label>
-                  <select required value={form.mes} onChange={(e) => setForm({ ...form, mes: e.target.value })}
-                    className="input-field w-full">
+                  <CustomSelect value={form.mes} onChange={(e) => setForm({ ...form, mes: e.target.value })}>
                     {MESES.slice(1).map((m, i) => (
                       <option key={i + 1} value={i + 1}>{m}</option>
                     ))}
-                  </select>
+                  </CustomSelect>
                 </div>
                 <div>
                   <label className="block text-zinc-400 text-xs mb-1">Año *</label>
-                  <select required value={form.anio} onChange={(e) => setForm({ ...form, anio: e.target.value })}
-                    className="input-field w-full">
+                  <CustomSelect value={form.anio} onChange={(e) => setForm({ ...form, anio: e.target.value })}>
                     {[2025, 2026, 2027].map((y) => <option key={y} value={y}>{y}</option>)}
-                  </select>
+                  </CustomSelect>
                 </div>
               </div>
 
@@ -646,10 +644,10 @@ function EmployeesTab() {
                 </div>
                 <div>
                   <label className="block text-zinc-400 text-xs mb-1">Tipo ID</label>
-                  <select className="input-field" value={form.tipo_identificacion} onChange={f("tipo_identificacion")}>
+                  <CustomSelect value={form.tipo_identificacion} onChange={f("tipo_identificacion")}>
                     <option value="CC">CC</option><option value="CE">CE</option>
                     <option value="NIT">NIT</option><option value="PA">Pasaporte</option>
-                  </select>
+                  </CustomSelect>
                 </div>
                 <div>
                   <label className="block text-zinc-400 text-xs mb-1">Número ID *</label>
@@ -662,11 +660,11 @@ function EmployeesTab() {
                 </div>
                 <div>
                   <label className="block text-zinc-400 text-xs mb-1">Estado</label>
-                  <select className="input-field" value={form.estado_laboral} onChange={f("estado_laboral")}>
+                  <CustomSelect value={form.estado_laboral} onChange={f("estado_laboral")}>
                     <option value="activo">Activo</option>
                     <option value="licencia">Licencia</option>
                     <option value="terminado">Terminado</option>
-                  </select>
+                  </CustomSelect>
                 </div>
                 <div>
                   <label className="block text-zinc-400 text-xs mb-1">Hora entrada</label>
@@ -723,14 +721,14 @@ function EmployeesTab() {
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-zinc-400 text-xs mb-1">Plataforma</label>
-                  <select className="input-field" value={form.tipo_cuenta} onChange={f("tipo_cuenta")}>
+                  <CustomSelect value={form.tipo_cuenta} onChange={f("tipo_cuenta")}>
                     <option value="nequi">NEQUI</option>
                     <option value="llave">LLAVE</option>
                     <option value="bancolombia">Bancolombia</option>
                     <option value="davivienda">Davivienda</option>
                     <option value="bbva">BBVA</option>
                     <option value="otro">Otro</option>
-                  </select>
+                  </CustomSelect>
                 </div>
                 <div className="col-span-2">
                   <label className="block text-zinc-400 text-xs mb-1">Número de cuenta / celular</label>

@@ -4,6 +4,7 @@ import { api } from "../../config/api.js";
 import { hardRefresh } from "../../utils/hardRefresh.js";
 import { ChatBubbleLeftIcon } from "@heroicons/react/24/outline";
 import ColorPicker from "../../components/ui/ColorPicker.jsx";
+import CustomSelect from "../../components/ui/CustomSelect.jsx";
 
 const STATUS_COLORS = {
   pending:     "bg-orange-500/20 text-orange-400 border border-orange-500/30",
@@ -174,12 +175,12 @@ function RequestForm({ orders, onSave, onClose, saving, error }) {
         <div className="space-y-3">
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Insumo *</label>
-            <select className="input-field" value={data.supply_catalog_id} onChange={(e) => handleSelectCatalog(e.target.value)}>
+            <CustomSelect value={data.supply_catalog_id} onChange={(e) => handleSelectCatalog(e.target.value)}>
               <option value="">Seleccionar del catálogo</option>
               {catalog.map((c) => (
                 <option key={c.id} value={c.id}>{c.name} ({c.unit})</option>
               ))}
-            </select>
+            </CustomSelect>
             {!data.supply_catalog_id && (
               <input className="input-field mt-2" placeholder="O escribir manualmente..." value={data.item_name} onChange={(e) => set("item_name", e.target.value)} />
             )}
@@ -192,9 +193,9 @@ function RequestForm({ orders, onSave, onClose, saving, error }) {
             </div>
             <div>
               <label className="block text-xs text-zinc-400 mb-1">Unidad</label>
-              <select className="input-field" value={data.unit} onChange={(e) => set("unit", e.target.value)}>
+              <CustomSelect value={data.unit} onChange={(e) => set("unit", e.target.value)}>
                 {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
-              </select>
+              </CustomSelect>
             </div>
           </div>
 
@@ -204,14 +205,14 @@ function RequestForm({ orders, onSave, onClose, saving, error }) {
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Pedido relacionado</label>
-            <select className="input-field" value={data.order_id} onChange={(e) => set("order_id", e.target.value)}>
+            <CustomSelect value={data.order_id} onChange={(e) => set("order_id", e.target.value)}>
               <option value="">Sin pedido específico</option>
               {orders.map((o) => (
                 <option key={o.id} value={o.id}>
                   #{String(o.order_number).padStart(3,"0")} — {o.customer_name}
                 </option>
               ))}
-            </select>
+            </CustomSelect>
           </div>
 
           <div>

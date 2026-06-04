@@ -13,6 +13,7 @@ import {
   ClipboardDocumentCheckIcon,
 } from "@heroicons/react/24/outline";
 import TabBar from "../../components/ui/TabBar.jsx";
+import CustomSelect from "../../components/ui/CustomSelect.jsx";
 
 const GENDERS = [
   { value: "nino",   label: "Niño"         },
@@ -245,12 +246,12 @@ function QuoteForm({ onClose, onSaved, initial }) {
                     <div className="grid grid-cols-2 gap-3 mb-3">
                       <div>
                         <label className="text-zinc-400 text-xs mb-1 block">Género</label>
-                        <select className="input-field" value={item.gender}
+                        <CustomSelect value={item.gender}
                           onChange={(e) => setItems((prev) => prev.map((item, idx) =>
                             idx === i ? { ...item, gender: e.target.value, sizes: {} } : item
                           ))}>
                           {GENDERS.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
-                        </select>
+                        </CustomSelect>
                       </div>
                       <div>
                         <label className="text-zinc-400 text-xs mb-1 block">Precio unitario</label>
@@ -597,9 +598,9 @@ export default function QuotesPage() {
 
         {/* Móvil — select */}
         <div className="md:hidden">
-          <select className="input-field w-full" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <CustomSelect value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             {STATUS_TABS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-          </select>
+          </CustomSelect>
         </div>
 
         {/* Tablet — TabBar */}

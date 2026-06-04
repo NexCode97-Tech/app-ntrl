@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../../config/api.js";
 import CascadeFilter from "../../components/orders/CascadeFilter.jsx";
+import CustomSelect from "../../components/ui/CustomSelect.jsx";
 import SizeQuantityGrid from "../../components/orders/SizeQuantityGrid.jsx";
 import { DocumentTextIcon, DocumentIcon } from "@heroicons/react/24/outline";
 import { Document, Page, pdfjs } from "react-pdf";
@@ -264,10 +265,10 @@ export default function OrderCreatePage() {
               <div className="flex gap-4 items-center flex-wrap">
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1">Género</label>
-                  <select className="input-field w-auto" value={item.gender}
+                  <CustomSelect value={item.gender}
                     onChange={(e) => updateItem(i, "gender", e.target.value)}>
                     {GENDERS.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
-                  </select>
+                  </CustomSelect>
                 </div>
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1">Precio unitario</label>

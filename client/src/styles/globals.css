@@ -77,6 +77,10 @@
     padding-right: 2.25rem;
   }
 
+  .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+  .custom-scrollbar::-webkit-scrollbar-track { @apply bg-zinc-800; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-zinc-600 rounded; }
+
   /* Iconos de calendario y reloj en inputs date/time — color zinc-400 (#a1a1aa) */
   input[type="date"]::-webkit-calendar-picker-indicator,
   input[type="time"]::-webkit-calendar-picker-indicator,

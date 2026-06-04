@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { api } from "../../config/api.js";
+import CustomSelect from "../ui/CustomSelect.jsx";
 
 export default function CascadeFilter({ onProductSelect }) {
   const [sports,   setSports]   = useState([]);
@@ -36,26 +37,26 @@ export default function CascadeFilter({ onProductSelect }) {
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
       <div>
         <label className="block text-xs text-zinc-400 mb-1">Deporte</label>
-        <select className="input-field" value={sportId} onChange={(e) => setSportId(e.target.value)}>
+        <CustomSelect value={sportId} onChange={(e) => setSportId(e.target.value)}>
           <option value="">Seleccionar...</option>
           {sports.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
+        </CustomSelect>
       </div>
 
       <div>
         <label className="block text-xs text-zinc-400 mb-1">Línea</label>
-        <select className="input-field" value={lineId} onChange={(e) => setLineId(e.target.value)} disabled={!sportId}>
+        <CustomSelect value={lineId} onChange={(e) => setLineId(e.target.value)} disabled={!sportId}>
           <option value="">Seleccionar...</option>
           {lines.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-        </select>
+        </CustomSelect>
       </div>
 
       <div>
         <label className="block text-xs text-zinc-400 mb-1">Producto</label>
-        <select className="input-field" value={productId} onChange={(e) => setProductId(e.target.value)} disabled={!lineId}>
+        <CustomSelect value={productId} onChange={(e) => setProductId(e.target.value)} disabled={!lineId}>
           <option value="">Seleccionar...</option>
           {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
+        </CustomSelect>
       </div>
     </div>
   );

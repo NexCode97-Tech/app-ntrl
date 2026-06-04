@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../config/api.js";
 import TabBar from "../../components/ui/TabBar.jsx";
+import CustomSelect from "../../components/ui/CustomSelect.jsx";
 
 const STATUS_CARDS = [
   { value: "",            label: "Todos",      color: "text-zinc-300",      border: "border-zinc-600",    activeBg: "bg-zinc-700" },
@@ -103,13 +104,12 @@ export default function OrdersPage() {
 
         {/* Móvil — select */}
         <div className="md:hidden">
-          <select className="input-field w-full" value={statusFilter}
-            onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
+          <CustomSelect value={statusFilter} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
             <option value="">Todos los estados</option>
             {Object.entries(STATUS_LABELS).map(([v, { label }]) => (
               <option key={v} value={v}>{label}</option>
             ))}
-          </select>
+          </CustomSelect>
         </div>
 
         {/* Tablet — TabBar */}

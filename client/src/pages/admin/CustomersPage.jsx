@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../config/api.js";
 import { COLOMBIA, DEPARTAMENTOS } from "../../data/colombia.js";
+import CustomSelect from "../../components/ui/CustomSelect.jsx";
 const IconEye = () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>;
 const IconEdit = () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>;
 const IconTrash = () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>;
@@ -571,12 +572,12 @@ function CustomerModal({ form, onSave, onClose, saving }) {
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1">Tipo doc. <span className="text-red-400">*</span></label>
-                  <select className="input-field" value={data.document_type} onChange={(e) => set("document_type", e.target.value)}>
+                  <CustomSelect value={data.document_type} onChange={(e) => set("document_type", e.target.value)}>
                     <option value="cedula">C.C.</option>
                     <option value="nit">NIT</option>
                     <option value="ce">C.E.</option>
                     <option value="pp">Pasaporte</option>
-                  </select>
+                  </CustomSelect>
                 </div>
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1">Número doc. <span className="text-red-400">*</span></label>
@@ -612,18 +613,17 @@ function CustomerModal({ form, onSave, onClose, saving }) {
               <p className="text-zinc-500 text-[10px] font-semibold uppercase tracking-wider">Ubicación</p>
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">Departamento <span className="text-red-400">*</span></label>
-                <select className="input-field" value={data.department || ""}
-                  onChange={(e) => { set("department", e.target.value); set("city", ""); }}>
+                <CustomSelect value={data.department || ""} onChange={(e) => { set("department", e.target.value); set("city", ""); }}>
                   <option value="">Seleccionar...</option>
                   {DEPARTAMENTOS.map((d) => <option key={d} value={d}>{d}</option>)}
-                </select>
+                </CustomSelect>
               </div>
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">Ciudad / Municipio <span className="text-red-400">*</span></label>
-                <select className="input-field" value={data.city || ""} onChange={(e) => set("city", e.target.value)} disabled={!data.department}>
+                <CustomSelect value={data.city || ""} onChange={(e) => set("city", e.target.value)} disabled={!data.department}>
                   <option value="">Seleccionar...</option>
                   {cities.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
+                </CustomSelect>
               </div>
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">Dirección</label>

@@ -2,6 +2,7 @@ import { useState, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../config/api.js";
 import { fileUrl } from "../../utils/fileUrl.js";
+import CustomSelect from "../../components/ui/CustomSelect.jsx";
 
 /* ── Icons ─────────────────────────────────────────────────────────── */
 const IconEdit    = () => <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>;
@@ -479,10 +480,10 @@ function LineModal({ form, onSave, onClose, saving, sports }) {
         <div className="px-5 py-4 space-y-3">
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Deporte <span className="text-red-400">*</span></label>
-            <select className="input-field" value={data.sport_id || ""} onChange={(e) => set("sport_id", e.target.value)}>
+            <CustomSelect value={data.sport_id || ""} onChange={(e) => set("sport_id", e.target.value)}>
               <option value="">Seleccionar deporte</option>
               {sports?.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
+            </CustomSelect>
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Nombre <span className="text-red-400">*</span></label>
@@ -580,10 +581,10 @@ function ProductMaterialsSection({ productId }) {
 
       {addOpen ? (
         <div className="space-y-2 pt-1">
-          <select className="input-field text-xs" value={newMat.supply_catalog_id} onChange={(e) => setNewMat(p => ({ ...p, supply_catalog_id: e.target.value }))}>
+          <CustomSelect value={newMat.supply_catalog_id} onChange={(e) => setNewMat(p => ({ ...p, supply_catalog_id: e.target.value }))}>
             <option value="">— Seleccionar insumo —</option>
             {catalog.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.unit})</option>)}
-          </select>
+          </CustomSelect>
           <div className="flex gap-2">
             <input className="input-field text-xs flex-1" type="number" min="0.001" step="0.001" placeholder="Cantidad por prenda"
               value={newMat.quantity_per_unit} onChange={(e) => setNewMat(p => ({ ...p, quantity_per_unit: e.target.value }))} />
@@ -650,10 +651,10 @@ function ProductModal({ form, onSave, onClose, saving, lines }) {
               <p className="text-zinc-500 text-[10px] font-semibold uppercase tracking-wider">Información</p>
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">Línea <span className="text-red-400">*</span></label>
-                <select className="input-field" value={data.line_id || ""} onChange={(e) => set("line_id", e.target.value)}>
+                <CustomSelect value={data.line_id || ""} onChange={(e) => set("line_id", e.target.value)}>
                   <option value="">Seleccionar línea</option>
                   {lines?.map(l => <option key={l.id} value={l.id}>{l.name} — {l.sport_name}</option>)}
-                </select>
+                </CustomSelect>
               </div>
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">Nombre <span className="text-red-400">*</span></label>

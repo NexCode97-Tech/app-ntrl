@@ -6,6 +6,7 @@ import { COLOMBIA, DEPARTAMENTOS } from "../../data/colombia.js";
 import { UserIcon, PhoneIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
 import TabBar from "../../components/ui/TabBar.jsx";
 import ColorPicker from "../../components/ui/ColorPicker.jsx";
+import CustomSelect from "../../components/ui/CustomSelect.jsx";
 
 const STATUS_COLORS = {
   pending:     "bg-orange-500/20 text-orange-400 border border-orange-500/30",
@@ -162,17 +163,13 @@ function RequestsTab({ showForm, setShowForm }) {
 
       {/* Filtros — dropdown en móvil, botones en escritorio */}
       <div className="md:hidden">
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="input-field text-sm w-full"
-        >
+        <CustomSelect value={filter} onChange={(e) => setFilter(e.target.value)}>
           {[["all","Todos"], ["pending","Pendientes"], ["in_progress","En proceso"], ["delivered","Entregados"]].map(([val, label]) => (
             <option key={val} value={val}>
               {label}{val !== "all" && counts[val] ? ` (${counts[val]})` : ""}
             </option>
           ))}
-        </select>
+        </CustomSelect>
       </div>
       <TabBar
         tabs={[
@@ -429,19 +426,17 @@ function SupplierModal({ form, onSave, onClose, saving, error }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-zinc-400 mb-1">Departamento</label>
-              <select className="input-field" value={data.department || ""}
-                onChange={(e) => { set("department", e.target.value); set("city", ""); }}>
+              <CustomSelect value={data.department || ""} onChange={(e) => { set("department", e.target.value); set("city", ""); }}>
                 <option value="">Seleccionar...</option>
                 {DEPARTAMENTOS.map((d) => <option key={d} value={d}>{d}</option>)}
-              </select>
+              </CustomSelect>
             </div>
             <div>
               <label className="block text-xs text-zinc-400 mb-1">Ciudad / Municipio</label>
-              <select className="input-field" value={data.city || ""}
-                onChange={(e) => set("city", e.target.value)} disabled={!data.department}>
+              <CustomSelect value={data.city || ""} onChange={(e) => set("city", e.target.value)} disabled={!data.department}>
                 <option value="">Seleccionar...</option>
                 {cities.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
+              </CustomSelect>
             </div>
           </div>
           <div>
@@ -501,12 +496,12 @@ function RequestForm({ orders, onSave, onClose, saving, error }) {
         <div className="space-y-3">
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Insumo *</label>
-            <select className="input-field" value={data.supply_catalog_id} onChange={(e) => handleSelectCatalog(e.target.value)}>
+            <CustomSelect value={data.supply_catalog_id} onChange={(e) => handleSelectCatalog(e.target.value)}>
               <option value="">Seleccionar del catálogo</option>
               {catalog.map((c) => (
                 <option key={c.id} value={c.id}>{c.name} ({c.unit})</option>
               ))}
-            </select>
+            </CustomSelect>
             {!data.supply_catalog_id && (
               <input className="input-field mt-2" placeholder="O escribir manualmente..." value={data.item_name} onChange={(e) => set("item_name", e.target.value)} />
             )}
@@ -521,9 +516,9 @@ function RequestForm({ orders, onSave, onClose, saving, error }) {
             </div>
             <div>
               <label className="block text-xs text-zinc-400 mb-1">Unidad</label>
-              <select className="input-field" value={data.unit} onChange={(e) => set("unit", e.target.value)}>
+              <CustomSelect value={data.unit} onChange={(e) => set("unit", e.target.value)}>
                 {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
-              </select>
+              </CustomSelect>
             </div>
           </div>
           {selected && data.quantity > 0 && (
@@ -537,12 +532,12 @@ function RequestForm({ orders, onSave, onClose, saving, error }) {
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Pedido relacionado</label>
-            <select className="input-field" value={data.order_id} onChange={(e) => set("order_id", e.target.value)}>
+            <CustomSelect value={data.order_id} onChange={(e) => set("order_id", e.target.value)}>
               <option value="">Sin pedido específico</option>
               {orders.map((o) => (
                 <option key={o.id} value={o.id}>#{String(o.order_number).padStart(3,"0")} — {o.customer_name}</option>
               ))}
-            </select>
+            </CustomSelect>
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Notas adicionales</label>
@@ -587,17 +582,17 @@ function EditRequestModal({ request, orders, onSave, onClose, saving }) {
             </div>
             <div>
               <label className="block text-xs text-zinc-400 mb-1">Unidad</label>
-              <select className="input-field" value={data.unit} onChange={(e) => set("unit", e.target.value)}>
+              <CustomSelect value={data.unit} onChange={(e) => set("unit", e.target.value)}>
                 {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
-              </select>
+              </CustomSelect>
             </div>
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Pedido relacionado</label>
-            <select className="input-field" value={data.order_id} onChange={(e) => set("order_id", e.target.value)}>
+            <CustomSelect value={data.order_id} onChange={(e) => set("order_id", e.target.value)}>
               <option value="">Sin pedido específico</option>
               {orders.map((o) => <option key={o.id} value={o.id}>#{String(o.order_number).padStart(3,"0")} — {o.customer_name}</option>)}
-            </select>
+            </CustomSelect>
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Notas</label>
@@ -635,11 +630,11 @@ function ManageModal({ request, onSave, onDelete, onClose, saving }) {
 
         <div>
           <label className="block text-xs text-zinc-400 mb-1">Estado</label>
-          <select className="input-field" value={status} onChange={(e) => setStatus(e.target.value)}>
+          <CustomSelect value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="pending">Pendiente</option>
             <option value="in_progress">En proceso</option>
             <option value="delivered">Entregado</option>
-          </select>
+          </CustomSelect>
         </div>
 
         <div>
@@ -888,9 +883,9 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-zinc-400 mb-1">Unidad *</label>
-              <select className="input-field" value={form.unit} onChange={(e) => set("unit", e.target.value)}>
+              <CustomSelect value={form.unit} onChange={(e) => set("unit", e.target.value)}>
                 {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
-              </select>
+              </CustomSelect>
             </div>
             <div>
               <label className="block text-xs text-zinc-400 mb-1">Precio por unidad (COP)</label>
@@ -899,10 +894,10 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Categoría</label>
-            <select className="input-field" value={form.category} onChange={(e) => set("category", e.target.value)}>
+            <CustomSelect value={form.category} onChange={(e) => set("category", e.target.value)}>
               <option value="">Sin categoría</option>
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
+            </CustomSelect>
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Notas</label>

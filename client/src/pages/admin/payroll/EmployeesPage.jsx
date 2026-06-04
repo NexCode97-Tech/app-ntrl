@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../../config/api.js";
+import CustomSelect from "../../../components/ui/CustomSelect.jsx";
 import {
   UserGroupIcon,
   PlusIcon,
@@ -148,16 +149,12 @@ export default function EmployeesPage() {
             className="w-full pl-9 pr-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:border-brand-green"
           />
         </div>
-        <select
-          value={estadoFiltro}
-          onChange={(e) => setEstadoFiltro(e.target.value)}
-          className="px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-brand-green"
-        >
+        <CustomSelect value={estadoFiltro} onChange={(e) => setEstadoFiltro(e.target.value)}>
           <option value="">Todos los estados</option>
           <option value="activo">Activo</option>
           <option value="licencia">Licencia</option>
           <option value="terminado">Terminado</option>
-        </select>
+        </CustomSelect>
       </div>
 
       {/* Tabla */}
@@ -255,13 +252,12 @@ export default function EmployeesPage() {
 
                 <div>
                   <label className="block text-zinc-400 text-xs mb-1">Tipo ID</label>
-                  <select value={form.tipo_identificacion} onChange={(e) => setForm({ ...form, tipo_identificacion: e.target.value })}
-                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-brand-green">
+                  <CustomSelect value={form.tipo_identificacion} onChange={(e) => setForm({ ...form, tipo_identificacion: e.target.value })}>
                     <option value="CC">Cédula (CC)</option>
                     <option value="CE">Cédula Extranjería (CE)</option>
                     <option value="PA">Pasaporte (PA)</option>
                     <option value="NIT">NIT</option>
-                  </select>
+                  </CustomSelect>
                 </div>
 
                 <div>
@@ -311,12 +307,11 @@ export default function EmployeesPage() {
 
                 <div>
                   <label className="block text-zinc-400 text-xs mb-1">Estado laboral</label>
-                  <select value={form.estado_laboral} onChange={(e) => setForm({ ...form, estado_laboral: e.target.value })}
-                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-brand-green">
+                  <CustomSelect value={form.estado_laboral} onChange={(e) => setForm({ ...form, estado_laboral: e.target.value })}>
                     <option value="activo">Activo</option>
                     <option value="licencia">Licencia</option>
                     <option value="terminado">Terminado</option>
-                  </select>
+                  </CustomSelect>
                 </div>
 
                 <div className="sm:col-span-2">
