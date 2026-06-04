@@ -724,8 +724,9 @@ function CatalogTab({ showForm, setShowForm }) {
           <div className="space-y-1">
             {catItems.map((item) => (
               <div key={item.id} className={`flex items-center justify-between px-3 py-2 rounded-lg ${item.is_active ? "bg-zinc-800" : "bg-zinc-900 opacity-50"}`}>
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 flex items-center gap-2">
                   <span className="text-white text-sm font-medium">{item.name}</span>
+                  {item.color && <ColorSwatch color={item.color} />}
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   <span className="text-brand-green text-sm">${Number(item.unit_price).toLocaleString("es-CO")}</span>
@@ -885,9 +886,10 @@ function PriceInput({ value, onChange, placeholder = "0" }) {
 function CatalogItemModal({ item, onClose, onSave, saving }) {
   const [form, setForm] = useState({
     name:       item?.name       || "",
-    unit:       item?.unit       || "metros",
+    unit:       item?.unit       || "Metros",
     unit_price: item?.unit_price || "",
     category:   item?.category   || "",
+    color:      item?.color      || "",
     notes:      item?.notes      || "",
   });
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
@@ -919,6 +921,10 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
               <option value="">Sin categoría</option>
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </CustomSelect>
+          </div>
+          <div>
+            <label className="block text-xs text-zinc-400 mb-1">Color</label>
+            <ColorPicker value={form.color} onChange={(v) => set("color", v)} />
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Notas</label>
