@@ -687,13 +687,11 @@ export default function OrderDetailPage() {
           {data.items?.length > 0 && (() => {
             const totalQty = data.items.reduce((s, item) =>
               s + Object.values(item.sizes).reduce((a, q) => a + (Number(q) || 0), 0), 0);
-            const subtotal = data.items.reduce((s, item) => {
-              const qty = Object.values(item.sizes).reduce((a, q) => a + (Number(q) || 0), 0);
-              return s + qty * (Number(item.unit_price) || 0);
-            }, 0);
-            const descPct   = Number(data.descuento_porcentaje) || 0;
-            const descValor = subtotal * descPct / 100;
-            const totalFinal = subtotal - descValor;
+            // Usar subtotales de la DB (calculados por trigger) para evitar discrepancias
+            const subtotal   = data.items.reduce((s, item) => s + Number(item.subtotal || 0), 0);
+            const descPct    = Number(data.descuento_porcentaje) || 0;
+            const totalFinal = Number(data.total) || subtotal; // total de DB ya tiene descuento aplicado
+            const descValor  = subtotal - totalFinal;
             return (
               <div className="border-t border-zinc-700 pt-3 space-y-1 px-1">
                 <div className="flex justify-between items-center">
