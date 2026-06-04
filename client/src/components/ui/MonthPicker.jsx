@@ -226,9 +226,10 @@ export default function MonthPicker({ value, currentMonth, availableMonths = [],
                       onClick={() => inMonth && handleDayClick(day)}
                       onMouseEnter={() => { if (rangeStart && !rangeEnd) setHoverDay(day); }}
                       onMouseLeave={() => setHoverDay(null)}
-                      className={`h-8 flex items-center justify-center text-xs rounded transition-all
+                      className={`h-8 flex items-center justify-center text-xs transition-all
                         ${!inMonth ? "opacity-0 pointer-events-none" : "cursor-pointer"}
-                        ${(isStart || isEnd) ? "bg-brand-green text-black font-bold rounded-lg" : ""}
+                        ${isStart ? "bg-brand-green text-black font-bold rounded-l-lg rounded-r-none" : ""}
+                        ${isEnd   ? "bg-brand-green text-black font-bold rounded-r-lg rounded-l-none" : ""}
                         ${inRange && !isStart && !isEnd ? "bg-brand-green/20 text-white rounded-none" : ""}
                         ${inMonth && !isStart && !isEnd && !inRange ? "text-zinc-300 hover:bg-zinc-700 hover:rounded-lg" : ""}
                       `}
