@@ -6,11 +6,11 @@ import TabBar from "../../components/ui/TabBar.jsx";
 import CustomSelect from "../../components/ui/CustomSelect.jsx";
 
 const STATUS_CARDS = [
-  { value: "",            label: "Todos",      color: "text-zinc-300",    border: "border-zinc-600",          bg: "bg-zinc-800/60",          activeBorder: "border-zinc-500"          },
-  { value: "pending",     label: "Pendiente",  color: "text-yellow-400",  border: "border-yellow-500/40",     bg: "bg-yellow-950/60",        activeBorder: "border-yellow-400"        },
-  { value: "in_progress", label: "En proceso", color: "text-blue-400",    border: "border-blue-500/40",       bg: "bg-blue-950/60",          activeBorder: "border-blue-400"          },
-  { value: "completed",   label: "Completado", color: "text-green-400",   border: "border-green-700/40",      bg: "bg-green-950/60",         activeBorder: "border-green-500"         },
-  { value: "delivered",   label: "Entregado",  color: "text-brand-green", border: "border-brand-green/40",    bg: "bg-[#0d1f14]",            activeBorder: "border-brand-green"       },
+  { value: "",            label: "Todos",      color: "text-zinc-300",    border: "border-zinc-600",          bg: "bg-zinc-800/60",          activeBorder: "border-zinc-500",          activeRing: "ring-zinc-500"          },
+  { value: "pending",     label: "Pendiente",  color: "text-yellow-400",  border: "border-yellow-500/40",     bg: "bg-yellow-950/60",        activeBorder: "border-yellow-400",        activeRing: "ring-yellow-400"        },
+  { value: "in_progress", label: "En proceso", color: "text-blue-400",    border: "border-blue-500/40",       bg: "bg-blue-950/60",          activeBorder: "border-blue-400",          activeRing: "ring-blue-400"          },
+  { value: "completed",   label: "Completado", color: "text-green-400",   border: "border-green-700/40",      bg: "bg-green-950/60",         activeBorder: "border-green-500",         activeRing: "ring-green-500"         },
+  { value: "delivered",   label: "Entregado",  color: "text-brand-green", border: "border-brand-green/40",    bg: "bg-[#0d1f14]",            activeBorder: "border-brand-green",       activeRing: "ring-brand-green"       },
 ];
 
 const STATUS_LABELS = {
@@ -138,7 +138,7 @@ export default function OrdersPage() {
                 onClick={() => { setStatus(s.value); setPage(1); }}
                 className={`rounded-xl border p-4 flex flex-col items-center justify-center gap-0.5 transition-all duration-150
                   ${isActive
-                    ? `${s.bg} ${s.activeBorder} ring-1 ring-inset ${s.activeBorder}`
+                    ? `${s.bg} ${s.activeBorder} ring-1 ring-inset ${s.activeRing}`
                     : "bg-zinc-900 border-zinc-800 hover:border-zinc-600"
                   }
                 `}
