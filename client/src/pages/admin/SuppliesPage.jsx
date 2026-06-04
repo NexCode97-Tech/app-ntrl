@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../config/api.js";
@@ -49,6 +49,69 @@ export default function SuppliesPage() {
       {tab === "requests"  && <RequestsTab  showForm={showRequestForm}  setShowForm={setShowRequestForm} />}
       {tab === "catalog"   && <CatalogTab   showForm={showCatalogForm}  setShowForm={setShowCatalogForm} />}
       {tab === "suppliers" && <SuppliersTab showForm={showSupplierForm} setShowForm={setShowSupplierForm} />}
+    </div>
+  );
+}
+
+const COLOR_HEX = { Blanco:"#FFFFFF", Negro:"#111111", Azul:"#2563EB", Rojo:"#DC2626", Amarillo:"#EAB308" };
+
+function ColorSwatch({ color }) {
+  const hex = COLOR_HEX[color] ?? (color?.startsWith("#") ? color : null);
+  return (
+    <span className="inline-flex items-center gap-1.5 justify-center">
+      {hex && (
+        <span className="w-3 h-3 rounded-full border border-white/20 shrink-0"
+          style={{ backgroundColor: hex }} />
+      )}
+      <span className="text-zinc-300 text-xs">{color}</span>
+    </span>
+  );
+}
+
+function RowMenu({ onEdit, onManage }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    function handle(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative inline-block">
+      <button
+        onClick={() => setOpen((p) => !p)}
+        className="w-7 h-7 flex items-center justify-center rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-700 transition-colors"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-8 z-50 w-36 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl overflow-hidden">
+          <button
+            onClick={() => { onEdit(); setOpen(false); }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700 hover:text-white transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Editar
+          </button>
+          <div className="h-px bg-zinc-700 mx-2" />
+          <button
+            onClick={() => { onManage(); setOpen(false); }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700 hover:text-white transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+            </svg>
+            Gestionar
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -177,6 +240,7 @@ function RequestsTab({ showForm, setShowForm }) {
             <tr>
               <th className="px-4 py-3 text-left whitespace-nowrap">Área</th>
               <th className="px-4 py-3 text-left whitespace-nowrap">Insumo</th>
+              <th className="px-4 py-3 text-center whitespace-nowrap">Color</th>
               <th className="px-4 py-3 text-center whitespace-nowrap">Cantidad</th>
               <th className="px-4 py-3 text-center whitespace-nowrap">Unidad</th>
               <th className="px-4 py-3 text-center whitespace-nowrap">Pedido</th>
@@ -186,9 +250,9 @@ function RequestsTab({ showForm, setShowForm }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-800">
-            {isLoading && <tr><td colSpan={8} className="text-center py-8 text-zinc-500">Cargando...</td></tr>}
+            {isLoading && <tr><td colSpan={9} className="text-center py-8 text-zinc-500">Cargando...</td></tr>}
             {!isLoading && data?.length === 0 && (
-              <tr><td colSpan={8} className="text-center py-8 text-zinc-600">Sin solicitudes</td></tr>
+              <tr><td colSpan={9} className="text-center py-8 text-zinc-600">Sin solicitudes</td></tr>
             )}
             {data?.map((r) => (
               <tr key={r.id} className="hover:bg-zinc-800/50 transition-colors">
@@ -199,6 +263,11 @@ function RequestsTab({ showForm, setShowForm }) {
                 <td className="px-4 py-3">
                   <p className="text-white">{r.item_name}</p>
                   {r.notes && <p className="text-zinc-500 text-xs truncate max-w-[160px]">{r.notes}</p>}
+                </td>
+                <td className="px-4 py-3 text-center">
+                  {r.color
+                    ? <ColorSwatch color={r.color} />
+                    : <span className="text-zinc-600 text-xs">—</span>}
                 </td>
                 <td className="px-4 py-3 text-zinc-300 whitespace-nowrap text-center">{parseFloat(r.quantity)}</td>
                 <td className="px-4 py-3 text-zinc-300 whitespace-nowrap text-center">{r.unit}</td>
@@ -213,11 +282,8 @@ function RequestsTab({ showForm, setShowForm }) {
                 <td className="px-4 py-3 text-zinc-500 text-xs whitespace-nowrap text-center">
                   {new Date(r.created_at).toLocaleDateString("es-CO", { day:"2-digit", month:"short" })}
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <div className="flex gap-3">
-                    <button onClick={() => setEditing(r)} className="text-zinc-500 hover:text-brand-green text-xs">Editar</button>
-                    <button onClick={() => setSelected(r)} className="text-zinc-500 hover:text-brand-green text-xs">Gestionar</button>
-                  </div>
+                <td className="px-4 py-3 whitespace-nowrap text-center">
+                  <RowMenu onEdit={() => setEditing(r)} onManage={() => setSelected(r)} />
                 </td>
               </tr>
             ))}
