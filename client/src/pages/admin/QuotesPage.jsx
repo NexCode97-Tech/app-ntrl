@@ -560,6 +560,22 @@ export default function QuotesPage() {
     { value: "rejected", label: "Rechazadas"},
   ];
 
+  const STATUS_CARDS = [
+    { value: "all",      label: "Todas",      color: "text-zinc-300",       border: "border-zinc-600",        activeBg: "bg-zinc-700"        },
+    { value: "draft",    label: "Borrador",   color: "text-zinc-400",       border: "border-zinc-600",        activeBg: "bg-zinc-700"        },
+    { value: "sent",     label: "Enviadas",   color: "text-blue-400",       border: "border-blue-500/50",     activeBg: "bg-blue-500/10"     },
+    { value: "approved", label: "Aprobadas",  color: "text-brand-green",    border: "border-brand-green/50",  activeBg: "bg-brand-green/10"  },
+    { value: "rejected", label: "Rechazadas", color: "text-red-400",        border: "border-red-500/50",      activeBg: "bg-red-500/10"      },
+  ];
+
+  const countByStatus = {
+    all:      quotes.length,
+    draft:    quotes.filter((q) => q.status === "draft").length,
+    sent:     quotes.filter((q) => q.status === "sent").length,
+    approved: quotes.filter((q) => q.status === "approved").length,
+    rejected: quotes.filter((q) => q.status === "rejected").length,
+  };
+
   return (
     <div className="space-y-4">
       <h1 className="text-white font-bold text-xl lg:hidden">Cotizaciones</h1>
@@ -579,22 +595,49 @@ export default function QuotesPage() {
           </button>
         </div>
 
-        {/* Fila 2: select en móvil, tabs en desktop */}
+        {/* Móvil — select */}
         <div className="md:hidden">
           <select className="input-field w-full" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             {STATUS_TABS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
         </div>
-        <TabBar
-          tabs={STATUS_TABS.map((t) => ({
-            ...t,
-            count: t.value !== "all"
-              ? quotes.filter((q) => q.status === t.value).length
-              : undefined,
-          }))}
-          value={statusFilter}
-          onChange={setStatusFilter}
-        />
+
+        {/* Tablet — TabBar */}
+        <div className="hidden md:block lg:hidden">
+          <TabBar
+            tabs={STATUS_TABS.map((t) => ({
+              ...t,
+              count: t.value !== "all" ? countByStatus[t.value] : undefined,
+            }))}
+            value={statusFilter}
+            onChange={setStatusFilter}
+          />
+        </div>
+
+        {/* Desktop — tarjetas de conteo */}
+        <div className="hidden lg:grid grid-cols-5 gap-3">
+          {STATUS_CARDS.map((s) => {
+            const isActive = statusFilter === s.value;
+            return (
+              <button
+                key={s.value}
+                onClick={() => setStatusFilter(s.value)}
+                className={`rounded-xl border p-3 text-left transition-all duration-150
+                  ${isActive
+                    ? `${s.activeBg} ${s.border} ring-1 ${s.border}`
+                    : "bg-zinc-900 border-zinc-800 hover:border-zinc-600"
+                  }`}
+              >
+                <p className={`text-2xl font-bold ${isActive ? s.color : "text-zinc-300"}`}>
+                  {countByStatus[s.value]}
+                </p>
+                <p className={`text-xs mt-0.5 ${isActive ? s.color : "text-zinc-500"}`}>
+                  {s.label}
+                </p>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Cards */}
