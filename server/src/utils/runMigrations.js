@@ -4,7 +4,10 @@ import { fileURLToPath } from "url";
 import { pool } from "../config/database.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const MIGRATIONS_DIR = join(__dirname, "../../../migrations");
+// Docker copia migrations/ dentro de server/ — en desarrollo está en la raíz del repo
+const _inServer = join(__dirname, "../../migrations");
+const _inRoot   = join(__dirname, "../../../migrations");
+const MIGRATIONS_DIR = existsSync(_inServer) ? _inServer : _inRoot;
 
 export async function runMigrations() {
   if (!existsSync(MIGRATIONS_DIR)) {

@@ -14,6 +14,7 @@ RUN apk add --no-cache curl tini
 
 COPY --from=deps --chown=appuser:appgroup /app/node_modules ./node_modules
 COPY --chown=appuser:appgroup ./src ./src
+COPY --chown=appuser:appgroup ./migrations ./migrations
 COPY --chown=appuser:appgroup package.json ./
 
 RUN mkdir -p /app/uploads /app/logs && \
