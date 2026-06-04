@@ -735,7 +735,13 @@ function CatalogTab({ showForm, setShowForm }) {
 
   const createMut = useMutation({
     mutationFn: (d) => api.post("/supply-catalog", d),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["supply-catalog-all"] }); qc.invalidateQueries({ queryKey: ["supply-catalog"] }); setShowForm(false); },
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ["supply-catalog-all"] });
+      qc.invalidateQueries({ queryKey: ["supply-catalog"] });
+      setShowForm(false);
+      // Abrir inmediatamente en modo edición para que el usuario pueda asignar proveedores
+      setEditing(res.data.data);
+    },
   });
 
   const updateMut = useMutation({
