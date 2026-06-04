@@ -69,6 +69,47 @@ function ColorSwatch({ color, size = "md" }) {
   );
 }
 
+function CatalogMenu({ onEdit, onToggle, isActive }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    function handle(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, []);
+  return (
+    <div ref={ref} className="relative inline-block">
+      <button onClick={() => setOpen((p) => !p)}
+        className="w-7 h-7 flex items-center justify-center rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-700 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-8 z-50 w-36 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl overflow-hidden">
+          <button onClick={() => { onEdit(); setOpen(false); }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700 hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Editar
+          </button>
+          <div className="h-px bg-zinc-700 mx-2" />
+          <button onClick={() => { onToggle(); setOpen(false); }}
+            className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${isActive ? "text-red-400 hover:bg-red-500/10" : "text-brand-green hover:bg-brand-green/10"}`}>
+            {isActive ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            )}
+            {isActive ? "Desactivar" : "Activar"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RowMenu({ onEdit, onManage }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -748,18 +789,12 @@ function CatalogTab({ showForm, setShowForm }) {
                 </div>
 
                 {/* Acciones */}
-                <div className="flex gap-2 justify-center mt-auto pt-1 border-t border-zinc-800">
-                  <button onClick={() => setEditing(item)}
-                    className="text-zinc-400 hover:text-white text-xs transition-colors">
-                    Editar
-                  </button>
-                  <span className="text-zinc-700">·</span>
-                  <button
-                    onClick={() => toggleMut.mutate({ id: item.id, is_active: !item.is_active })}
-                    className={`text-xs transition-colors ${item.is_active ? "text-zinc-500 hover:text-red-400" : "text-zinc-600 hover:text-brand-green"}`}
-                  >
-                    {item.is_active ? "Desactivar" : "Activar"}
-                  </button>
+                <div className="flex justify-end mt-auto pt-1 border-t border-zinc-800">
+                  <CatalogMenu
+                    isActive={item.is_active}
+                    onEdit={() => setEditing(item)}
+                    onToggle={() => toggleMut.mutate({ id: item.id, is_active: !item.is_active })}
+                  />
                 </div>
               </div>
             ))}
