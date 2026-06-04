@@ -56,14 +56,15 @@ export default function SuppliesPage() {
 
 const COLOR_HEX = { Blanco:"#FFFFFF", Negro:"#111111", Azul:"#2563EB", Rojo:"#DC2626", Amarillo:"#EAB308" };
 
-function ColorSwatch({ color }) {
+function ColorSwatch({ color, size = "md" }) {
   const hex = COLOR_HEX[color] ?? (color?.startsWith("#") ? color : null);
   if (!hex) return <span className="text-zinc-600 text-xs">—</span>;
+  const dim = size === "lg" ? 32 : 20;
   return (
     <span
       title={color}
-      className="w-5 h-5 rounded-full border border-white/20 inline-block mx-auto"
-      style={{ backgroundColor: hex }}
+      className="rounded-full border border-white/20 inline-block"
+      style={{ width: dim, height: dim, backgroundColor: hex, flexShrink: 0 }}
     />
   );
 }
@@ -719,18 +720,40 @@ function CatalogTab({ showForm, setShowForm }) {
       {isLoading && <p className="text-zinc-500 text-center py-8 text-sm">Cargando...</p>}
 
       {Object.entries(grouped).map(([cat, catItems]) => (
-        <div key={cat} className="card space-y-2">
-          <h3 className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">{cat}</h3>
-          <div className="space-y-1">
+        <div key={cat} className="space-y-3">
+          <h3 className="text-zinc-400 text-xs font-semibold uppercase tracking-wider px-1">{cat}</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
             {catItems.map((item) => (
-              <div key={item.id} className={`flex items-center justify-between px-3 py-2 rounded-lg ${item.is_active ? "bg-zinc-800" : "bg-zinc-900 opacity-50"}`}>
-                <div className="min-w-0 flex-1 flex items-center gap-2">
-                  <span className="text-white text-sm font-medium">{item.name}</span>
-                  {item.color && <ColorSwatch color={item.color} />}
+              <div key={item.id}
+                className={`bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col gap-2 transition-colors hover:border-zinc-600
+                  ${!item.is_active ? "opacity-40" : ""}`}
+              >
+                {/* Color swatch o placeholder */}
+                <div className="flex items-center justify-center h-10">
+                  {item.color
+                    ? <ColorSwatch color={item.color} size="lg" />
+                    : <span className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 block" />
+                  }
                 </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-brand-green text-sm">${Number(item.unit_price).toLocaleString("es-CO")}</span>
-                  <button onClick={() => setEditing(item)} className="text-zinc-400 hover:text-white text-xs transition-colors">Editar</button>
+
+                {/* Nombre */}
+                <p className="text-white text-sm font-medium text-center leading-snug truncate" title={item.name}>
+                  {item.name}
+                </p>
+
+                {/* Unidad + Precio */}
+                <div className="text-center">
+                  <p className="text-brand-green text-sm font-semibold">${Number(item.unit_price).toLocaleString("es-CO")}</p>
+                  <p className="text-zinc-500 text-xs">/ {item.unit}</p>
+                </div>
+
+                {/* Acciones */}
+                <div className="flex gap-2 justify-center mt-auto pt-1 border-t border-zinc-800">
+                  <button onClick={() => setEditing(item)}
+                    className="text-zinc-400 hover:text-white text-xs transition-colors">
+                    Editar
+                  </button>
+                  <span className="text-zinc-700">·</span>
                   <button
                     onClick={() => toggleMut.mutate({ id: item.id, is_active: !item.is_active })}
                     className={`text-xs transition-colors ${item.is_active ? "text-zinc-500 hover:text-red-400" : "text-zinc-600 hover:text-brand-green"}`}
