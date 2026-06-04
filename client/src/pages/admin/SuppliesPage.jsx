@@ -825,6 +825,7 @@ function CatalogTab({ showForm, setShowForm }) {
 
       {(showForm || editing) && (
         <CatalogItemModal
+          key={editing?.id || "new"}
           item={editing}
           onClose={() => { setShowForm(false); setEditing(null); }}
           onSave={(d) => editing ? updateMut.mutate({ id: editing.id, ...d }) : createMut.mutate(d)}
