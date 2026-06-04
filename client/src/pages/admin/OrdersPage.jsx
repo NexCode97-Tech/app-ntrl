@@ -72,11 +72,11 @@ export default function OrdersPage() {
         statuses.map((s) => api.get(`/orders?page=1&limit=1&status=${s}`).then((r) => r.data))
       );
       return {
-        "":            results[0]?.pagination?.total ?? 0,
-        pending:       results[1]?.pagination?.total ?? 0,
-        in_progress:   results[2]?.pagination?.total ?? 0,
-        completed:     results[3]?.pagination?.total ?? 0,
-        delivered:     results[4]?.pagination?.total ?? 0,
+        "":            results[0]?.total ?? 0,
+        pending:       results[1]?.total ?? 0,
+        in_progress:   results[2]?.total ?? 0,
+        completed:     results[3]?.total ?? 0,
+        delivered:     results[4]?.total ?? 0,
       };
     },
     staleTime: 30_000,
