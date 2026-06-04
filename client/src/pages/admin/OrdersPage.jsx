@@ -4,6 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../../config/api.js";
 import TabBar from "../../components/ui/TabBar.jsx";
 
+const STATUS_CARDS = [
+  { value: "",            label: "Todos",      color: "text-zinc-300",      border: "border-zinc-600",    activeBg: "bg-zinc-700" },
+  { value: "pending",     label: "Pendiente",  color: "text-yellow-400",    border: "border-yellow-500/50", activeBg: "bg-yellow-500/10" },
+  { value: "in_progress", label: "En proceso", color: "text-blue-400",      border: "border-blue-500/50",   activeBg: "bg-blue-500/10" },
+  { value: "completed",   label: "Completado", color: "text-brand-green",   border: "border-brand-green/50",activeBg: "bg-brand-green/10" },
+  { value: "delivered",   label: "Entregado",  color: "text-zinc-400",      border: "border-zinc-600",      activeBg: "bg-zinc-700" },
+];
+
 const STATUS_LABELS = {
   pending:     { label: "Pendiente",   cls: "badge-pending"   },
   in_progress: { label: "En proceso",  cls: "badge-progress"  },
@@ -55,6 +63,25 @@ export default function OrdersPage() {
     keepPreviousData: true,
   });
 
+  // Conteos por estado (queries livianas — limit=1, solo necesitamos pagination.total)
+  const { data: counts } = useQuery({
+    queryKey: ["orders-counts"],
+    queryFn: async () => {
+      const statuses = ["", "pending", "in_progress", "completed", "delivered"];
+      const results = await Promise.all(
+        statuses.map((s) => api.get(`/orders?page=1&limit=1&status=${s}`).then((r) => r.data))
+      );
+      return {
+        "":            results[0]?.pagination?.total ?? 0,
+        pending:       results[1]?.pagination?.total ?? 0,
+        in_progress:   results[2]?.pagination?.total ?? 0,
+        completed:     results[3]?.pagination?.total ?? 0,
+        delivered:     results[4]?.pagination?.total ?? 0,
+      };
+    },
+    staleTime: 30_000,
+  });
+
   return (
     <div className="space-y-4">
       <h1 className="text-white font-bold text-xl lg:hidden">Pedidos</h1>
@@ -74,7 +101,7 @@ export default function OrdersPage() {
           </button>
         </div>
 
-        {/* Fila 2: filtro — tabs en desktop, select en móvil */}
+        {/* Móvil — select */}
         <div className="md:hidden">
           <select className="input-field w-full" value={statusFilter}
             onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
@@ -84,17 +111,47 @@ export default function OrdersPage() {
             ))}
           </select>
         </div>
-        <TabBar
-          tabs={[
-            { value: "",            label: "Todos" },
-            { value: "pending",     label: "Pendiente" },
-            { value: "in_progress", label: "En proceso" },
-            { value: "completed",   label: "Completado" },
-            { value: "delivered",   label: "Entregado" },
-          ]}
-          value={statusFilter}
-          onChange={(v) => { setStatus(v); setPage(1); }}
-        />
+
+        {/* Tablet — TabBar */}
+        <div className="hidden md:block lg:hidden">
+          <TabBar
+            tabs={[
+              { value: "",            label: "Todos" },
+              { value: "pending",     label: "Pendiente" },
+              { value: "in_progress", label: "En proceso" },
+              { value: "completed",   label: "Completado" },
+              { value: "delivered",   label: "Entregado" },
+            ]}
+            value={statusFilter}
+            onChange={(v) => { setStatus(v); setPage(1); }}
+          />
+        </div>
+
+        {/* Desktop — tarjetas de conteo */}
+        <div className="hidden lg:grid grid-cols-5 gap-3">
+          {STATUS_CARDS.map((s) => {
+            const count = counts?.[s.value] ?? "—";
+            const isActive = statusFilter === s.value;
+            return (
+              <button
+                key={s.value}
+                onClick={() => { setStatus(s.value); setPage(1); }}
+                className={`rounded-xl border p-3 text-left transition-all duration-150
+                  ${isActive
+                    ? `${s.activeBg} ${s.border} ring-1 ${s.border}`
+                    : "bg-zinc-900 border-zinc-800 hover:border-zinc-600"
+                  }`}
+              >
+                <p className={`text-2xl font-bold ${isActive ? s.color : "text-zinc-300"}`}>
+                  {count}
+                </p>
+                <p className={`text-xs mt-0.5 ${isActive ? s.color : "text-zinc-500"}`}>
+                  {s.label}
+                </p>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Cards — todos los tamaños */}
