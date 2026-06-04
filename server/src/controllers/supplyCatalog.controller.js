@@ -7,7 +7,7 @@ import { AppError } from "../utils/AppError.js";
 export async function list(req, res, next) {
   try {
     const { rows } = await pool.query(
-      `SELECT id, name, unit, unit_price, category
+      `SELECT id, name, unit, unit_price, category, color
        FROM supply_catalog
        WHERE is_active = TRUE
        ORDER BY category NULLS LAST, name ASC`
@@ -21,7 +21,7 @@ export async function listAll(req, res, next) {
   try {
     if (req.user.role !== "admin") throw new AppError("Solo administradores.", 403, "FORBIDDEN");
     const { rows } = await pool.query(
-      `SELECT id, name, unit, unit_price, category, notes, is_active, created_at
+      `SELECT id, name, unit, unit_price, category, color, notes, is_active, created_at
        FROM supply_catalog
        ORDER BY category NULLS LAST, name ASC`
     );
@@ -33,15 +33,15 @@ export async function listAll(req, res, next) {
 export async function create(req, res, next) {
   try {
     if (req.user.role !== "admin") throw new AppError("Solo administradores.", 403, "FORBIDDEN");
-    const { name, unit, unit_price = 0, category = null, notes = null } = req.body;
+    const { name, unit, unit_price = 0, category = null, color = null, notes = null } = req.body;
     if (!name?.trim()) throw new AppError("El nombre es requerido.", 400, "BAD_REQUEST");
     if (!unit?.trim()) throw new AppError("La unidad es requerida.", 400, "BAD_REQUEST");
 
     const { rows: [row] } = await pool.query(
-      `INSERT INTO supply_catalog (name, unit, unit_price, category, notes)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO supply_catalog (name, unit, unit_price, category, color, notes)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [name.trim(), unit.trim(), Number(unit_price) || 0, category?.trim() || null, notes?.trim() || null]
+      [name.trim(), unit.trim(), Number(unit_price) || 0, category?.trim() || null, color?.trim() || null, notes?.trim() || null]
     );
     res.status(201).json({ status: "ok", data: row });
   } catch (err) { next(err); }
@@ -52,7 +52,7 @@ export async function update(req, res, next) {
   try {
     if (req.user.role !== "admin") throw new AppError("Solo administradores.", 403, "FORBIDDEN");
     const { id } = req.params;
-    const { name, unit, unit_price, category, notes, is_active } = req.body;
+    const { name, unit, unit_price, category, color, notes, is_active } = req.body;
 
     const sets = [];
     const vals = [id];
@@ -60,6 +60,7 @@ export async function update(req, res, next) {
     if (unit       !== undefined) { vals.push(unit.trim());                    sets.push(`unit = $${vals.length}`); }
     if (unit_price !== undefined) { vals.push(Number(unit_price) || 0);        sets.push(`unit_price = $${vals.length}`); }
     if (category   !== undefined) { vals.push(category?.trim() || null);       sets.push(`category = $${vals.length}`); }
+    if (color      !== undefined) { vals.push(color?.trim() || null);          sets.push(`color = $${vals.length}`); }
     if (notes      !== undefined) { vals.push(notes?.trim() || null);          sets.push(`notes = $${vals.length}`); }
     if (is_active  !== undefined) { vals.push(Boolean(is_active));             sets.push(`is_active = $${vals.length}`); }
 

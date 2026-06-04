@@ -639,9 +639,10 @@ function CatalogTab({ showForm, setShowForm }) {
                 <div className="min-w-0 flex-1">
                   <span className="text-white text-sm font-medium">{item.name}</span>
                   <span className="text-zinc-500 text-xs ml-2">{item.unit}</span>
+                  {item.color && <span className="text-zinc-400 text-xs ml-2 px-1.5 py-0.5 bg-zinc-700 rounded">{item.color}</span>}
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-brand-green text-sm font-mono">${Number(item.unit_price).toLocaleString("es-CO")}</span>
+                  <span className="text-brand-green text-sm">${Number(item.unit_price).toLocaleString("es-CO")}</span>
                   <button onClick={() => setEditing(item)} className="text-zinc-400 hover:text-white text-xs transition-colors">Editar</button>
                   <button
                     onClick={() => toggleMut.mutate({ id: item.id, is_active: !item.is_active })}
@@ -755,6 +756,7 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
     unit:       item?.unit       || "metros",
     unit_price: item?.unit_price || "",
     category:   item?.category   || "",
+    color:      item?.color      || "",
     notes:      item?.notes      || "",
   });
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
@@ -780,12 +782,18 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
               <PriceInput value={form.unit_price} onChange={(v) => set("unit_price", v)} />
             </div>
           </div>
-          <div>
-            <label className="block text-xs text-zinc-400 mb-1">Categoría</label>
-            <select className="input-field" value={form.category} onChange={(e) => set("category", e.target.value)}>
-              <option value="">Sin categoría</option>
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1">Categoría</label>
+              <select className="input-field" value={form.category} onChange={(e) => set("category", e.target.value)}>
+                <option value="">Sin categoría</option>
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1">Color</label>
+              <input className="input-field" placeholder="Ej: Blanco, Negro, Rojo..." value={form.color} onChange={(e) => set("color", e.target.value)} />
+            </div>
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Notas</label>
