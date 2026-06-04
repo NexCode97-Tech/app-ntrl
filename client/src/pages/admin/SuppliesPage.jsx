@@ -58,14 +58,13 @@ const COLOR_HEX = { Blanco:"#FFFFFF", Negro:"#111111", Azul:"#2563EB", Rojo:"#DC
 
 function ColorSwatch({ color }) {
   const hex = COLOR_HEX[color] ?? (color?.startsWith("#") ? color : null);
+  if (!hex) return <span className="text-zinc-600 text-xs">—</span>;
   return (
-    <span className="inline-flex items-center gap-1.5 justify-center">
-      {hex && (
-        <span className="w-3 h-3 rounded-full border border-white/20 shrink-0"
-          style={{ backgroundColor: hex }} />
-      )}
-      <span className="text-zinc-300 text-xs">{color}</span>
-    </span>
+    <span
+      title={color}
+      className="w-5 h-5 rounded-full border border-white/20 inline-block mx-auto"
+      style={{ backgroundColor: hex }}
+    />
   );
 }
 
