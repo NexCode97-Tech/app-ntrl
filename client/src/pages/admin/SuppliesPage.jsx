@@ -502,7 +502,7 @@ function RequestForm({ orders, onSave, onClose, saving, error }) {
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Insumo *</label>
             <select className="input-field" value={data.supply_catalog_id} onChange={(e) => handleSelectCatalog(e.target.value)}>
-              <option value="">— Seleccionar del catálogo —</option>
+              <option value="">Seleccionar del catálogo</option>
               {catalog.map((c) => (
                 <option key={c.id} value={c.id}>{c.name} ({c.unit})</option>
               ))}
@@ -517,7 +517,7 @@ function RequestForm({ orders, onSave, onClose, saving, error }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-zinc-400 mb-1">Cantidad *</label>
-              <input className="input-field" type="number" min="0.01" step="0.01" placeholder="0" value={data.quantity} onChange={(e) => set("quantity", e.target.value)} />
+              <QuantityInput value={data.quantity} onChange={(v) => set("quantity", v)} />
             </div>
             <div>
               <label className="block text-xs text-zinc-400 mb-1">Unidad</label>
@@ -747,6 +747,52 @@ function CatalogTab({ showForm, setShowForm }) {
 }
 
 /** Input de precio con formato colombiano (puntos como separadores de miles) y flechas custom */
+function QuantityInput({ value, onChange }) {
+  const STEP = 1;
+  const num  = parseFloat(value) || 0;
+
+  return (
+    <div className="flex rounded-lg overflow-hidden border border-zinc-700 focus-within:border-brand-green transition-colors bg-zinc-800">
+      <input
+        type="text"
+        inputMode="decimal"
+        className="flex-1 bg-transparent text-white text-sm px-3 py-2 outline-none min-w-0"
+        placeholder="0"
+        value={value}
+        onChange={(e) => {
+          const raw = e.target.value;
+          if (raw === "" || /^\d*\.?\d*$/.test(raw)) onChange(raw);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowUp")   { e.preventDefault(); onChange(String(Math.max(0, num + STEP))); }
+          if (e.key === "ArrowDown") { e.preventDefault(); onChange(String(Math.max(0, num - STEP))); }
+        }}
+      />
+      <div className="flex flex-col border-l border-zinc-700">
+        <button
+          type="button" tabIndex={-1}
+          onClick={() => onChange(String(num + STEP))}
+          className="flex-1 flex items-center justify-center px-2.5 text-zinc-400 hover:text-brand-green hover:bg-zinc-700 transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="18 15 12 9 6 15"/>
+          </svg>
+        </button>
+        <div className="h-px bg-zinc-700" />
+        <button
+          type="button" tabIndex={-1}
+          onClick={() => onChange(String(Math.max(0, num - STEP)))}
+          className="flex-1 flex items-center justify-center px-2.5 text-zinc-400 hover:text-brand-green hover:bg-zinc-700 transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function PriceInput({ value, onChange, placeholder = "0" }) {
   const STEP = 100;
 
