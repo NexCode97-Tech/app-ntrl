@@ -596,18 +596,22 @@ export default function DashboardPage() {
               </p>
               {pct !== null && (
                 <div className={`flex items-center justify-center gap-1.5 mt-1.5 text-xs font-medium ${up ? "text-emerald-400" : "text-red-400"}`}>
-                  {/* Mini sparkline */}
-                  <svg width="36" height="18" viewBox="0 0 36 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  {/* Flecha curva trending */}
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                     {up ? (
-                      <polyline
-                        points="2,14 7,11 12,13 17,8 22,10 27,5 34,2"
-                        stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-                      />
+                      <>
+                        {/* Curva que arranca horizontal y termina apuntando arriba-derecha */}
+                        <path d="M2 14 Q6 14 10 9 T17 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" fill="none"/>
+                        {/* Punta de flecha */}
+                        <polyline points="13,2 17,3 16,7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                      </>
                     ) : (
-                      <polyline
-                        points="2,4 7,7 12,5 17,9 22,8 27,12 34,15"
-                        stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-                      />
+                      <>
+                        {/* Curva que arranca horizontal y termina apuntando abajo-derecha */}
+                        <path d="M2 6 Q6 6 10 11 T17 17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" fill="none"/>
+                        {/* Punta de flecha */}
+                        <polyline points="13,18 17,17 16,13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                      </>
                     )}
                   </svg>
                   {Math.abs(pct).toFixed(1)}% <span className="text-zinc-500 font-normal">vs mes anterior</span>
