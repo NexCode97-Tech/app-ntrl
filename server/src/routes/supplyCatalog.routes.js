@@ -19,4 +19,10 @@ router.post("/product/:productId/materials", ctrl.addMaterial);
 router.put("/materials/:id",                 ctrl.updateMaterial);
 router.delete("/materials/:id",              ctrl.deleteMaterial);
 
+// Proveedores por insumo
+router.get("/:id/suppliers",              ctrl.getCatalogSuppliers);
+router.post("/:id/suppliers",             ctrl.addCatalogSupplier);
+router.put("/catalog-suppliers/:id",      ctrl.updateCatalogSupplier);
+router.delete("/catalog-suppliers/:id",   ctrl.removeCatalogSupplier);
+
 export default router;

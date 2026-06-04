@@ -152,3 +152,93 @@ export async function deleteMaterial(req, res, next) {
     res.json({ status: "ok" });
   } catch (err) { next(err); }
 }
+
+// ── PROVEEDORES POR INSUMO ────────────────────────────────────
+
+/** GET /supply-catalog/:id/suppliers — proveedores asignados a un insumo */
+export async function getCatalogSuppliers(req, res, next) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT cs.id, cs.unit_price, cs.is_preferred, cs.notes,
+              s.id AS supplier_id, s.name AS supplier_name, s.contact_name, s.phone, s.email
+       FROM supply_catalog_suppliers cs
+       JOIN suppliers s ON s.id = cs.supplier_id
+       WHERE cs.supply_catalog_id = $1
+       ORDER BY cs.is_preferred DESC, s.name ASC`,
+      [req.params.id]
+    );
+    res.json({ status: "ok", data: rows });
+  } catch (err) { next(err); }
+}
+
+/** POST /supply-catalog/:id/suppliers — asignar proveedor a un insumo */
+export async function addCatalogSupplier(req, res, next) {
+  try {
+    if (req.user.role !== "admin") throw new AppError("Solo administradores.", 403, "FORBIDDEN");
+    const { supplier_id, unit_price = null, is_preferred = false, notes = null } = req.body;
+    if (!supplier_id) throw new AppError("supplier_id requerido.", 400, "BAD_REQUEST");
+
+    // Si se marca como preferido, quitar preferido anterior
+    if (is_preferred) {
+      await pool.query(
+        `UPDATE supply_catalog_suppliers SET is_preferred = FALSE WHERE supply_catalog_id = $1`,
+        [req.params.id]
+      );
+    }
+
+    const { rows: [row] } = await pool.query(
+      `INSERT INTO supply_catalog_suppliers (supply_catalog_id, supplier_id, unit_price, is_preferred, notes)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (supply_catalog_id, supplier_id)
+       DO UPDATE SET unit_price = EXCLUDED.unit_price, is_preferred = EXCLUDED.is_preferred, notes = EXCLUDED.notes
+       RETURNING *`,
+      [req.params.id, supplier_id, unit_price ? Number(unit_price) : null, Boolean(is_preferred), notes?.trim() || null]
+    );
+    res.status(201).json({ status: "ok", data: row });
+  } catch (err) { next(err); }
+}
+
+/** PUT /supply-catalog/catalog-suppliers/:id — editar asignación */
+export async function updateCatalogSupplier(req, res, next) {
+  try {
+    if (req.user.role !== "admin") throw new AppError("Solo administradores.", 403, "FORBIDDEN");
+    const { unit_price, is_preferred, notes } = req.body;
+
+    // Obtener supply_catalog_id para poder quitar preferido anterior
+    const { rows: [existing] } = await pool.query(
+      `SELECT supply_catalog_id FROM supply_catalog_suppliers WHERE id = $1`, [req.params.id]
+    );
+    if (!existing) throw new AppError("Asignación no encontrada.", 404, "NOT_FOUND");
+
+    if (is_preferred) {
+      await pool.query(
+        `UPDATE supply_catalog_suppliers SET is_preferred = FALSE WHERE supply_catalog_id = $1 AND id != $2`,
+        [existing.supply_catalog_id, req.params.id]
+      );
+    }
+
+    const sets = [], vals = [req.params.id];
+    if (unit_price   !== undefined) { vals.push(unit_price ? Number(unit_price) : null); sets.push(`unit_price = $${vals.length}`); }
+    if (is_preferred !== undefined) { vals.push(Boolean(is_preferred));                  sets.push(`is_preferred = $${vals.length}`); }
+    if (notes        !== undefined) { vals.push(notes?.trim() || null);                  sets.push(`notes = $${vals.length}`); }
+
+    if (!sets.length) throw new AppError("Nada que actualizar.", 400, "BAD_REQUEST");
+
+    const { rows: [row] } = await pool.query(
+      `UPDATE supply_catalog_suppliers SET ${sets.join(", ")} WHERE id = $1 RETURNING *`, vals
+    );
+    res.json({ status: "ok", data: row });
+  } catch (err) { next(err); }
+}
+
+/** DELETE /supply-catalog/catalog-suppliers/:id — quitar proveedor de insumo */
+export async function removeCatalogSupplier(req, res, next) {
+  try {
+    if (req.user.role !== "admin") throw new AppError("Solo administradores.", 403, "FORBIDDEN");
+    const { rowCount } = await pool.query(
+      `DELETE FROM supply_catalog_suppliers WHERE id = $1`, [req.params.id]
+    );
+    if (!rowCount) throw new AppError("Asignación no encontrada.", 404, "NOT_FOUND");
+    res.json({ status: "ok" });
+  } catch (err) { next(err); }
+}
