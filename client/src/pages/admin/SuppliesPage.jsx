@@ -466,7 +466,8 @@ function SupplierModal({ form, onSave, onClose, saving, error }) {
 }
 
 function RequestForm({ orders, onSave, onClose, saving, error }) {
-  const [data, setData] = useState({ supply_catalog_id: "", item_name: "", quantity: "", unit: "unidades", color: "", order_id: "", notes: "" });
+  const [data, setData]     = useState({ supply_catalog_id: "", item_name: "", quantity: "", unit: "Unidades", color: "", order_id: "", notes: "" });
+  const [category, setCategory] = useState("");
   const set = (k, v) => setData((p) => ({ ...p, [k]: v }));
 
   const { data: catalog = [] } = useQuery({
@@ -474,11 +475,24 @@ function RequestForm({ orders, onSave, onClose, saving, error }) {
     queryFn: () => api.get("/supply-catalog").then((r) => r.data.data),
   });
 
+  // Categorías únicas del catálogo
+  const categories = [...new Set(catalog.map((c) => c.category).filter(Boolean))].sort();
+  const filtered   = category ? catalog.filter((c) => c.category === category) : catalog;
+
   function handleSelectCatalog(id) {
     const item = catalog.find((c) => c.id === id);
     set("supply_catalog_id", id);
     if (item) { set("item_name", item.name); set("unit", item.unit); }
     else       { set("item_name", ""); }
+  }
+
+  function handleCategoryChange(cat) {
+    setCategory(cat);
+    // Limpiar insumo seleccionado si no pertenece a la nueva categoría
+    if (cat && data.supply_catalog_id) {
+      const item = catalog.find((c) => c.id === data.supply_catalog_id);
+      if (item && item.category !== cat) handleSelectCatalog("");
+    }
   }
 
   function handleSubmit() {
@@ -493,21 +507,31 @@ function RequestForm({ orders, onSave, onClose, saving, error }) {
       <div className="bg-zinc-900 rounded-xl p-6 w-full max-w-md space-y-4">
         <h2 className="text-white font-semibold">Nueva solicitud de insumo</h2>
         <div className="space-y-3">
-          <div>
-            <label className="block text-xs text-zinc-400 mb-1">Insumo *</label>
-            <CustomSelect value={data.supply_catalog_id} onChange={(e) => handleSelectCatalog(e.target.value)}>
-              <option value="">Seleccionar del catálogo</option>
-              {catalog.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </CustomSelect>
-            {!data.supply_catalog_id && (
-              <input className="input-field mt-2" placeholder="O escribir manualmente..." value={data.item_name} onChange={(e) => set("item_name", e.target.value)} />
-            )}
-            {selected && (
-              <p className="text-xs text-zinc-500 mt-1">Precio referencial: ${Number(selected.unit_price).toLocaleString("es-CO")} / {selected.unit}</p>
-            )}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1">Categoría</label>
+              <CustomSelect value={category} onChange={(e) => handleCategoryChange(e.target.value)}>
+                <option value="">Todas</option>
+                {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+              </CustomSelect>
+            </div>
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1">Insumo *</label>
+              <CustomSelect value={data.supply_catalog_id} onChange={(e) => handleSelectCatalog(e.target.value)}>
+                <option value="">Seleccionar insumo</option>
+                {filtered.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </CustomSelect>
+            </div>
           </div>
+          {!data.supply_catalog_id && (
+            <input className="input-field" placeholder="O escribir manualmente..." value={data.item_name} onChange={(e) => set("item_name", e.target.value)} autoCapitalize="off" autoCorrect="off" />
+          )}
+          {selected && (
+            <p className="text-xs text-zinc-500">Precio referencial: ${Number(selected.unit_price).toLocaleString("es-CO")} / {selected.unit}</p>
+          )}
+          <div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-zinc-400 mb-1">Cantidad *</label>
