@@ -55,11 +55,12 @@ export default function ColorPicker({ value, onChange }) {
   // Detectar si abrir hacia arriba o abajo
   useEffect(() => {
     if (!open || !triggerRef.current) return;
-    const rect         = triggerRef.current.getBoundingClientRect();
-    const dropdownH    = recent.length > 0 ? 420 : 380; // estimado
-    const spaceBelow   = window.innerHeight - rect.bottom;
-    setOpenUp(spaceBelow < dropdownH && rect.top > dropdownH);
-  }, [open, recent.length]);
+    const rect       = triggerRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    // Si hay menos de 420px abajo Y hay más espacio arriba → abrir hacia arriba
+    setOpenUp(spaceBelow < 420 && spaceAbove > spaceBelow);
+  }, [open]);
 
   // Cerrar al clic fuera
   useEffect(() => {
@@ -121,7 +122,7 @@ export default function ColorPicker({ value, onChange }) {
 
       {open && (
         <div
-          className={`absolute left-0 z-[200] bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl p-4 w-64
+          className={`absolute left-0 z-[200] bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl p-4 w-64 overflow-y-auto max-h-[90vh]
             ${openUp ? "bottom-full mb-1" : "top-full mt-1"}`}
         >
           {/* Presets */}
