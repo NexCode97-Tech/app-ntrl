@@ -206,8 +206,6 @@ function RequestForm({ orders, onSave, onClose, saving, error }) {
           {!data.supply_catalog_id && (
             <input className="input-field" placeholder="O escribir manualmente..." value={data.item_name} onChange={(e) => set("item_name", e.target.value)} autoCapitalize="off" autoCorrect="off" />
           )}
-          <div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-zinc-400 mb-1">Cantidad *</label>
