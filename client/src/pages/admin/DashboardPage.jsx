@@ -320,6 +320,7 @@ export default function DashboardPage() {
   }, []);
 
   const [selectedMonth, setSelectedMonth] = useState(null); // null = mes actual
+  const [selectedRange,  setSelectedRange]  = useState(null); // { start: Date, end: Date } | null
   const [activePieIndex, setActivePieIndex] = useState(null);
   const onPieEnter = useCallback((_, index) => setActivePieIndex(index), []);
   const onPieLeave = useCallback(() => setActivePieIndex(null), []);
@@ -330,6 +331,15 @@ export default function DashboardPage() {
     queryFn:  () => api.get("/dashboard/history").then((r) => r.data.data),
     staleTime: 0,
     enabled: !isVendedor,
+  });
+
+  // Query para rango de días específico
+  const fmtDate = (d) => d.toISOString().slice(0, 10);
+  const { data: rangeData } = useQuery({
+    queryKey: ["dashboard-range", selectedRange?.start, selectedRange?.end],
+    queryFn:  () => api.get(`/dashboard/range?start=${fmtDate(selectedRange.start)}&end=${fmtDate(selectedRange.end)}`).then((r) => r.data.data),
+    enabled:  !!selectedRange?.start && !!selectedRange?.end,
+    staleTime: 2 * 60 * 1000,
   });
 
   const { data: sportByMonth } = useQuery({
@@ -344,9 +354,30 @@ export default function DashboardPage() {
     return (monthlyHistory ?? []).find((s) => s.month === selectedMonth) ?? null;
   }, [selectedMonth, monthlyHistory]);
 
-  const financialDisplay = selectedSnapshot
+  // Mes anterior para % comparación
+  const prevSnapshot = useMemo(() => {
+    const activeMonth = selectedMonth ?? currentMonth;
+    const history = monthlyHistory ?? [];
+    // Calcular mes anterior
+    const [y, m] = activeMonth.split("-").map(Number);
+    const prevDate = new Date(y, m - 2, 1);
+    const prevKey  = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
+    return history.find((s) => s.month === prevKey) ?? null;
+  }, [selectedMonth, currentMonth, monthlyHistory]);
+
+  const financialDisplay = selectedRange && rangeData
+    ? rangeData.financial
+    : selectedSnapshot
     ? { total_revenue: selectedSnapshot.total_revenue, collected: selectedSnapshot.collected, pending: selectedSnapshot.pending }
     : data?.financial;
+
+  // % de cambio vs mes anterior
+  function pctChange(current, prev) {
+    const c = Number(current || 0);
+    const p = Number(prev    || 0);
+    if (p === 0) return null;
+    return ((c - p) / p) * 100;
+  }
 
   // Datos siempre presentes — si no hay info real se muestran en cero
   const byStatusData = useMemo(() => {
@@ -520,43 +551,62 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      {/* Selector de mes */}
+      {/* Selector de mes + rango de días */}
       <div className="flex items-center gap-2">
         <span className="text-zinc-500 text-xs shrink-0">Ver mes:</span>
         <MonthPicker
           value={selectedMonth}
           currentMonth={currentMonth}
           availableMonths={(monthlyHistory ?? []).map((s) => s.month)}
-          onChange={(m) => { setSelectedMonth(m); setSelectedSport(null); }}
+          dateRange={selectedRange}
+          onChange={(m, range) => { setSelectedMonth(m); setSelectedRange(range); setSelectedSport(null); }}
         />
       </div>
 
       {/* FILA 1 — KPIs financieros */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: "Total facturado",    value: Number(financialDisplay?.total_revenue || 0), color: "text-brand-green" },
-          { label: "Recaudado",          value: Number(financialDisplay?.collected     || 0), color: "text-white"       },
-          { label: "Pendiente de cobro", value: Number(financialDisplay?.pending       || 0), color: "text-yellow-400"  },
-        ].map((kpi, i) => (
-          <motion.div
-            key={kpi.label}
-            className="card text-center"
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: i * 0.08, ease: "easeOut" }}
-          >
-            <p className="text-zinc-400 text-sm mb-1">{kpi.label}</p>
-            <p className={`${kpi.color} text-2xl font-bold`}>
-              $<CountUp
-                end={kpi.value}
-                duration={1.2}
-                separator="."
-                decimal=","
-                preserveValue
-              />
-            </p>
-          </motion.div>
-        ))}
+          {
+            label: "Total facturado", color: "text-brand-green",
+            value: Number(financialDisplay?.total_revenue || 0),
+            prev:  Number(prevSnapshot?.total_revenue || 0),
+          },
+          {
+            label: "Recaudado", color: "text-white",
+            value: Number(financialDisplay?.collected || 0),
+            prev:  Number(prevSnapshot?.collected     || 0),
+          },
+          {
+            label: "Pendiente de cobro", color: "text-yellow-400",
+            value: Number(financialDisplay?.pending || 0),
+            prev:  Number(prevSnapshot?.pending     || 0),
+          },
+        ].map((kpi, i) => {
+          const pct = !selectedRange ? pctChange(kpi.value, kpi.prev) : null;
+          const up  = pct !== null && pct >= 0;
+          return (
+            <motion.div
+              key={kpi.label}
+              className="card text-center"
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: i * 0.08, ease: "easeOut" }}
+            >
+              <p className="text-zinc-400 text-sm mb-1">{kpi.label}</p>
+              <p className={`${kpi.color} text-2xl font-bold`}>
+                $<CountUp end={kpi.value} duration={1.2} separator="." decimal="," preserveValue />
+              </p>
+              {pct !== null && (
+                <div className={`flex items-center justify-center gap-1 mt-1.5 text-xs font-medium ${up ? "text-emerald-400" : "text-red-400"}`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" className={`transition-transform ${up ? "" : "rotate-180"}`}>
+                    <path d="M12 4l8 8H4z"/>
+                  </svg>
+                  {Math.abs(pct).toFixed(1)}% vs mes anterior
+                </div>
+              )}
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* FILA 2 — Dona + Ventas por deporte */}

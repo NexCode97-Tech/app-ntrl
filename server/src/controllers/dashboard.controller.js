@@ -188,6 +188,44 @@ export async function getMonthlyHistory(req, res, next) {
   } catch (err) { next(err); }
 }
 
+export async function getDateRangeSummary(req, res, next) {
+  try {
+    const { start, end } = req.query;
+    if (!start || !end) return res.status(400).json({ status: "error", message: "Parámetros start y end requeridos." });
+
+    const startDate = new Date(start + "T00:00:00.000Z");
+    const endDate   = new Date(end   + "T23:59:59.999Z");
+    if (isNaN(startDate) || isNaN(endDate)) return res.status(400).json({ status: "error", message: "Fechas inválidas." });
+
+    const [financial, byStatus] = await Promise.all([
+      pool.query(`
+        SELECT
+          COALESCE(SUM(total), 0)   AS total_revenue,
+          COALESCE(SUM(balance), 0) AS pending,
+          (SELECT COALESCE(SUM(amount), 0) FROM order_payments
+           WHERE paid_at >= $1 AND paid_at <= $2) AS collected
+        FROM orders
+        WHERE created_at >= $1 AND created_at <= $2
+      `, [startDate, endDate]),
+
+      pool.query(`
+        SELECT status, COUNT(*) AS total
+        FROM orders
+        WHERE created_at >= $1 AND created_at <= $2
+        GROUP BY status
+      `, [startDate, endDate]),
+    ]);
+
+    res.json({
+      status: "ok",
+      data: {
+        financial:  financial.rows[0],
+        byStatus:   byStatus.rows,
+      },
+    });
+  } catch (err) { next(err); }
+}
+
 export async function getPendingBalances(req, res, next) {
   try {
     const { rows } = await pool.query(
