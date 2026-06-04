@@ -596,17 +596,17 @@ export default function DashboardPage() {
               </p>
               {pct !== null && (
                 <div className={`flex items-center justify-center gap-1.5 mt-1.5 text-xs font-medium ${up ? "text-emerald-400" : "text-red-400"}`}>
-                  {/* Mini gráfica de tendencia */}
-                  <svg width="28" height="16" viewBox="0 0 28 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  {/* Mini sparkline */}
+                  <svg width="36" height="18" viewBox="0 0 36 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                     {up ? (
                       <polyline
-                        points="2,13 8,10 14,7 20,4 26,1"
-                        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                        points="2,14 7,11 12,13 17,8 22,10 27,5 34,2"
+                        stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
                       />
                     ) : (
                       <polyline
-                        points="2,3 8,6 14,9 20,12 26,15"
-                        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                        points="2,4 7,7 12,5 17,9 22,8 27,12 34,15"
+                        stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
                       />
                     )}
                   </svg>
