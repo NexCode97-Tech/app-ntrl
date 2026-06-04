@@ -521,6 +521,88 @@ function PriceField({ label, desc, fieldKey, data, setData }) {
   );
 }
 
+function ProductMaterialsSection({ productId }) {
+  const qc = useQueryClient();
+  const [addOpen, setAddOpen] = useState(false);
+  const [newMat, setNewMat]   = useState({ supply_catalog_id: "", quantity_per_unit: "" });
+
+  const { data: mats = [], costo_total = 0 } = useQuery({
+    queryKey: ["product-materials", productId],
+    queryFn: () => api.get(`/supply-catalog/product/${productId}/materials`).then((r) => ({ data: r.data.data, costo_total: r.data.costo_total })),
+    select: (r) => r,
+  });
+
+  const { data: catalog = [] } = useQuery({
+    queryKey: ["supply-catalog"],
+    queryFn: () => api.get("/supply-catalog").then((r) => r.data.data),
+  });
+
+  const addMut = useMutation({
+    mutationFn: (d) => api.post(`/supply-catalog/product/${productId}/materials`, d),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["product-materials", productId] }); setAddOpen(false); setNewMat({ supply_catalog_id: "", quantity_per_unit: "" }); },
+  });
+
+  const delMut = useMutation({
+    mutationFn: (id) => api.delete(`/supply-catalog/materials/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["product-materials", productId] }),
+  });
+
+  const items = Array.isArray(mats) ? mats : mats.data ?? [];
+  const costoTotal = typeof costo_total === "number" ? costo_total : mats.costo_total ?? 0;
+
+  return (
+    <div className="bg-zinc-800/50 rounded-xl p-3 space-y-2.5">
+      <div className="flex items-center justify-between">
+        <p className="text-zinc-500 text-[10px] font-semibold uppercase tracking-wider">Materiales y Costo</p>
+        {costoTotal > 0 && (
+          <span className="text-brand-green text-xs font-mono font-semibold">
+            Costo: ${Number(costoTotal).toLocaleString("es-CO")}
+          </span>
+        )}
+      </div>
+
+      {items.length === 0 && <p className="text-zinc-600 text-xs">Sin materiales asignados</p>}
+
+      <div className="space-y-1">
+        {items.map((m) => (
+          <div key={m.id} className="flex items-center justify-between bg-zinc-800 rounded-lg px-2 py-1.5">
+            <div className="min-w-0 flex-1">
+              <span className="text-white text-xs">{m.name}</span>
+              <span className="text-zinc-500 text-xs ml-2">{m.quantity_per_unit} {m.unit}</span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-zinc-400 text-xs font-mono">${Number(m.subtotal_costo).toLocaleString("es-CO")}</span>
+              <button onClick={() => delMut.mutate(m.id)} className="text-zinc-600 hover:text-red-400 transition-colors text-xs">✕</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {addOpen ? (
+        <div className="space-y-2 pt-1">
+          <select className="input-field text-xs" value={newMat.supply_catalog_id} onChange={(e) => setNewMat(p => ({ ...p, supply_catalog_id: e.target.value }))}>
+            <option value="">— Seleccionar insumo —</option>
+            {catalog.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.unit})</option>)}
+          </select>
+          <div className="flex gap-2">
+            <input className="input-field text-xs flex-1" type="number" min="0.001" step="0.001" placeholder="Cantidad por prenda"
+              value={newMat.quantity_per_unit} onChange={(e) => setNewMat(p => ({ ...p, quantity_per_unit: e.target.value }))} />
+            <button className="btn-primary text-xs px-3" disabled={addMut.isPending || !newMat.supply_catalog_id || !newMat.quantity_per_unit}
+              onClick={() => addMut.mutate({ supply_catalog_id: newMat.supply_catalog_id, quantity_per_unit: parseFloat(newMat.quantity_per_unit) })}>
+              Agregar
+            </button>
+            <button className="btn-secondary text-xs px-2" onClick={() => setAddOpen(false)}>✕</button>
+          </div>
+        </div>
+      ) : (
+        <button className="text-xs text-zinc-400 hover:text-brand-green transition-colors" onClick={() => setAddOpen(true)}>
+          + Agregar material
+        </button>
+      )}
+    </div>
+  );
+}
+
 function ProductModal({ form, onSave, onClose, saving, lines }) {
   const [data,    setData]   = useState({ ...form });
   const [preview, setPreview] = useState(form.image_url ? fileUrl(form.image_url) : null);
@@ -591,6 +673,9 @@ function ProductModal({ form, onSave, onClose, saving, lines }) {
               <PriceField label="Grupo"        desc="(+6 uds)"  fieldKey="price_group"       data={data} setData={setData} />
               <PriceField label="Distribuidor" desc="(+15 uds)" fieldKey="price_distributor" data={data} setData={setData} />
             </div>
+
+            {/* Materiales — solo en edición */}
+            {data.id && <ProductMaterialsSection productId={data.id} />}
           </div>
 
           {/* Col derecha: Imagen */}

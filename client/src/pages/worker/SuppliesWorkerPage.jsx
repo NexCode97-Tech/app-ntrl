@@ -115,12 +115,24 @@ export default function SuppliesWorkerPage() {
 }
 
 function RequestForm({ orders, onSave, onClose, saving, error }) {
-  const [data, setData] = useState({ item_name: "", quantity: "", unit: "unidades", order_id: "", notes: "" });
+  const [data, setData] = useState({ supply_catalog_id: "", item_name: "", quantity: "", unit: "unidades", order_id: "", notes: "" });
   const set = (k, v) => setData((p) => ({ ...p, [k]: v }));
+
+  const { data: catalog = [] } = useQuery({
+    queryKey: ["supply-catalog"],
+    queryFn: () => api.get("/supply-catalog").then((r) => r.data.data),
+  });
+
+  function handleSelectCatalog(id) {
+    const item = catalog.find((c) => c.id === id);
+    set("supply_catalog_id", id);
+    if (item) { set("item_name", item.name); set("unit", item.unit); }
+    else       { set("item_name", ""); }
+  }
 
   function handleSubmit() {
     if (!data.item_name.trim() || !data.quantity) return;
-    onSave({ ...data, quantity: parseFloat(data.quantity), order_id: data.order_id || null });
+    onSave({ ...data, quantity: parseFloat(data.quantity), order_id: data.order_id || null, supply_catalog_id: data.supply_catalog_id || null });
   }
 
   return (
@@ -131,7 +143,15 @@ function RequestForm({ orders, onSave, onClose, saving, error }) {
         <div className="space-y-3">
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Insumo *</label>
-            <input className="input-field" placeholder="Ej: Hilo negro, Tela sublimación..." value={data.item_name} onChange={(e) => set("item_name", e.target.value)} />
+            <select className="input-field" value={data.supply_catalog_id} onChange={(e) => handleSelectCatalog(e.target.value)}>
+              <option value="">— Seleccionar del catálogo —</option>
+              {catalog.map((c) => (
+                <option key={c.id} value={c.id}>{c.name} ({c.unit})</option>
+              ))}
+            </select>
+            {!data.supply_catalog_id && (
+              <input className="input-field mt-2" placeholder="O escribir manualmente..." value={data.item_name} onChange={(e) => set("item_name", e.target.value)} />
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

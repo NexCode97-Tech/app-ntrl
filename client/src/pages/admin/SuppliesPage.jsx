@@ -22,9 +22,10 @@ const AREA_LABELS = {
 const UNITS = ["unidades", "metros", "kg", "litros", "rollos", "yardas", "piezas", "resma"];
 
 export default function SuppliesPage() {
-  const [tab, setTab] = useState("requests"); // "requests" | "suppliers"
+  const [tab, setTab] = useState("requests");
   const [showRequestForm,  setShowRequestForm]  = useState(false);
   const [showSupplierForm, setShowSupplierForm] = useState(false);
+  const [showCatalogForm,  setShowCatalogForm]  = useState(false);
 
   return (
     <div className="space-y-4">
@@ -32,6 +33,7 @@ export default function SuppliesPage() {
         <TabBar
           tabs={[
             { value: "requests",  label: "Solicitudes" },
+            { value: "catalog",   label: "Catálogo de Insumos" },
             { value: "suppliers", label: "Proveedores" },
           ]}
           value={tab}
@@ -39,12 +41,13 @@ export default function SuppliesPage() {
         />
         <div className="order-first sm:order-last self-start sm:self-auto">
           {tab === "requests"  && <button className="btn-primary whitespace-nowrap" onClick={() => setShowRequestForm(true)}>+ Nueva solicitud</button>}
+          {tab === "catalog"   && <button className="btn-primary whitespace-nowrap" onClick={() => setShowCatalogForm(true)}>+ Nuevo insumo</button>}
           {tab === "suppliers" && <button className="btn-primary whitespace-nowrap" onClick={() => setShowSupplierForm(true)}>+ Nuevo proveedor</button>}
         </div>
       </div>
-      {tab === "requests"
-        ? <RequestsTab  showForm={showRequestForm}  setShowForm={setShowRequestForm} />
-        : <SuppliersTab showForm={showSupplierForm} setShowForm={setShowSupplierForm} />}
+      {tab === "requests"  && <RequestsTab  showForm={showRequestForm}  setShowForm={setShowRequestForm} />}
+      {tab === "catalog"   && <CatalogTab   showForm={showCatalogForm}  setShowForm={setShowCatalogForm} />}
+      {tab === "suppliers" && <SuppliersTab showForm={showSupplierForm} setShowForm={setShowSupplierForm} />}
     </div>
   );
 }
@@ -402,13 +405,27 @@ function SupplierModal({ form, onSave, onClose, saving, error }) {
 }
 
 function RequestForm({ orders, onSave, onClose, saving, error }) {
-  const [data, setData] = useState({ item_name: "", quantity: "", unit: "unidades", order_id: "", notes: "" });
+  const [data, setData] = useState({ supply_catalog_id: "", item_name: "", quantity: "", unit: "unidades", order_id: "", notes: "" });
   const set = (k, v) => setData((p) => ({ ...p, [k]: v }));
+
+  const { data: catalog = [] } = useQuery({
+    queryKey: ["supply-catalog"],
+    queryFn: () => api.get("/supply-catalog").then((r) => r.data.data),
+  });
+
+  function handleSelectCatalog(id) {
+    const item = catalog.find((c) => c.id === id);
+    set("supply_catalog_id", id);
+    if (item) { set("item_name", item.name); set("unit", item.unit); }
+    else       { set("item_name", ""); }
+  }
 
   function handleSubmit() {
     if (!data.item_name.trim() || !data.quantity) return;
-    onSave({ ...data, quantity: parseFloat(data.quantity), order_id: data.order_id || null });
+    onSave({ ...data, quantity: parseFloat(data.quantity), order_id: data.order_id || null, supply_catalog_id: data.supply_catalog_id || null });
   }
+
+  const selected = catalog.find((c) => c.id === data.supply_catalog_id);
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
@@ -417,7 +434,18 @@ function RequestForm({ orders, onSave, onClose, saving, error }) {
         <div className="space-y-3">
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Insumo *</label>
-            <input className="input-field" placeholder="Ej: Hilo negro, Tela sublimación..." value={data.item_name} onChange={(e) => set("item_name", e.target.value)} />
+            <select className="input-field" value={data.supply_catalog_id} onChange={(e) => handleSelectCatalog(e.target.value)}>
+              <option value="">— Seleccionar del catálogo —</option>
+              {catalog.map((c) => (
+                <option key={c.id} value={c.id}>{c.name} ({c.unit})</option>
+              ))}
+            </select>
+            {!data.supply_catalog_id && (
+              <input className="input-field mt-2" placeholder="O escribir manualmente..." value={data.item_name} onChange={(e) => set("item_name", e.target.value)} />
+            )}
+            {selected && (
+              <p className="text-xs text-zinc-500 mt-1">Precio referencial: ${Number(selected.unit_price).toLocaleString("es-CO")} / {selected.unit}</p>
+            )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -431,6 +459,11 @@ function RequestForm({ orders, onSave, onClose, saving, error }) {
               </select>
             </div>
           </div>
+          {selected && data.quantity > 0 && (
+            <p className="text-xs text-brand-green font-medium">
+              Costo estimado: ${(Number(selected.unit_price) * parseFloat(data.quantity || 0)).toLocaleString("es-CO")}
+            </p>
+          )}
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Pedido relacionado</label>
             <select className="input-field" value={data.order_id} onChange={(e) => set("order_id", e.target.value)}>
@@ -551,6 +584,145 @@ function ManageModal({ request, onSave, onDelete, onClose, saving }) {
               {saving ? "Guardando..." : "Guardar"}
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── CATÁLOGO DE INSUMOS ────────────────────────────────────────
+
+const CATEGORIES = ["Telas", "Elásticos", "Hilos", "Insumos de impresión", "Empaque", "Otros"];
+
+function CatalogTab({ showForm, setShowForm }) {
+  const qc = useQueryClient();
+  const [editing, setEditing] = useState(null);
+
+  const { data: items = [], isLoading } = useQuery({
+    queryKey: ["supply-catalog-all"],
+    queryFn: () => api.get("/supply-catalog/all").then((r) => r.data.data),
+  });
+
+  const createMut = useMutation({
+    mutationFn: (d) => api.post("/supply-catalog", d),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["supply-catalog-all"] }); qc.invalidateQueries({ queryKey: ["supply-catalog"] }); setShowForm(false); },
+  });
+
+  const updateMut = useMutation({
+    mutationFn: ({ id, ...d }) => api.put(`/supply-catalog/${id}`, d),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["supply-catalog-all"] }); qc.invalidateQueries({ queryKey: ["supply-catalog"] }); setEditing(null); },
+  });
+
+  const toggleMut = useMutation({
+    mutationFn: ({ id, is_active }) => api.put(`/supply-catalog/${id}`, { is_active }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["supply-catalog-all"] }); qc.invalidateQueries({ queryKey: ["supply-catalog"] }); },
+  });
+
+  // Agrupar por categoría
+  const grouped = items.reduce((acc, item) => {
+    const cat = item.category || "Sin categoría";
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(item);
+    return acc;
+  }, {});
+
+  return (
+    <div className="space-y-4">
+      {isLoading && <p className="text-zinc-500 text-center py-8 text-sm">Cargando...</p>}
+
+      {Object.entries(grouped).map(([cat, catItems]) => (
+        <div key={cat} className="card space-y-2">
+          <h3 className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">{cat}</h3>
+          <div className="space-y-1">
+            {catItems.map((item) => (
+              <div key={item.id} className={`flex items-center justify-between px-3 py-2 rounded-lg ${item.is_active ? "bg-zinc-800" : "bg-zinc-900 opacity-50"}`}>
+                <div className="min-w-0 flex-1">
+                  <span className="text-white text-sm font-medium">{item.name}</span>
+                  <span className="text-zinc-500 text-xs ml-2">{item.unit}</span>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-brand-green text-sm font-mono">${Number(item.unit_price).toLocaleString("es-CO")}</span>
+                  <button onClick={() => setEditing(item)} className="text-zinc-400 hover:text-white text-xs transition-colors">Editar</button>
+                  <button
+                    onClick={() => toggleMut.mutate({ id: item.id, is_active: !item.is_active })}
+                    className={`text-xs transition-colors ${item.is_active ? "text-zinc-500 hover:text-red-400" : "text-zinc-600 hover:text-brand-green"}`}
+                  >
+                    {item.is_active ? "Desactivar" : "Activar"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {!isLoading && items.length === 0 && (
+        <div className="card text-center py-12">
+          <p className="text-zinc-500 text-sm">No hay insumos en el catálogo</p>
+          <p className="text-zinc-600 text-xs mt-1">Crea el primero con el botón "+ Nuevo insumo"</p>
+        </div>
+      )}
+
+      {(showForm || editing) && (
+        <CatalogItemModal
+          item={editing}
+          onClose={() => { setShowForm(false); setEditing(null); }}
+          onSave={(d) => editing ? updateMut.mutate({ id: editing.id, ...d }) : createMut.mutate(d)}
+          saving={createMut.isPending || updateMut.isPending}
+        />
+      )}
+    </div>
+  );
+}
+
+function CatalogItemModal({ item, onClose, onSave, saving }) {
+  const [form, setForm] = useState({
+    name:       item?.name       || "",
+    unit:       item?.unit       || "metros",
+    unit_price: item?.unit_price || "",
+    category:   item?.category   || "",
+    notes:      item?.notes      || "",
+  });
+  const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
+
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <div className="bg-zinc-900 rounded-xl p-6 w-full max-w-md space-y-4">
+        <h2 className="text-white font-semibold">{item ? "Editar insumo" : "Nuevo insumo"}</h2>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs text-zinc-400 mb-1">Nombre *</label>
+            <input className="input-field" placeholder="Ej: Tela Sublimación Blanca" value={form.name} onChange={(e) => set("name", e.target.value)} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1">Unidad *</label>
+              <select className="input-field" value={form.unit} onChange={(e) => set("unit", e.target.value)}>
+                {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1">Precio por unidad (COP)</label>
+              <input className="input-field" type="number" min="0" step="1" placeholder="0" value={form.unit_price} onChange={(e) => set("unit_price", e.target.value)} />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs text-zinc-400 mb-1">Categoría</label>
+            <select className="input-field" value={form.category} onChange={(e) => set("category", e.target.value)}>
+              <option value="">Sin categoría</option>
+              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-zinc-400 mb-1">Notas</label>
+            <input className="input-field" placeholder="Descripción adicional..." value={form.notes} onChange={(e) => set("notes", e.target.value)} />
+          </div>
+        </div>
+        <div className="flex gap-2 justify-end">
+          <button className="btn-secondary" onClick={onClose}>Cancelar</button>
+          <button className="btn-primary" onClick={() => onSave(form)} disabled={saving || !form.name.trim() || !form.unit}>
+            {saving ? "Guardando..." : item ? "Actualizar" : "Crear insumo"}
+          </button>
         </div>
       </div>
     </div>
