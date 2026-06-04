@@ -766,14 +766,32 @@ function CatalogTab({ showForm, setShowForm }) {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
             {catItems.map((item) => (
               <div key={item.id}
-                className={`bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col gap-2 transition-colors hover:border-zinc-600
+                className={`bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col gap-2 transition-colors hover:border-zinc-600 relative
                   ${!item.is_active ? "opacity-40" : ""}`}
               >
-                {/* Color swatch o placeholder */}
-                <div className="flex items-center justify-center h-10">
+                {/* 3 puntos — esquina superior derecha */}
+                <div className="absolute top-2 right-2">
+                  <CatalogMenu
+                    isActive={item.is_active}
+                    onEdit={() => setEditing(item)}
+                    onToggle={() => toggleMut.mutate({ id: item.id, is_active: !item.is_active })}
+                  />
+                </div>
+
+                {/* Color swatch o icono */}
+                <div className="flex items-center justify-center h-12 mt-1">
                   {item.color
                     ? <ColorSwatch color={item.color} size="lg" />
-                    : <span className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 block" />
+                    : (
+                      <div className="w-10 h-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                          stroke="#52525b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                          <line x1="12" y1="22.08" x2="12" y2="12"/>
+                        </svg>
+                      </div>
+                    )
                   }
                 </div>
 
@@ -783,18 +801,9 @@ function CatalogTab({ showForm, setShowForm }) {
                 </p>
 
                 {/* Unidad + Precio */}
-                <div className="text-center">
+                <div className="text-center mt-auto">
                   <p className="text-brand-green text-sm font-semibold">${Number(item.unit_price).toLocaleString("es-CO")}</p>
                   <p className="text-zinc-500 text-xs">/ {item.unit}</p>
-                </div>
-
-                {/* Acciones */}
-                <div className="flex justify-end mt-auto pt-1 border-t border-zinc-800">
-                  <CatalogMenu
-                    isActive={item.is_active}
-                    onEdit={() => setEditing(item)}
-                    onToggle={() => toggleMut.mutate({ id: item.id, is_active: !item.is_active })}
-                  />
                 </div>
               </div>
             ))}
