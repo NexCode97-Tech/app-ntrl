@@ -563,11 +563,11 @@ export default function QuotesPage() {
   ];
 
   const STATUS_CARDS = [
-    { value: "all",      label: "Todas",      color: "text-zinc-300",       border: "border-zinc-600",        activeBg: "bg-zinc-700"        },
-    { value: "draft",    label: "Borrador",   color: "text-zinc-400",       border: "border-zinc-600",        activeBg: "bg-zinc-700"        },
-    { value: "sent",     label: "Enviadas",   color: "text-blue-400",       border: "border-blue-500/50",     activeBg: "bg-blue-500/10"     },
-    { value: "approved", label: "Aprobadas",  color: "text-brand-green",    border: "border-brand-green/50",  activeBg: "bg-brand-green/10"  },
-    { value: "rejected", label: "Rechazadas", color: "text-red-400",        border: "border-red-500/50",      activeBg: "bg-red-500/10"      },
+    { value: "all",      label: "Todas",      color: "text-zinc-300",    border: "border-zinc-600",         bg: "bg-zinc-800/60",    activeBorder: "border-zinc-500",         activeRing: "ring-zinc-500"         },
+    { value: "draft",    label: "Borrador",   color: "text-zinc-400",    border: "border-zinc-600",         bg: "bg-zinc-800/60",    activeBorder: "border-zinc-400",         activeRing: "ring-zinc-400"         },
+    { value: "sent",     label: "Enviadas",   color: "text-blue-400",    border: "border-blue-500/40",      bg: "bg-blue-950/60",    activeBorder: "border-blue-400",         activeRing: "ring-blue-400"         },
+    { value: "approved", label: "Aprobadas",  color: "text-brand-green", border: "border-brand-green/40",   bg: "bg-[#0d1f14]",      activeBorder: "border-brand-green",      activeRing: "ring-brand-green"      },
+    { value: "rejected", label: "Rechazadas", color: "text-red-400",     border: "border-red-500/40",       bg: "bg-red-950/60",     activeBorder: "border-red-400",          activeRing: "ring-red-400"          },
   ];
 
   const countByStatus = {
@@ -624,16 +624,16 @@ export default function QuotesPage() {
               <button
                 key={s.value}
                 onClick={() => setStatusFilter(s.value)}
-                className={`rounded-xl border p-3 text-left transition-all duration-150
+                className={`rounded-xl border p-4 flex flex-col items-center justify-center gap-0.5 transition-all duration-150
                   ${isActive
-                    ? `${s.activeBg} ${s.border} ring-1 ${s.border}`
+                    ? `${s.bg} ${s.activeBorder} ring-1 ring-inset ${s.activeRing}`
                     : "bg-zinc-900 border-zinc-800 hover:border-zinc-600"
                   }`}
               >
                 <p className={`text-2xl font-bold ${isActive ? s.color : "text-zinc-300"}`}>
                   {countByStatus[s.value]}
                 </p>
-                <p className={`text-xs mt-0.5 ${isActive ? s.color : "text-zinc-500"}`}>
+                <p className={`text-xs mt-0.5 ${isActive ? s.color : "text-zinc-500"} opacity-90`}>
                   {s.label}
                 </p>
               </button>
