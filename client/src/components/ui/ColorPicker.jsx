@@ -33,7 +33,6 @@ export default function ColorPicker({ value, onChange }) {
   const user      = useAuthStore((s) => s.user);
   const [open, setOpen]         = useState(false);
   const [hexInput, setHexInput] = useState("");
-  const [openUp, setOpenUp]     = useState(false);
   const [recent, setRecent]     = useState([]);
   const ref        = useRef(null);
   const triggerRef = useRef(null);
@@ -52,15 +51,6 @@ export default function ColorPicker({ value, onChange }) {
     setHexInput(activeHex.replace("#", "").toUpperCase());
   }, [activeHex]);
 
-  // Detectar si abrir hacia arriba o abajo
-  useEffect(() => {
-    if (!open || !triggerRef.current) return;
-    const rect       = triggerRef.current.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const spaceAbove = rect.top;
-    // Si hay menos de 420px abajo Y hay más espacio arriba → abrir hacia arriba
-    setOpenUp(spaceBelow < 420 && spaceAbove > spaceBelow);
-  }, [open]);
 
   // Cerrar al clic fuera
   useEffect(() => {
@@ -122,8 +112,7 @@ export default function ColorPicker({ value, onChange }) {
 
       {open && (
         <div
-          className={`absolute left-0 z-[200] bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl p-4 w-64 overflow-y-auto max-h-[90vh]
-            ${openUp ? "bottom-full mb-1" : "top-full mt-1"}`}
+          className="absolute top-full left-0 mt-1 z-[200] bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl p-4 w-64"
         >
           {/* Presets */}
           <div className="flex items-center gap-2 mb-3">
