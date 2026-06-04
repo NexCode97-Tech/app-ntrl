@@ -35,7 +35,7 @@ export async function list(req, res, next) {
 
 export async function create(req, res, next) {
   try {
-    const { item_name, quantity, unit, order_id, notes } = req.body;
+    const { item_name, quantity, unit, order_id, notes, color } = req.body;
     if (!item_name?.trim()) throw new AppError("El nombre del insumo es requerido.", 400, "MISSING_ITEM");
     if (!quantity || isNaN(quantity) || quantity <= 0) throw new AppError("La cantidad debe ser mayor a 0.", 400, "INVALID_QTY");
 
@@ -46,10 +46,10 @@ export async function create(req, res, next) {
     }
 
     const { rows: [req_] } = await pool.query(
-      `INSERT INTO supply_requests (worker_id, order_id, item_name, quantity, unit, notes)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO supply_requests (worker_id, order_id, item_name, quantity, unit, notes, color)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [req.user.id, order_id || null, item_name.trim(), quantity, unit || "unidades", notes?.trim() || null]
+      [req.user.id, order_id || null, item_name.trim(), quantity, unit || "unidades", notes?.trim() || null, color?.trim() || null]
     );
 
     // Notificar a admins

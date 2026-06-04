@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../config/api.js";
 import { hardRefresh } from "../../utils/hardRefresh.js";
 import { ChatBubbleLeftIcon } from "@heroicons/react/24/outline";
+import ColorPicker from "../../components/ui/ColorPicker.jsx";
 
 const STATUS_COLORS = {
   pending:     "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30",
@@ -115,7 +116,7 @@ export default function SuppliesWorkerPage() {
 }
 
 function RequestForm({ orders, onSave, onClose, saving, error }) {
-  const [data, setData] = useState({ supply_catalog_id: "", item_name: "", quantity: "", unit: "unidades", order_id: "", notes: "" });
+  const [data, setData] = useState({ supply_catalog_id: "", item_name: "", quantity: "", unit: "unidades", color: "", order_id: "", notes: "" });
   const set = (k, v) => setData((p) => ({ ...p, [k]: v }));
 
   const { data: catalog = [] } = useQuery({
@@ -167,6 +168,10 @@ function RequestForm({ orders, onSave, onClose, saving, error }) {
             </div>
           </div>
 
+          <div>
+            <label className="block text-xs text-zinc-400 mb-1">Color</label>
+            <ColorPicker value={data.color} onChange={(v) => set("color", v)} />
+          </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Pedido relacionado</label>
             <select className="input-field" value={data.order_id} onChange={(e) => set("order_id", e.target.value)}>

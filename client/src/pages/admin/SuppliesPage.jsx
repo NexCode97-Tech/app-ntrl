@@ -5,6 +5,7 @@ import { api } from "../../config/api.js";
 import { COLOMBIA, DEPARTAMENTOS } from "../../data/colombia.js";
 import { UserIcon, PhoneIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
 import TabBar from "../../components/ui/TabBar.jsx";
+import ColorPicker from "../../components/ui/ColorPicker.jsx";
 
 const STATUS_COLORS = {
   pending:     "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30",
@@ -405,7 +406,7 @@ function SupplierModal({ form, onSave, onClose, saving, error }) {
 }
 
 function RequestForm({ orders, onSave, onClose, saving, error }) {
-  const [data, setData] = useState({ supply_catalog_id: "", item_name: "", quantity: "", unit: "unidades", order_id: "", notes: "" });
+  const [data, setData] = useState({ supply_catalog_id: "", item_name: "", quantity: "", unit: "unidades", color: "", order_id: "", notes: "" });
   const set = (k, v) => setData((p) => ({ ...p, [k]: v }));
 
   const { data: catalog = [] } = useQuery({
@@ -464,6 +465,10 @@ function RequestForm({ orders, onSave, onClose, saving, error }) {
               Costo estimado: ${(Number(selected.unit_price) * parseFloat(data.quantity || 0)).toLocaleString("es-CO")}
             </p>
           )}
+          <div>
+            <label className="block text-xs text-zinc-400 mb-1">Color</label>
+            <ColorPicker value={data.color} onChange={(v) => set("color", v)} />
+          </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Pedido relacionado</label>
             <select className="input-field" value={data.order_id} onChange={(e) => set("order_id", e.target.value)}>
@@ -639,7 +644,6 @@ function CatalogTab({ showForm, setShowForm }) {
                 <div className="min-w-0 flex-1">
                   <span className="text-white text-sm font-medium">{item.name}</span>
                   <span className="text-zinc-500 text-xs ml-2">{item.unit}</span>
-                  {item.color && <span className="text-zinc-400 text-xs ml-2 px-1.5 py-0.5 bg-zinc-700 rounded">{item.color}</span>}
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   <span className="text-brand-green text-sm">${Number(item.unit_price).toLocaleString("es-CO")}</span>
@@ -750,126 +754,12 @@ function PriceInput({ value, onChange, placeholder = "0" }) {
   );
 }
 
-const PALETTE = [
-  { name: "Blanco",   hex: "#FFFFFF" },
-  { name: "Negro",    hex: "#111111" },
-  { name: "Azul",     hex: "#2563EB" },
-  { name: "Rojo",     hex: "#DC2626" },
-  { name: "Amarillo", hex: "#EAB308" },
-];
-
-function ColorPicker({ value, onChange }) {
-  const [open, setOpen] = useState(false);
-  const selected = PALETTE.find((c) => c.name === value);
-  // Para colores custom (hex) detectamos si empieza con #
-  const isCustomHex = value && value.startsWith("#");
-
-  return (
-    <div className="relative">
-      {/* Trigger */}
-      <button
-        type="button"
-        onClick={() => setOpen((p) => !p)}
-        className="input-field flex items-center gap-2 w-full text-left"
-      >
-        {(selected || isCustomHex) ? (
-          <>
-            <span
-              className="w-4 h-4 rounded-full shrink-0 border border-white/20"
-              style={{ backgroundColor: selected ? selected.hex : value }}
-            />
-            <span className="text-white text-sm truncate">{selected ? selected.name : value}</span>
-          </>
-        ) : (
-          <span className="text-zinc-500 text-sm">{value || "Sin color"}</span>
-        )}
-        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="ml-auto shrink-0 text-zinc-500">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </button>
-
-      {open && (
-        <div className="absolute top-full left-0 mt-1 z-50 bg-zinc-800 border border-zinc-700 rounded-xl p-3 shadow-xl w-full space-y-3">
-
-          {/* Paleta predeterminada */}
-          <div className="flex items-center gap-2">
-            {PALETTE.map((c) => {
-              const isSelected = value === c.name;
-              return (
-                <button
-                  key={c.name}
-                  type="button"
-                  title={c.name}
-                  onClick={() => { onChange(c.name); setOpen(false); }}
-                  style={{ backgroundColor: c.hex }}
-                  className="relative shrink-0 transition-transform hover:scale-110 focus:outline-none"
-                  css-fix="true"
-                >
-                  {/* Círculo fijo — no puede deformarse */}
-                  <span
-                    className="block rounded-full"
-                    style={{
-                      width: 32, height: 32,
-                      backgroundColor: c.hex,
-                      border: isSelected ? "2.5px solid #C5FF3A" : c.hex === "#FFFFFF" ? "1.5px solid #52525b" : "2.5px solid transparent",
-                    }}
-                  >
-                    {isSelected && (
-                      <svg viewBox="0 0 24 24" fill="none" stroke={c.hex === "#FFFFFF" ? "#000" : "#fff"} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, margin: "auto", display: "block", marginTop: 8 }}>
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                    )}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Separador */}
-          <div className="flex items-center gap-2">
-            <div className="flex-1 h-px bg-zinc-700" />
-            <span className="text-zinc-500 text-xs">otro color</span>
-            <div className="flex-1 h-px bg-zinc-700" />
-          </div>
-
-          {/* Color picker nativo */}
-          <label className="flex items-center gap-2 cursor-pointer group">
-            <input
-              type="color"
-              className="w-8 h-8 rounded-full cursor-pointer border-0 bg-transparent p-0"
-              style={{ appearance: "none", WebkitAppearance: "none" }}
-              value={isCustomHex ? value : "#ffffff"}
-              onChange={(e) => onChange(e.target.value)}
-            />
-            <span className="text-zinc-400 text-xs group-hover:text-white transition-colors">
-              {isCustomHex ? value : "Abrir paleta completa"}
-            </span>
-          </label>
-
-          {/* Footer */}
-          <div className="flex items-center justify-between pt-1">
-            {value && (
-              <button type="button" onClick={() => { onChange(""); }} className="text-xs text-zinc-500 hover:text-red-400 transition-colors">
-                Quitar color
-              </button>
-            )}
-            <button type="button" onClick={() => setOpen(false)} className="text-xs text-brand-green ml-auto">
-              Listo
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function CatalogItemModal({ item, onClose, onSave, saving }) {
   const [form, setForm] = useState({
     name:       item?.name       || "",
     unit:       item?.unit       || "metros",
     unit_price: item?.unit_price || "",
     category:   item?.category   || "",
-    color:      item?.color      || "",
     notes:      item?.notes      || "",
   });
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
@@ -895,18 +785,12 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
               <PriceInput value={form.unit_price} onChange={(v) => set("unit_price", v)} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1">Categoría</label>
-              <select className="input-field" value={form.category} onChange={(e) => set("category", e.target.value)}>
-                <option value="">Sin categoría</option>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1">Color</label>
-              <ColorPicker value={form.color} onChange={(v) => set("color", v)} />
-            </div>
+          <div>
+            <label className="block text-xs text-zinc-400 mb-1">Categoría</label>
+            <select className="input-field" value={form.category} onChange={(e) => set("category", e.target.value)}>
+              <option value="">Sin categoría</option>
+              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Notas</label>
