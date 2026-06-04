@@ -595,9 +595,20 @@ export default function DashboardPage() {
                 $<CountUp end={kpi.value} duration={1.2} separator="." decimal="," preserveValue />
               </p>
               {pct !== null && (
-                <div className={`flex items-center justify-center gap-1 mt-1.5 text-xs font-medium ${up ? "text-emerald-400" : "text-red-400"}`}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" className={`transition-transform ${up ? "" : "rotate-180"}`}>
-                    <path d="M12 4l8 8H4z"/>
+                <div className={`flex items-center justify-center gap-1.5 mt-1.5 text-xs font-medium ${up ? "text-emerald-400" : "text-red-400"}`}>
+                  {/* Mini gráfica de tendencia */}
+                  <svg width="28" height="16" viewBox="0 0 28 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    {up ? (
+                      <polyline
+                        points="2,13 8,10 14,7 20,4 26,1"
+                        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                      />
+                    ) : (
+                      <polyline
+                        points="2,3 8,6 14,9 20,12 26,15"
+                        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                      />
+                    )}
                   </svg>
                   {Math.abs(pct).toFixed(1)}% <span className="text-zinc-500 font-normal">vs mes anterior</span>
                 </div>
