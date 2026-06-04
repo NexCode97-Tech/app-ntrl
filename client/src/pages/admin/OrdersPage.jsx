@@ -137,12 +137,14 @@ export default function OrdersPage() {
                 key={s.value}
                 onClick={() => { setStatus(s.value); setPage(1); }}
                 className={`rounded-xl border p-4 flex flex-col items-center justify-center gap-0.5 transition-all duration-150
-                  ${s.bg} ${s.border}
-                  ${isActive ? `${s.activeBorder} ring-1 ring-inset ${s.activeBorder} brightness-110` : "hover:brightness-125"}
+                  ${isActive
+                    ? `${s.bg} ${s.activeBorder} ring-1 ring-inset ${s.activeBorder}`
+                    : "bg-zinc-900 border-zinc-800 hover:border-zinc-600"
+                  }
                 `}
               >
-                <p className={`text-2xl font-bold ${s.color}`}>{count}</p>
-                <p className={`text-xs ${s.color} opacity-80`}>{s.label}</p>
+                <p className={`text-2xl font-bold ${isActive ? s.color : "text-zinc-300"}`}>{count}</p>
+                <p className={`text-xs ${isActive ? s.color : "text-zinc-500"} opacity-90`}>{s.label}</p>
               </button>
             );
           })}
