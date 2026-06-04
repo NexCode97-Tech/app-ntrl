@@ -559,8 +559,8 @@ function RequestForm({ orders, onSave, onClose, saving, error }) {
             </div>
             <div>
               <label className="block text-xs text-zinc-400 mb-1">Insumo *</label>
-              <CustomSelect value={data.supply_catalog_id} onChange={(e) => handleSelectCatalog(e.target.value)}>
-                <option value="">Seleccionar insumo</option>
+              <CustomSelect value={data.supply_catalog_id} onChange={(e) => handleSelectCatalog(e.target.value)} disabled={!category}>
+                <option value="">{category ? "Seleccionar insumo" : "Primero selecciona categoría"}</option>
                 {filtered.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -803,7 +803,6 @@ function CatalogTab({ showForm, setShowForm }) {
                 {/* Unidad + Precio */}
                 <div className="text-center mt-auto">
                   <p className="text-brand-green text-sm font-semibold">${Number(item.unit_price).toLocaleString("es-CO")}</p>
-                  <p className="text-zinc-500 text-xs">/ {item.unit}</p>
                 </div>
               </div>
             ))}
