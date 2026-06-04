@@ -18,8 +18,8 @@ financials AS (
 ),
 statuses AS (
   SELECT
-    DATE_TRUNC('month', created_at) AS month_start,
-    jsonb_object_agg(status, cnt)   AS status_counts
+    month_start,
+    jsonb_object_agg(status, cnt) AS status_counts
   FROM (
     SELECT DATE_TRUNC('month', created_at) AS month_start, status, COUNT(*) AS cnt
     FROM orders
