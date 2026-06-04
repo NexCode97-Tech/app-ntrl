@@ -499,7 +499,7 @@ function RequestForm({ orders, onSave, onClose, saving, error }) {
             <CustomSelect value={data.supply_catalog_id} onChange={(e) => handleSelectCatalog(e.target.value)}>
               <option value="">Seleccionar del catálogo</option>
               {catalog.map((c) => (
-                <option key={c.id} value={c.id}>{c.name} ({c.unit})</option>
+                <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </CustomSelect>
             {!data.supply_catalog_id && (
