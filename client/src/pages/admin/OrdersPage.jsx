@@ -6,11 +6,11 @@ import TabBar from "../../components/ui/TabBar.jsx";
 import CustomSelect from "../../components/ui/CustomSelect.jsx";
 
 const STATUS_CARDS = [
-  { value: "",            label: "Todos",      color: "text-zinc-300",      border: "border-zinc-600",    activeBg: "bg-zinc-700" },
-  { value: "pending",     label: "Pendiente",  color: "text-orange-400",    border: "border-orange-500/50", activeBg: "bg-orange-500/10" },
-  { value: "in_progress", label: "En proceso", color: "text-blue-400",      border: "border-blue-500/50",   activeBg: "bg-blue-500/10" },
-  { value: "completed",   label: "Completado", color: "text-green-400",     border: "border-green-700/50",  activeBg: "bg-green-900/30" },
-  { value: "delivered",   label: "Entregado",  color: "text-brand-green",   border: "border-brand-green/50",activeBg: "bg-brand-green/10" },
+  { value: "",            label: "Todos",      color: "text-zinc-300",    border: "border-zinc-600",          bg: "bg-zinc-800/60",          activeBorder: "border-zinc-500"          },
+  { value: "pending",     label: "Pendiente",  color: "text-yellow-400",  border: "border-yellow-500/40",     bg: "bg-yellow-950/60",        activeBorder: "border-yellow-400"        },
+  { value: "in_progress", label: "En proceso", color: "text-blue-400",    border: "border-blue-500/40",       bg: "bg-blue-950/60",          activeBorder: "border-blue-400"          },
+  { value: "completed",   label: "Completado", color: "text-green-400",   border: "border-green-700/40",      bg: "bg-green-950/60",         activeBorder: "border-green-500"         },
+  { value: "delivered",   label: "Entregado",  color: "text-brand-green", border: "border-brand-green/40",    bg: "bg-[#0d1f14]",            activeBorder: "border-brand-green"       },
 ];
 
 const STATUS_LABELS = {
@@ -136,18 +136,13 @@ export default function OrdersPage() {
               <button
                 key={s.value}
                 onClick={() => { setStatus(s.value); setPage(1); }}
-                className={`rounded-xl border p-3 text-left transition-all duration-150
-                  ${isActive
-                    ? `${s.activeBg} ${s.border} ring-1 ${s.border}`
-                    : "bg-zinc-900 border-zinc-800 hover:border-zinc-600"
-                  }`}
+                className={`rounded-xl border p-4 flex flex-col items-center justify-center gap-0.5 transition-all duration-150
+                  ${s.bg} ${s.border}
+                  ${isActive ? `${s.activeBorder} ring-1 ring-inset ${s.activeBorder} brightness-110` : "hover:brightness-125"}
+                `}
               >
-                <p className={`text-2xl font-bold ${isActive ? s.color : "text-zinc-300"}`}>
-                  {count}
-                </p>
-                <p className={`text-xs mt-0.5 ${isActive ? s.color : "text-zinc-500"}`}>
-                  {s.label}
-                </p>
+                <p className={`text-2xl font-bold ${s.color}`}>{count}</p>
+                <p className={`text-xs ${s.color} opacity-80`}>{s.label}</p>
               </button>
             );
           })}
