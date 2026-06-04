@@ -599,7 +599,7 @@ export default function DashboardPage() {
                   <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" className={`transition-transform ${up ? "" : "rotate-180"}`}>
                     <path d="M12 4l8 8H4z"/>
                   </svg>
-                  {Math.abs(pct).toFixed(1)}% vs mes anterior
+                  {Math.abs(pct).toFixed(1)}% <span className="text-zinc-500 font-normal">vs mes anterior</span>
                 </div>
               )}
             </motion.div>

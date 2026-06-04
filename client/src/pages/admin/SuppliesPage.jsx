@@ -750,6 +750,89 @@ function PriceInput({ value, onChange, placeholder = "0" }) {
   );
 }
 
+const PALETTE = [
+  { name: "Blanco",   hex: "#FFFFFF" },
+  { name: "Negro",    hex: "#111111" },
+  { name: "Azul",     hex: "#2563EB" },
+  { name: "Rojo",     hex: "#DC2626" },
+  { name: "Amarillo", hex: "#EAB308" },
+];
+
+function ColorPicker({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const selected = PALETTE.find((c) => c.name === value);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        className="input-field flex items-center gap-2 w-full text-left"
+      >
+        {selected ? (
+          <>
+            <span
+              className="w-4 h-4 rounded-full border border-white/20 shrink-0"
+              style={{ backgroundColor: selected.hex }}
+            />
+            <span className="text-white text-sm">{selected.name}</span>
+          </>
+        ) : (
+          <span className="text-zinc-500 text-sm">{value || "Sin color"}</span>
+        )}
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="ml-auto text-zinc-500">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute top-full left-0 mt-1 z-50 bg-zinc-800 border border-zinc-700 rounded-xl p-3 shadow-xl w-full">
+          {/* Paleta predeterminada */}
+          <div className="flex items-center gap-2 mb-3">
+            {PALETTE.map((c) => (
+              <button
+                key={c.name}
+                type="button"
+                title={c.name}
+                onClick={() => { onChange(c.name); setOpen(false); }}
+                className="relative w-8 h-8 rounded-full border-2 transition-all hover:scale-110"
+                style={{
+                  backgroundColor: c.hex,
+                  borderColor: value === c.name ? "#C5FF3A" : "transparent",
+                  boxShadow: c.hex === "#FFFFFF" ? "0 0 0 1px #52525b" : undefined,
+                }}
+              >
+                {value === c.name && (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={c.hex === "#FFFFFF" ? "#000" : "#fff"} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="absolute inset-0 m-auto">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                )}
+              </button>
+            ))}
+          </div>
+          {/* Input texto libre */}
+          <input
+            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-zinc-500 outline-none focus:border-brand-green"
+            placeholder="Otro color..."
+            value={PALETTE.find((c) => c.name === value) ? "" : (value || "")}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") setOpen(false); }}
+          />
+          {value && !PALETTE.find((c) => c.name === value) && (
+            <p className="text-zinc-400 text-xs mt-1.5 px-1">{value}</p>
+          )}
+          <div className="flex justify-between mt-2">
+            {value && (
+              <button type="button" onClick={() => { onChange(""); setOpen(false); }} className="text-xs text-zinc-500 hover:text-red-400 transition-colors">Quitar color</button>
+            )}
+            <button type="button" onClick={() => setOpen(false)} className="text-xs text-brand-green ml-auto">Listo</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CatalogItemModal({ item, onClose, onSave, saving }) {
   const [form, setForm] = useState({
     name:       item?.name       || "",
@@ -792,7 +875,7 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
             </div>
             <div>
               <label className="block text-xs text-zinc-400 mb-1">Color</label>
-              <input className="input-field" placeholder="Ej: Blanco, Negro, Rojo..." value={form.color} onChange={(e) => set("color", e.target.value)} />
+              <ColorPicker value={form.color} onChange={(v) => set("color", v)} />
             </div>
           </div>
           <div>
