@@ -1060,8 +1060,9 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
             <ColorPicker value={form.color} onChange={(v) => set("color", v)} />
           </div>
           {!item?.id && (
-            <div className="rounded-xl border border-zinc-700 p-4 space-y-3">
-              <p className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Proveedor (opcional)</p>
+            <div className="space-y-3">
+              <label className="block text-xs text-zinc-400 mb-1">Proveedor</label>
+              <div className="rounded-xl border border-zinc-700 p-4 space-y-3">
               <CustomSelect value={initSupplier} onChange={(e) => setInitSupplier(e.target.value)}>
                 <option value="">Seleccionar proveedor...</option>
                 {allSuppliers.filter(s => s.is_active).map((s) => (
@@ -1082,6 +1083,7 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
                   </div>
                 </div>
               )}
+              </div>
             </div>
           )}
           <div>
