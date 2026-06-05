@@ -1072,7 +1072,11 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
                 <div className="bg-zinc-800/50 border border-zinc-700/60 rounded-xl p-3 space-y-3">
                   <div>
                     <label className="block text-xs text-zinc-400 mb-1.5">Precio de este proveedor</label>
-                    <PriceInput value={initSupplierPrice} onChange={setInitSupplierPrice} placeholder="Mismo precio base" />
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <PriceInput value={initSupplierPrice} onChange={setInitSupplierPrice} placeholder="Mismo precio base" />
+                      </div>
+                    </div>
                   </div>
                   <label className="flex items-center gap-2.5 text-sm text-zinc-300 cursor-pointer select-none">
                     <input type="checkbox" checked={initSupplierPreferred} onChange={(e) => setInitSupplierPreferred(e.target.checked)} className="rounded accent-brand-green w-4 h-4" />
@@ -1128,19 +1132,21 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
                   <div className="bg-zinc-800/50 border border-zinc-700/60 rounded-xl p-3 space-y-3">
                     <div>
                       <label className="block text-xs text-zinc-400 mb-1.5">Precio de este proveedor</label>
-                      <PriceInput value={supplierForm.unit_price} onChange={(v) => setSupplierForm((p) => ({ ...p, unit_price: v }))} placeholder="Mismo precio base" />
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <PriceInput value={supplierForm.unit_price} onChange={(v) => setSupplierForm((p) => ({ ...p, unit_price: v }))} placeholder="Mismo precio base" />
+                        </div>
+                        <button type="button" className="btn-secondary text-xs py-1.5 px-3 shrink-0" onClick={() => setSupplierForm({ supplier_id: "", unit_price: "", is_preferred: false })}>Cancelar</button>
+                        <button type="button" className="btn-primary text-xs py-1.5 px-3 shrink-0" disabled={addSupplierMut.isPending}
+                          onClick={() => addSupplierMut.mutate({ supplier_id: supplierForm.supplier_id, unit_price: supplierForm.unit_price || null, is_preferred: supplierForm.is_preferred })}>
+                          {addSupplierMut.isPending ? "..." : "Asignar"}
+                        </button>
+                      </div>
                     </div>
                     <label className="flex items-center gap-2.5 text-sm text-zinc-300 cursor-pointer select-none">
                       <input type="checkbox" checked={supplierForm.is_preferred} onChange={(e) => setSupplierForm((p) => ({ ...p, is_preferred: e.target.checked }))} className="rounded accent-brand-green w-4 h-4" />
                       Marcar como proveedor preferido
                     </label>
-                    <div className="flex gap-2 justify-end pt-1">
-                      <button type="button" className="btn-secondary text-xs py-1.5 px-4" onClick={() => setSupplierForm({ supplier_id: "", unit_price: "", is_preferred: false })}>Cancelar</button>
-                      <button type="button" className="btn-primary text-xs py-1.5 px-4" disabled={addSupplierMut.isPending}
-                        onClick={() => addSupplierMut.mutate({ supplier_id: supplierForm.supplier_id, unit_price: supplierForm.unit_price || null, is_preferred: supplierForm.is_preferred })}>
-                        {addSupplierMut.isPending ? "Guardando..." : "Asignar"}
-                      </button>
-                    </div>
                   </div>
                 )}
               </>
