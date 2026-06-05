@@ -454,7 +454,7 @@ function EmployeesTab() {
                   <p className="text-zinc-500 text-xs">{emp.cargo}</p>
                 </div>
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium border shrink-0 ${EMP_BADGE[emp.estado_laboral]}`}>
-                  {emp.estado_laboral}
+                  {emp.estado_laboral ? emp.estado_laboral.charAt(0).toUpperCase() + emp.estado_laboral.slice(1) : ''}
                 </span>
               </div>
 
