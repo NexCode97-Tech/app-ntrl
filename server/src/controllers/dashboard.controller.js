@@ -56,7 +56,7 @@ export async function getSummary(req, res, next) {
     saveSnapshotIfMissing(previousMonth()).catch(() => {});
 
     const data = await cached("dashboard:summary", async () => {
-      const [byStatus, monthly, bySport, byLine, financial, workerPerf] = await Promise.all([
+      const [byStatus, monthly, bySport, byLine, financial, workerPerf, prevPeriod] = await Promise.all([
         // Solo pedidos del mes actual
         pool.query(`
           SELECT status, COUNT(*) AS total
@@ -104,6 +104,22 @@ export async function getSummary(req, res, next) {
           WHERE DATE_TRUNC('month', created_at) = DATE_TRUNC('month', NOW())
         `),
 
+        // Mismo periodo del mes anterior (día 1 hasta el día equivalente al día actual)
+        pool.query(`
+          SELECT
+            COALESCE(SUM(total), 0)   AS total_revenue,
+            COALESCE(SUM(balance), 0) AS pending,
+            (SELECT COALESCE(SUM(amount), 0) FROM order_payments
+             WHERE paid_at >= DATE_TRUNC('month', NOW()) - INTERVAL '1 month'
+               AND paid_at <  (DATE_TRUNC('month', NOW()) - INTERVAL '1 month')
+                             + (NOW() - DATE_TRUNC('month', NOW()))
+            ) AS collected
+          FROM orders
+          WHERE created_at >= DATE_TRUNC('month', NOW()) - INTERVAL '1 month'
+            AND created_at <  (DATE_TRUNC('month', NOW()) - INTERVAL '1 month')
+                            + (NOW() - DATE_TRUNC('month', NOW()))
+        `),
+
         pool.query(`
           SELECT u.name, u.area,
                  COUNT(*) FILTER (WHERE pt.status = 'done')        AS completed,
@@ -122,6 +138,7 @@ export async function getSummary(req, res, next) {
         byLine:     byLine.rows,
         financial:  financial.rows[0],
         workerPerf: workerPerf.rows,
+        prev_period: prevPeriod.rows[0],
       };
     });
 

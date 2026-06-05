@@ -568,17 +568,17 @@ export default function DashboardPage() {
           {
             label: "Total facturado", color: "text-brand-green",
             value: Number(financialDisplay?.total_revenue || 0),
-            prev:  Number(prevSnapshot?.total_revenue || 0),
+            prev:  Number((!selectedSnapshot ? data?.prev_period?.total_revenue : prevSnapshot?.total_revenue) || 0),
           },
           {
             label: "Recaudado", color: "text-white",
             value: Number(financialDisplay?.collected || 0),
-            prev:  Number(prevSnapshot?.collected     || 0),
+            prev:  Number((!selectedSnapshot ? data?.prev_period?.collected : prevSnapshot?.collected) || 0),
           },
           {
             label: "Pendiente de cobro", color: "text-yellow-400",
             value: Number(financialDisplay?.pending || 0),
-            prev:  Number(prevSnapshot?.pending     || 0),
+            prev:  Number((!selectedSnapshot ? data?.prev_period?.pending : prevSnapshot?.pending) || 0),
           },
         ].map((kpi, i) => {
           const pct = !selectedRange ? pctChange(kpi.value, kpi.prev) : null;
