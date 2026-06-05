@@ -89,19 +89,6 @@ export default function OrdersPage() {
 
       {/* Toolbar */}
       <div className="space-y-3">
-        {/* Fila 1: buscador + botón */}
-        <div className="flex items-center gap-3">
-          <input
-            className="input-field flex-1"
-            placeholder="Buscar por # o cliente..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          />
-          <button className="btn-primary shrink-0 whitespace-nowrap" onClick={() => navigate("/orders/new")}>
-            + Nuevo pedido
-          </button>
-        </div>
-
         {/* Móvil — select */}
         <div className="md:hidden">
           <CustomSelect value={statusFilter} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
@@ -148,6 +135,19 @@ export default function OrdersPage() {
               </button>
             );
           })}
+        </div>
+
+        {/* Fila buscador + botón — debajo de los filtros */}
+        <div className="flex items-center gap-3">
+          <input
+            className="input-field flex-1"
+            placeholder="Buscar por # o cliente..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          />
+          <button className="btn-primary shrink-0 whitespace-nowrap" onClick={() => navigate("/orders/new")}>
+            + Nuevo pedido
+          </button>
         </div>
       </div>
 
