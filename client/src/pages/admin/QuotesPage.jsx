@@ -584,19 +584,6 @@ export default function QuotesPage() {
 
       {/* Toolbar */}
       <div className="space-y-3">
-        {/* Fila 1: buscador + botón */}
-        <div className="flex items-center gap-3">
-          <input
-            className="input-field flex-1"
-            placeholder="Buscar por # o cliente..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <button onClick={() => setShowForm(true)} className="btn-primary shrink-0 whitespace-nowrap">
-            + Nueva cotización
-          </button>
-        </div>
-
         {/* Móvil — select */}
         <div className="md:hidden">
           <CustomSelect value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
@@ -639,6 +626,19 @@ export default function QuotesPage() {
               </button>
             );
           })}
+        </div>
+
+        {/* Buscador + botón — debajo de los filtros */}
+        <div className="flex items-center gap-3">
+          <input
+            className="input-field flex-1"
+            placeholder="Buscar por # o cliente..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <button onClick={() => setShowForm(true)} className="btn-primary shrink-0 whitespace-nowrap">
+            + Nueva cotización
+          </button>
         </div>
       </div>
 
