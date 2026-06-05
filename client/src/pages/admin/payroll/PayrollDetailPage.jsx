@@ -219,63 +219,63 @@ function EditModal({ tx, periodId, onClose, onSaved }) {
             <p className="text-zinc-500 text-xs font-medium uppercase tracking-wide mb-2">Resumen calculado</p>
             <div className="space-y-1 text-xs">
               <div className="flex justify-between text-zinc-400">
-                <span>Básico ({form.dias_laborados} días)</span><span {{className="">{fmt(basico)}</span>
+                <span>Básico ({form.dias_laborados} días)</span><span className="">{fmt(basico)}</span>
               </div>
               {esLaboral && auxT > 0 && (
                 <div className="flex justify-between text-zinc-400">
-                  <span>Aux. transporte</span><span {{className="">{fmt(auxT)}</span>
+                  <span>Aux. transporte</span><span className="">{fmt(auxT)}</span>
                 </div>
               )}
               {!esLaboral && antPrest > 0 && (
                 <div className="flex justify-between text-zinc-400">
-                  <span>Anticipo prestaciones</span><span {{className="">{fmt(antPrest)}</span>
+                  <span>Anticipo prestaciones</span><span className="">{fmt(antPrest)}</span>
                 </div>
               )}
               {/* Subtotal: básico + aux/anticipo */}
               <div className="flex justify-between text-zinc-300 font-medium border-t border-zinc-800 pt-1 mt-1">
-                <span>Subtotal</span><span {{className="">{fmt(subtotal)}</span>
+                <span>Subtotal</span><span className="">{fmt(subtotal)}</span>
               </div>
               {hExt > 0 && (
                 <div className="flex justify-between text-zinc-400">
-                  <span>Horas extras</span><span {{className="">{fmt(hExt)}</span>
+                  <span>Horas extras</span><span className="">{fmt(hExt)}</span>
                 </div>
               )}
               {otros_i > 0 && (
                 <div className="flex justify-between text-zinc-400">
-                  <span>Otros ingresos</span><span {{className="">{fmt(otros_i)}</span>
+                  <span>Otros ingresos</span><span className="">{fmt(otros_i)}</span>
                 </div>
               )}
               <div className="flex justify-between text-white font-semibold border-t border-zinc-800 pt-1 mt-1">
-                <span>Total devengado</span><span {{className="">{fmt(deveng)}</span>
+                <span>Total devengado</span><span className="">{fmt(deveng)}</span>
               </div>
               {esLaboral && (
                 <>
                   <div className="flex justify-between text-red-400 text-xs mt-1">
-                    <span>Salud (4%)</span><span {{className="">−{fmt(salud)}</span>
+                    <span>Salud (4%)</span><span className="">−{fmt(salud)}</span>
                   </div>
                   <div className="flex justify-between text-red-400 text-xs">
-                    <span>Pensión (4%)</span><span {{className="">−{fmt(pension)}</span>
+                    <span>Pensión (4%)</span><span className="">−{fmt(pension)}</span>
                   </div>
                 </>
               )}
               {antAdel > 0 && (
                 <div className="flex justify-between text-red-400 text-xs">
-                  <span>Anticipo</span><span {{className="">−{fmt(antAdel)}</span>
+                  <span>Anticipo</span><span className="">−{fmt(antAdel)}</span>
                 </div>
               )}
               {funeral > 0 && (
                 <div className="flex justify-between text-red-400 text-xs">
-                  <span>Funeral</span><span {{className="">−{fmt(funeral)}</span>
+                  <span>Funeral</span><span className="">−{fmt(funeral)}</span>
                 </div>
               )}
               {descHrs > 0 && (
                 <div className="flex justify-between text-red-400 text-xs">
-                  <span>Desc. horas pendientes</span><span {{className="">−{fmt(descHrs)}</span>
+                  <span>Desc. horas pendientes</span><span className="">−{fmt(descHrs)}</span>
                 </div>
               )}
               {otrosD > 0 && (
                 <div className="flex justify-between text-red-400 text-xs">
-                  <span>Otros descuentos</span><span {{className="">−{fmt(otrosD)}</span>
+                  <span>Otros descuentos</span><span className="">−{fmt(otrosD)}</span>
                 </div>
               )}
               <div className="flex justify-between border-t border-zinc-700 pt-2 mt-1">
