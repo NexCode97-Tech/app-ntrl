@@ -307,9 +307,16 @@ export default function CustomersPage() {
     queryFn:  () => api.get(`/customers?search=${search}&limit=50`).then((r) => r.data),
   });
 
+  const [saveError, setSaveError] = useState("");
   const save = useMutation({
     mutationFn: (d) => d.id ? api.put(`/customers/${d.id}`, d) : api.post("/customers", d),
-    onSuccess:  () => { qc.invalidateQueries(["customers"]); setForm(null); },
+    onSuccess:  () => { qc.invalidateQueries(["customers"]); setForm(null); setSaveError(""); },
+    onError:    (err) => {
+      const msg = err?.response?.data?.message || err?.message || "Error al guardar el cliente.";
+      setSaveError(msg.includes("duplicate") || msg.includes("unique") || msg.includes("ya existe")
+        ? "Ya existe un cliente con ese número de documento."
+        : msg);
+    },
   });
 
   const remove = useMutation({
@@ -391,7 +398,7 @@ export default function CustomersPage() {
         </div>
       )}
 
-      {form !== null && <CustomerModal form={form} onSave={(d) => save.mutate(d)} onClose={() => setForm(null)} saving={save.isLoading} />}
+      {form !== null && <CustomerModal form={form} onSave={(d) => { setSaveError(""); save.mutate(d); }} onClose={() => { setForm(null); setSaveError(""); }} saving={save.isPending} apiError={saveError} />}
       {viewing && <CustomerView customer={viewing} onEdit={() => { setForm(viewing); setViewing(null); }} onClose={() => setViewing(null)} />}
     </div>
   );
@@ -507,7 +514,7 @@ function parsePhone(phone) {
   return { countryCode: match.code, localPhone: phone.slice(match.dial.length).trim() };
 }
 
-function CustomerModal({ form, onSave, onClose, saving }) {
+function CustomerModal({ form, onSave, onClose, saving, apiError }) {
   const [data, setData] = useState(() => {
     const { countryCode, localPhone } = parsePhone(form.phone);
     return { document_type: "cedula", is_company: false, ...form, dial_code: countryCode, phone: localPhone };
@@ -634,7 +641,7 @@ function CustomerModal({ form, onSave, onClose, saving }) {
 
         </div>
 
-        {error && <p className="mx-5 mb-3 text-red-400 text-xs bg-red-950/50 border border-red-800/50 rounded-lg px-3 py-2">{error}</p>}
+        {(error || apiError) && <p className="mx-5 mb-3 text-red-400 text-xs bg-red-950/50 border border-red-800/50 rounded-lg px-3 py-2">{error || apiError}</p>}
 
         {/* Acciones */}
         <div className="px-6 pb-6 flex gap-2">
