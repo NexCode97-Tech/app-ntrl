@@ -22,7 +22,7 @@ const ESTADO_LABEL = {
 };
 
 const fmt = (v) =>
-  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v);
+  "$ " + Number(v).toLocaleString("es-CO");
 
 
 const EMPTY_FORM = {

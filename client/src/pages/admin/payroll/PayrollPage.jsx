@@ -13,7 +13,7 @@ import TabBar from "../../../components/ui/TabBar.jsx";
 
 // ── Helpers ───────────────────────────────────────────────────
 const fmt = (v) =>
-  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v ?? 0);
+  "$ " + Number(v ?? 0).toLocaleString("es-CO");
 
 const MESES = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio",
   "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
