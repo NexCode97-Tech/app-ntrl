@@ -359,11 +359,27 @@ export default function DashboardPage() {
   const prevSnapshot = useMemo(() => {
     const activeMonth = selectedMonth ?? currentMonth;
     const history = monthlyHistory ?? [];
-    // Calcular mes anterior
     const [y, m] = activeMonth.split("-").map(Number);
     const prevDate = new Date(y, m - 2, 1);
     const prevKey  = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
-    return history.find((s) => s.month === prevKey) ?? null;
+    const snap = history.find((s) => s.month === prevKey) ?? null;
+
+    // Si estamos viendo el mes actual (sin snapshot seleccionado), escalar el mes anterior
+    // proporcionalmente a los días transcurridos para comparar periodos equivalentes.
+    // Ej: hoy es día 5 de 30 → ratio = 5/30 → ajustamos el total del mes anterior.
+    if (!selectedMonth && snap) {
+      const now   = new Date();
+      const dayOfMonth  = now.getDate();
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      const ratio = dayOfMonth / daysInMonth;
+      return {
+        ...snap,
+        total_revenue: Number(snap.total_revenue) * ratio,
+        collected:     Number(snap.collected)     * ratio,
+        pending:       Number(snap.pending)       * ratio,
+      };
+    }
+    return snap;
   }, [selectedMonth, currentMonth, monthlyHistory]);
 
   const financialDisplay = selectedRange && rangeData
@@ -568,23 +584,17 @@ export default function DashboardPage() {
           {
             label: "Total facturado", color: "text-brand-green",
             value: Number(financialDisplay?.total_revenue || 0),
-            prev:  !selectedSnapshot
-              ? Number(data?.prev_period?.total_revenue || prevSnapshot?.total_revenue || 0)
-              : Number(prevSnapshot?.total_revenue || 0),
+            prev:  Number(prevSnapshot?.total_revenue || 0),
           },
           {
             label: "Recaudado", color: "text-white",
             value: Number(financialDisplay?.collected || 0),
-            prev:  !selectedSnapshot
-              ? Number(data?.prev_period?.collected || prevSnapshot?.collected || 0)
-              : Number(prevSnapshot?.collected || 0),
+            prev:  Number(prevSnapshot?.collected     || 0),
           },
           {
             label: "Pendiente de cobro", color: "text-yellow-400",
             value: Number(financialDisplay?.pending || 0),
-            prev:  !selectedSnapshot
-              ? Number(data?.prev_period?.pending || prevSnapshot?.pending || 0)
-              : Number(prevSnapshot?.pending || 0),
+            prev:  Number(prevSnapshot?.pending      || 0),
           },
         ].map((kpi, i) => {
           const pct = !selectedRange ? pctChange(kpi.value, kpi.prev) : null;
