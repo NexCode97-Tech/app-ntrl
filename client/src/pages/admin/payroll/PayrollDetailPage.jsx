@@ -9,7 +9,7 @@ import {
 
 // ── Helpers ───────────────────────────────────────────────────
 const fmt = (v) =>
-  "$ " + Number(Number(v ?? 0).toLocaleString("es-CO"));
+  "$ " + Number(v ?? 0).toLocaleString("es-CO");
 
 const fmtShort = (v) => {
   const n = Math.round(Number(v ?? 0));
