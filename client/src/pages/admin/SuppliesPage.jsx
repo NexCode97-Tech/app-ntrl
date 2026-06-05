@@ -971,6 +971,9 @@ function CatalogItemModal({ item, onClose, onSave, onCreate, saving }) {
   });
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
+  // ── Proveedor inicial (solo al crear) ────────────────────────
+  const [initSupplier, setInitSupplier] = useState("");
+
   // ── Proveedores (disponibles una vez guardado el insumo) ──────
   const [addingSupplier, setAddingSupplier]   = useState(false);
   const [supplierForm,   setSupplierForm]     = useState({ supplier_id: "", unit_price: "", is_preferred: false });
@@ -984,7 +987,6 @@ function CatalogItemModal({ item, onClose, onSave, onCreate, saving }) {
   const { data: allSuppliers = [] } = useQuery({
     queryKey: ["suppliers"],
     queryFn: () => api.get("/supplies/suppliers").then((r) => r.data.data),
-    enabled: !!activeId,
   });
 
   const addSupplierMut = useMutation({
@@ -1047,6 +1049,17 @@ function CatalogItemModal({ item, onClose, onSave, onCreate, saving }) {
             <label className="block text-xs text-zinc-400 mb-1">Color</label>
             <ColorPicker value={form.color} onChange={(v) => set("color", v)} />
           </div>
+          {!activeId && (
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1">Proveedor (opcional)</label>
+              <CustomSelect value={initSupplier} onChange={(e) => setInitSupplier(e.target.value)}>
+                <option value="">Sin proveedor</option>
+                {allSuppliers.filter(s => s.is_active).map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </CustomSelect>
+            </div>
+          )}
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Notas</label>
             <input className="input-field" placeholder="Descripción adicional..." value={form.notes} onChange={(e) => set("notes", e.target.value)} />
@@ -1177,7 +1190,12 @@ function CatalogItemModal({ item, onClose, onSave, onCreate, saving }) {
               onClick={async () => {
                 try {
                   const newItem = await onCreate(form);
-                  if (newItem?.id) setSavedId(newItem.id);
+                  if (newItem?.id) {
+                    if (initSupplier) {
+                      await api.post(`/supply-catalog/${newItem.id}/suppliers`, { supplier_id: initSupplier, is_preferred: true });
+                    }
+                    setSavedId(newItem.id);
+                  }
                 } catch {}
               }}
             >
