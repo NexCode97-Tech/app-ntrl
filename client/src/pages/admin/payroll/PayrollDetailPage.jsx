@@ -470,13 +470,6 @@ export default function PayrollDetailPage() {
             {paidMut.isPending ? "Procesando..." : "Marcar como pagado"}
           </button>
         )}
-        {canExport && (
-          <button onClick={downloadBanco}
-            className="btn-secondary flex items-center gap-2">
-            <ArrowDownTrayIcon className="w-4 h-4" />
-            Archivo banco (CSV)
-          </button>
-        )}
         {actionError && (
           <p className="text-red-400 text-sm">{actionError}</p>
         )}
