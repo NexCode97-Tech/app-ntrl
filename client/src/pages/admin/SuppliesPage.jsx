@@ -821,12 +821,22 @@ function CatalogTab({ showForm, setShowForm }) {
           key={editing?.id || "new"}
           item={editing}
           onClose={() => { setShowForm(false); setEditing(null); }}
-          onSave={(d) => updateMut.mutate({ id: editing.id, ...d })}
-          onCreate={async (d) => {
-            const res = await createMut.mutateAsync(d);
-            qc.invalidateQueries({ queryKey: ["supply-catalog-all"] });
-            qc.invalidateQueries({ queryKey: ["supply-catalog"] });
-            return res.data.data; // devuelve el item creado con su id
+          onSave={async (d) => {
+            if (editing) {
+              updateMut.mutate({ id: editing.id, ...d });
+            } else {
+              try {
+                const res = await createMut.mutateAsync(d);
+                const newItem = res.data.data;
+                if (d._supplierId) {
+                  await api.post(`/supply-catalog/${newItem.id}/suppliers`, { supplier_id: d._supplierId, is_preferred: true });
+                }
+                qc.invalidateQueries({ queryKey: ["supply-catalog-all"] });
+                qc.invalidateQueries({ queryKey: ["supply-catalog"] });
+                setShowForm(false);
+                setEditing(null);
+              } catch {}
+            }
           }}
           saving={createMut.isPending || updateMut.isPending}
         />
@@ -955,12 +965,8 @@ function PriceInput({ value, onChange, placeholder = "0" }) {
   );
 }
 
-function CatalogItemModal({ item, onClose, onSave, onCreate, saving }) {
+function CatalogItemModal({ item, onClose, onSave, saving }) {
   const qc = useQueryClient();
-  // savedId permite mostrar la sección de proveedores incluso cuando se acaba de crear el insumo
-  const [savedId, setSavedId] = useState(item?.id || null);
-  const activeId = savedId; // id real del insumo (existente o recién creado)
-
   const [form, setForm] = useState({
     name:       item?.name       || "",
     unit:       item?.unit       || "Metros",
@@ -974,14 +980,14 @@ function CatalogItemModal({ item, onClose, onSave, onCreate, saving }) {
   // ── Proveedor inicial (solo al crear) ────────────────────────
   const [initSupplier, setInitSupplier] = useState("");
 
-  // ── Proveedores (disponibles una vez guardado el insumo) ──────
+  // ── Proveedores ───────────────────────────────────────────────
   const [addingSupplier, setAddingSupplier]   = useState(false);
   const [supplierForm,   setSupplierForm]     = useState({ supplier_id: "", unit_price: "", is_preferred: false });
 
   const { data: assignedSuppliers = [], isLoading: loadingAssigned } = useQuery({
-    queryKey: ["catalog-suppliers", activeId],
-    queryFn: () => api.get(`/supply-catalog/${activeId}/suppliers`).then((r) => r.data.data),
-    enabled: !!activeId,
+    queryKey: ["catalog-suppliers", item?.id],
+    queryFn: () => api.get(`/supply-catalog/${item.id}/suppliers`).then((r) => r.data.data),
+    enabled: !!item?.id,
   });
 
   const { data: allSuppliers = [] } = useQuery({
@@ -990,9 +996,9 @@ function CatalogItemModal({ item, onClose, onSave, onCreate, saving }) {
   });
 
   const addSupplierMut = useMutation({
-    mutationFn: (d) => api.post(`/supply-catalog/${activeId}/suppliers`, d),
+    mutationFn: (d) => api.post(`/supply-catalog/${item.id}/suppliers`, d),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["catalog-suppliers", activeId] });
+      qc.invalidateQueries({ queryKey: ["catalog-suppliers", item.id] });
       setAddingSupplier(false);
       setSupplierForm({ supplier_id: "", unit_price: "", is_preferred: false });
     },
@@ -1000,12 +1006,12 @@ function CatalogItemModal({ item, onClose, onSave, onCreate, saving }) {
 
   const removeSupplierMut = useMutation({
     mutationFn: (csId) => api.delete(`/supply-catalog/catalog-suppliers/${csId}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["catalog-suppliers", activeId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["catalog-suppliers", item.id] }),
   });
 
   const setPreferredMut = useMutation({
     mutationFn: ({ csId }) => api.put(`/supply-catalog/catalog-suppliers/${csId}`, { is_preferred: true }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["catalog-suppliers", activeId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["catalog-suppliers", item.id] }),
   });
 
   // Proveedores aún no asignados
@@ -1016,9 +1022,7 @@ function CatalogItemModal({ item, onClose, onSave, onCreate, saving }) {
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="bg-zinc-900 rounded-xl p-6 w-full max-w-lg space-y-4 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-white font-semibold">
-          {item ? "Editar insumo" : activeId ? "Insumo creado — asigna proveedores" : "Nuevo insumo"}
-        </h2>
+        <h2 className="text-white font-semibold">{item ? "Editar insumo" : "Nuevo insumo"}</h2>
 
         {/* ── Datos del insumo ── */}
         <div className="space-y-3">
@@ -1066,8 +1070,8 @@ function CatalogItemModal({ item, onClose, onSave, onCreate, saving }) {
           </div>
         </div>
 
-        {/* ── Proveedores (disponibles tras guardar) ── */}
-        {activeId && (
+        {/* ── Proveedores (solo al editar) ── */}
+        {item?.id && (
           <div className="border-t border-zinc-800 pt-4 space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Proveedores</p>
@@ -1181,36 +1185,10 @@ function CatalogItemModal({ item, onClose, onSave, onCreate, saving }) {
         )}
 
         <div className="flex gap-2 justify-end pt-2">
-          {!activeId && <button className="btn-secondary" onClick={onClose}>Cancelar</button>}
-          {activeId && <button className="btn-secondary" onClick={onClose}>Cerrar</button>}
-          {!activeId && (
-            <button
-              className="btn-primary"
-              disabled={saving || !form.name.trim() || !form.unit}
-              onClick={async () => {
-                try {
-                  const newItem = await onCreate(form);
-                  if (newItem?.id) {
-                    if (initSupplier) {
-                      await api.post(`/supply-catalog/${newItem.id}/suppliers`, { supplier_id: initSupplier, is_preferred: true });
-                    }
-                    setSavedId(newItem.id);
-                  }
-                } catch {}
-              }}
-            >
-              {saving ? "Guardando..." : "Crear insumo"}
-            </button>
-          )}
-          {activeId && item && (
-            <button
-              className="btn-primary"
-              onClick={() => onSave(form)}
-              disabled={saving || !form.name.trim() || !form.unit}
-            >
-              {saving ? "Guardando..." : "Actualizar"}
-            </button>
-          )}
+          <button className="btn-secondary" onClick={onClose}>Cancelar</button>
+          <button className="btn-primary" onClick={() => onSave({ ...form, _supplierId: initSupplier || undefined })} disabled={saving || !form.name.trim() || !form.unit}>
+            {saving ? "Guardando..." : item ? "Actualizar" : "Crear insumo"}
+          </button>
         </div>
       </div>
     </div>
