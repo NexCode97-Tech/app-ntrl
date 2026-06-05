@@ -190,7 +190,7 @@ export default function EmployeesPage() {
                       {emp.tipo_identificacion} {emp.numero_identificacion}
                     </td>
                     <td className="px-4 py-3 text-zinc-300">{emp.cargo}</td>
-                    <td className="px-4 py-3 text-right text-white font-mono font-medium">
+                    <td className="px-4 py-3 text-right text-white font-medium">
                       {fmt(emp.salario_base)}
                     </td>
                     <td className="px-4 py-3">

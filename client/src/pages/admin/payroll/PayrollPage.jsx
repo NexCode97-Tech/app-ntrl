@@ -197,7 +197,7 @@ function PeriodsTab() {
 
                 {/* Total */}
                 <div className="text-right shrink-0">
-                  <p className="text-brand-green font-bold font-mono text-sm">{fmt(total)}</p>
+                  <p className="text-brand-green font-bold text-sm">{fmt(total)}</p>
                   <p className="text-zinc-600 text-xs">neto total</p>
                 </div>
 
@@ -463,14 +463,14 @@ function EmployeesTab() {
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${CONTRATO_BADGE[emp.tipo_contrato]}`}>
                   {CONTRATO_LABEL[emp.tipo_contrato]}
                 </span>
-                <span className="text-brand-green font-mono font-bold text-xs">{fmt(emp.salario_base)}</span>
+                <span className="text-brand-green font-bold text-xs">{fmt(emp.salario_base)}</span>
               </div>
 
               {/* Datos bancarios */}
               {emp.numero_cuenta && (
                 <div className="flex items-center gap-2 text-xs text-zinc-500">
                   <span className="uppercase font-medium text-zinc-400">{emp.tipo_cuenta}</span>
-                  <span className="font-mono">{emp.numero_cuenta}</span>
+                  <span>{emp.numero_cuenta}</span>
                 </div>
               )}
 

@@ -31,7 +31,7 @@ function StatCard({ label, value, sub, accent }) {
       ? "bg-brand-green/5 border-brand-green/20"
       : "bg-zinc-900 border-zinc-800"}`}>
       <p className="text-zinc-500 text-xs mb-1">{label}</p>
-      <p className={`font-bold text-lg font-mono ${accent ? "text-brand-green" : "text-white"}`}>{value}</p>
+      <p className={`font-bold text-lg ${accent ? "text-brand-green" : "text-white"}`}>{value}</p>
       {sub && <p className="text-zinc-600 text-xs mt-0.5">{sub}</p>}
     </div>
   );
@@ -219,68 +219,68 @@ function EditModal({ tx, periodId, onClose, onSaved }) {
             <p className="text-zinc-500 text-xs font-medium uppercase tracking-wide mb-2">Resumen calculado</p>
             <div className="space-y-1 text-xs">
               <div className="flex justify-between text-zinc-400">
-                <span>Básico ({form.dias_laborados} días)</span><span className="font-mono">{fmt(basico)}</span>
+                <span>Básico ({form.dias_laborados} días)</span><span className=">{fmt(basico)}</span>
               </div>
               {esLaboral && auxT > 0 && (
                 <div className="flex justify-between text-zinc-400">
-                  <span>Aux. transporte</span><span className="font-mono">{fmt(auxT)}</span>
+                  <span>Aux. transporte</span><span className=">{fmt(auxT)}</span>
                 </div>
               )}
               {!esLaboral && antPrest > 0 && (
                 <div className="flex justify-between text-zinc-400">
-                  <span>Anticipo prestaciones</span><span className="font-mono">{fmt(antPrest)}</span>
+                  <span>Anticipo prestaciones</span><span className=">{fmt(antPrest)}</span>
                 </div>
               )}
               {/* Subtotal: básico + aux/anticipo */}
               <div className="flex justify-between text-zinc-300 font-medium border-t border-zinc-800 pt-1 mt-1">
-                <span>Subtotal</span><span className="font-mono">{fmt(subtotal)}</span>
+                <span>Subtotal</span><span className=">{fmt(subtotal)}</span>
               </div>
               {hExt > 0 && (
                 <div className="flex justify-between text-zinc-400">
-                  <span>Horas extras</span><span className="font-mono">{fmt(hExt)}</span>
+                  <span>Horas extras</span><span className=">{fmt(hExt)}</span>
                 </div>
               )}
               {otros_i > 0 && (
                 <div className="flex justify-between text-zinc-400">
-                  <span>Otros ingresos</span><span className="font-mono">{fmt(otros_i)}</span>
+                  <span>Otros ingresos</span><span className=">{fmt(otros_i)}</span>
                 </div>
               )}
               <div className="flex justify-between text-white font-semibold border-t border-zinc-800 pt-1 mt-1">
-                <span>Total devengado</span><span className="font-mono">{fmt(deveng)}</span>
+                <span>Total devengado</span><span className=">{fmt(deveng)}</span>
               </div>
               {esLaboral && (
                 <>
                   <div className="flex justify-between text-red-400 text-xs mt-1">
-                    <span>Salud (4%)</span><span className="font-mono">−{fmt(salud)}</span>
+                    <span>Salud (4%)</span><span className=">−{fmt(salud)}</span>
                   </div>
                   <div className="flex justify-between text-red-400 text-xs">
-                    <span>Pensión (4%)</span><span className="font-mono">−{fmt(pension)}</span>
+                    <span>Pensión (4%)</span><span className=">−{fmt(pension)}</span>
                   </div>
                 </>
               )}
               {antAdel > 0 && (
                 <div className="flex justify-between text-red-400 text-xs">
-                  <span>Anticipo</span><span className="font-mono">−{fmt(antAdel)}</span>
+                  <span>Anticipo</span><span className=">−{fmt(antAdel)}</span>
                 </div>
               )}
               {funeral > 0 && (
                 <div className="flex justify-between text-red-400 text-xs">
-                  <span>Funeral</span><span className="font-mono">−{fmt(funeral)}</span>
+                  <span>Funeral</span><span className=">−{fmt(funeral)}</span>
                 </div>
               )}
               {descHrs > 0 && (
                 <div className="flex justify-between text-red-400 text-xs">
-                  <span>Desc. horas pendientes</span><span className="font-mono">−{fmt(descHrs)}</span>
+                  <span>Desc. horas pendientes</span><span className=">−{fmt(descHrs)}</span>
                 </div>
               )}
               {otrosD > 0 && (
                 <div className="flex justify-between text-red-400 text-xs">
-                  <span>Otros descuentos</span><span className="font-mono">−{fmt(otrosD)}</span>
+                  <span>Otros descuentos</span><span className=">−{fmt(otrosD)}</span>
                 </div>
               )}
               <div className="flex justify-between border-t border-zinc-700 pt-2 mt-1">
                 <span className="text-brand-green font-bold text-sm">NETO A PAGAR</span>
-                <span className="text-brand-green font-black text-sm font-mono">{fmt(neto)}</span>
+                <span className="text-brand-green font-black text-sm">{fmt(neto)}</span>
               </div>
             </div>
           </div>
@@ -521,23 +521,23 @@ export default function PayrollDetailPage() {
                           {esLaboral ? "LAB" : "P.S."}
                         </span>
                       </td>
-                      <td className="px-3 py-3 text-right text-zinc-300 font-mono">{fmtShort(tx.basico)}</td>
-                      <td className="px-3 py-3 text-right font-mono">
+                      <td className="px-3 py-3 text-right text-zinc-300">{fmtShort(tx.basico)}</td>
+                      <td className="px-3 py-3 text-right">
                         {esLaboral
                           ? <span className="text-blue-400">{fmtShort(tx.aux_transporte)}</span>
                           : <span className="text-purple-400">{fmtShort(tx.anticipo_prestaciones)}</span>
                         }
                       </td>
-                      <td className="px-3 py-3 text-right font-mono text-zinc-200 font-medium">
+                      <td className="px-3 py-3 text-right text-zinc-200 font-medium">
                         {fmtShort(Number(tx.basico) + (esLaboral ? Number(tx.aux_transporte || 0) : Number(tx.anticipo_prestaciones || 0)))}
                       </td>
-                      <td className="px-3 py-3 text-right font-mono text-zinc-400">{fmtShort(tx.horas_extras)}</td>
-                      <td className="px-3 py-3 text-right font-mono text-white font-semibold">{fmtShort(tx.total_devengado)}</td>
-                      <td className="px-3 py-3 text-right font-mono text-red-400">{fmtShort(tx.salud)}</td>
-                      <td className="px-3 py-3 text-right font-mono text-red-400">{fmtShort(tx.pension)}</td>
-                      <td className="px-3 py-3 text-right font-mono text-red-400">{fmtShort(tx.anticipo_adelanto)}</td>
-                      <td className="px-3 py-3 text-right font-mono text-red-400">{fmtShort(otrosDesc)}</td>
-                      <td className="px-3 py-3 text-right font-mono text-brand-green font-bold">{fmtShort(tx.neto_pagable)}</td>
+                      <td className="px-3 py-3 text-right text-zinc-400">{fmtShort(tx.horas_extras)}</td>
+                      <td className="px-3 py-3 text-right text-white font-semibold">{fmtShort(tx.total_devengado)}</td>
+                      <td className="px-3 py-3 text-right text-red-400">{fmtShort(tx.salud)}</td>
+                      <td className="px-3 py-3 text-right text-red-400">{fmtShort(tx.pension)}</td>
+                      <td className="px-3 py-3 text-right text-red-400">{fmtShort(tx.anticipo_adelanto)}</td>
+                      <td className="px-3 py-3 text-right text-red-400">{fmtShort(otrosDesc)}</td>
+                      <td className="px-3 py-3 text-right text-brand-green font-bold">{fmtShort(tx.neto_pagable)}</td>
                       <td className="px-3 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
                           {canEdit && (
@@ -569,9 +569,9 @@ export default function PayrollDetailPage() {
                 <tr className="bg-zinc-800/60 border-t border-zinc-700 font-semibold text-sm">
                   <td className="px-4 py-3 text-zinc-300">TOTALES</td>
                   <td colSpan={4} />
-                  <td className="px-3 py-3 text-right font-mono text-white">{fmt(totalDevengado)}</td>
+                  <td className="px-3 py-3 text-right text-white">{fmt(totalDevengado)}</td>
                   <td colSpan={4} />
-                  <td className="px-3 py-3 text-right font-mono text-brand-green font-bold">{fmt(totalNeto)}</td>
+                  <td className="px-3 py-3 text-right text-brand-green font-bold">{fmt(totalNeto)}</td>
                   <td />
                 </tr>
               </tfoot>
@@ -607,19 +607,19 @@ export default function PayrollDetailPage() {
                           <span className="text-zinc-500">DEVENGADOS</span>
                           <span className="text-white font-semibold">{fmt(tx.total_devengado)}</span>
                         </div>
-                        <div className="flex justify-between"><span className="text-zinc-500">Básico</span><span className="text-zinc-300 font-mono">{fmt(tx.basico)}</span></div>
+                        <div className="flex justify-between"><span className="text-zinc-500">Básico</span><span className="text-zinc-300">{fmt(tx.basico)}</span></div>
                         {esLab && Number(tx.aux_transporte) > 0 && (
-                          <div className="flex justify-between"><span className="text-zinc-500">Aux. transp.</span><span className="text-blue-400 font-mono">{fmt(tx.aux_transporte)}</span></div>
+                          <div className="flex justify-between"><span className="text-zinc-500">Aux. transp.</span><span className="text-blue-400">{fmt(tx.aux_transporte)}</span></div>
                         )}
                         {!esLab && Number(tx.anticipo_prestaciones) > 0 && (
-                          <div className="flex justify-between"><span className="text-zinc-500">A. prestaciones</span><span className="text-purple-400 font-mono">{fmt(tx.anticipo_prestaciones)}</span></div>
+                          <div className="flex justify-between"><span className="text-zinc-500">A. prestaciones</span><span className="text-purple-400">{fmt(tx.anticipo_prestaciones)}</span></div>
                         )}
                         <div className="flex justify-between col-span-2 border-t border-zinc-800 pt-1 mt-0.5">
                           <span className="text-zinc-300 font-medium">Subtotal</span>
-                          <span className="text-zinc-200 font-mono font-medium">{fmt(sub)}</span>
+                          <span className="text-zinc-200 font-medium">{fmt(sub)}</span>
                         </div>
                         {Number(tx.horas_extras) > 0 && (
-                          <div className="flex justify-between"><span className="text-zinc-500">H. extras</span><span className="text-zinc-300 font-mono">{fmt(tx.horas_extras)}</span></div>
+                          <div className="flex justify-between"><span className="text-zinc-500">H. extras</span><span className="text-zinc-300">{fmt(tx.horas_extras)}</span></div>
                         )}
                       </div>
                     );
@@ -632,9 +632,9 @@ export default function PayrollDetailPage() {
                         <span className="text-zinc-500">DEDUCIDOS</span>
                         <span className="text-red-400 font-semibold">−{fmt(tx.total_deducido)}</span>
                       </div>
-                      {Number(tx.salud) > 0 && <div className="flex justify-between"><span className="text-zinc-500">Salud</span><span className="text-red-400 font-mono">−{fmt(tx.salud)}</span></div>}
-                      {Number(tx.pension) > 0 && <div className="flex justify-between"><span className="text-zinc-500">Pensión</span><span className="text-red-400 font-mono">−{fmt(tx.pension)}</span></div>}
-                      {Number(tx.anticipo_adelanto) > 0 && <div className="flex justify-between"><span className="text-zinc-500">Anticipo</span><span className="text-red-400 font-mono">−{fmt(tx.anticipo_adelanto)}</span></div>}
+                      {Number(tx.salud) > 0 && <div className="flex justify-between"><span className="text-zinc-500">Salud</span><span className="text-red-400">−{fmt(tx.salud)}</span></div>}
+                      {Number(tx.pension) > 0 && <div className="flex justify-between"><span className="text-zinc-500">Pensión</span><span className="text-red-400">−{fmt(tx.pension)}</span></div>}
+                      {Number(tx.anticipo_adelanto) > 0 && <div className="flex justify-between"><span className="text-zinc-500">Anticipo</span><span className="text-red-400">−{fmt(tx.anticipo_adelanto)}</span></div>}
                     </div>
                   )}
 
@@ -642,7 +642,7 @@ export default function PayrollDetailPage() {
                   <div className="flex items-center justify-between pt-2 border-t border-zinc-800">
                     <div>
                       <p className="text-zinc-500 text-xs">Neto a pagar</p>
-                      <p className="text-brand-green font-black text-base font-mono">{fmt(tx.neto_pagable)}</p>
+                      <p className="text-brand-green font-black text-base">{fmt(tx.neto_pagable)}</p>
                     </div>
                     <div className="flex gap-2 flex-wrap">
                       {canEdit && (
@@ -665,7 +665,7 @@ export default function PayrollDetailPage() {
 
                   {/* Datos bancarios */}
                   {tx.empleado_numero_cuenta && (
-                    <p className="text-zinc-600 text-xs font-mono">
+                    <p className="text-zinc-600 text-xs">
                       {tx.empleado_tipo_cuenta?.toUpperCase()} · {tx.empleado_numero_cuenta}
                     </p>
                   )}
