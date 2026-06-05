@@ -1092,9 +1092,9 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
 
         {/* ── Proveedores (solo al editar) ── */}
         {item?.id && (
-          <div className="border-t border-zinc-800 pt-4 space-y-3">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Proveedores</p>
+              <label className="block text-xs text-zinc-400">Proveedores</label>
               {!addingSupplier && availableSuppliers.length > 0 && (
                 <button
                   type="button"
