@@ -829,7 +829,11 @@ function CatalogTab({ showForm, setShowForm }) {
                 const res = await createMut.mutateAsync(d);
                 const newItem = res.data.data;
                 if (d._supplierId) {
-                  await api.post(`/supply-catalog/${newItem.id}/suppliers`, { supplier_id: d._supplierId, is_preferred: true });
+                  await api.post(`/supply-catalog/${newItem.id}/suppliers`, {
+                    supplier_id:  d._supplierId,
+                    unit_price:   d._supplierPrice || null,
+                    is_preferred: d._supplierPreferred ?? false,
+                  });
                 }
                 qc.invalidateQueries({ queryKey: ["supply-catalog-all"] });
                 qc.invalidateQueries({ queryKey: ["supply-catalog"] });
@@ -978,7 +982,9 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
   // ── Proveedor inicial (solo al crear) ────────────────────────
-  const [initSupplier, setInitSupplier] = useState("");
+  const [initSupplier,          setInitSupplier]          = useState("");
+  const [initSupplierPrice,     setInitSupplierPrice]     = useState("");
+  const [initSupplierPreferred, setInitSupplierPreferred] = useState(false);
 
   // ── Proveedores ───────────────────────────────────────────────
   const [addingSupplier, setAddingSupplier]   = useState(false);
@@ -1053,15 +1059,29 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
             <label className="block text-xs text-zinc-400 mb-1">Color</label>
             <ColorPicker value={form.color} onChange={(v) => set("color", v)} />
           </div>
-          {!activeId && (
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1">Proveedor (opcional)</label>
+          {!item?.id && (
+            <div className="rounded-xl border border-zinc-700 p-4 space-y-3">
+              <p className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Proveedor (opcional)</p>
               <CustomSelect value={initSupplier} onChange={(e) => setInitSupplier(e.target.value)}>
-                <option value="">Sin proveedor</option>
+                <option value="">Seleccionar proveedor...</option>
                 {allSuppliers.filter(s => s.is_active).map((s) => (
                   <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
               </CustomSelect>
+              {initSupplier && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-zinc-500 mb-1">Precio de este proveedor (opcional)</label>
+                    <PriceInput value={initSupplierPrice} onChange={setInitSupplierPrice} placeholder="Mismo precio base" />
+                  </div>
+                  <div className="flex items-end pb-1">
+                    <label className="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer">
+                      <input type="checkbox" checked={initSupplierPreferred} onChange={(e) => setInitSupplierPreferred(e.target.checked)} className="rounded" />
+                      Proveedor preferido
+                    </label>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           <div>
@@ -1186,7 +1206,7 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
 
         <div className="flex gap-2 justify-end pt-2">
           <button className="btn-secondary" onClick={onClose}>Cancelar</button>
-          <button className="btn-primary" onClick={() => onSave({ ...form, _supplierId: initSupplier || undefined })} disabled={saving || !form.name.trim() || !form.unit}>
+          <button className="btn-primary" onClick={() => onSave({ ...form, _supplierId: initSupplier || undefined, _supplierPrice: initSupplierPrice || undefined, _supplierPreferred: initSupplierPreferred })} disabled={saving || !form.name.trim() || !form.unit}>
             {saving ? "Guardando..." : item ? "Actualizar" : "Crear insumo"}
           </button>
         </div>
