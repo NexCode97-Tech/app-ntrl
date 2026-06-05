@@ -1093,69 +1093,34 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
         {/* ── Proveedores (solo al editar) ── */}
         {item?.id && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="block text-xs text-zinc-400">Proveedores</label>
-              {!addingSupplier && availableSuppliers.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setAddingSupplier(true)}
-                  className="text-xs text-brand-green hover:text-brand-green/80 transition-colors"
-                >
-                  + Asignar proveedor
-                </button>
-              )}
-            </div>
+            <label className="block text-xs text-zinc-400">Proveedores</label>
 
-            {/* Lista de proveedores asignados */}
-            {loadingAssigned ? (
-              <p className="text-zinc-600 text-xs">Cargando...</p>
-            ) : assignedSuppliers.length === 0 ? (
-              <p className="text-zinc-600 text-xs">Sin proveedores asignados</p>
-            ) : (
-              <div className="space-y-2">
-                {assignedSuppliers.map((cs) => (
-                  <div key={cs.id} className="flex items-center gap-3 bg-zinc-800 rounded-lg px-3 py-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-white text-sm font-medium truncate">{cs.supplier_name}</p>
-                        {cs.is_preferred && (
-                          <span className="text-[10px] bg-brand-green/20 text-brand-green border border-brand-green/30 px-1.5 py-0.5 rounded-full shrink-0">
-                            Preferido
-                          </span>
-                        )}
-                      </div>
-                      {cs.unit_price != null && (
-                        <p className="text-zinc-400 text-xs">${Number(cs.unit_price).toLocaleString("es-CO")} / {form.unit || item.unit}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {!cs.is_preferred && (
-                        <button
-                          type="button"
-                          onClick={() => setPreferredMut.mutate({ csId: cs.id })}
-                          className="text-zinc-500 hover:text-brand-green text-xs transition-colors"
-                          title="Marcar como preferido"
-                        >
-                          ★
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => { if (confirm(`¿Quitar a ${cs.supplier_name} de este insumo?`)) removeSupplierMut.mutate(cs.id); }}
-                        className="text-zinc-600 hover:text-red-400 text-xs transition-colors"
-                      >
-                        ✕
-                      </button>
-                    </div>
+            {/* Lista de proveedores ya asignados */}
+            {!loadingAssigned && assignedSuppliers.map((cs) => (
+              <div key={cs.id} className="flex items-center gap-3 bg-zinc-800 rounded-lg px-3 py-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-white text-sm font-medium truncate">{cs.supplier_name}</p>
+                    {cs.is_preferred && (
+                      <span className="text-[10px] bg-brand-green/20 text-brand-green border border-brand-green/30 px-1.5 py-0.5 rounded-full shrink-0">Preferido</span>
+                    )}
                   </div>
-                ))}
+                  {cs.unit_price != null && (
+                    <p className="text-zinc-400 text-xs">${Number(cs.unit_price).toLocaleString("es-CO")} / {form.unit || item.unit}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {!cs.is_preferred && (
+                    <button type="button" onClick={() => setPreferredMut.mutate({ csId: cs.id })} className="text-zinc-500 hover:text-brand-green text-xs transition-colors" title="Marcar como preferido">★</button>
+                  )}
+                  <button type="button" onClick={() => { if (confirm(`¿Quitar a ${cs.supplier_name} de este insumo?`)) removeSupplierMut.mutate(cs.id); }} className="text-zinc-600 hover:text-red-400 text-xs transition-colors">✕</button>
+                </div>
               </div>
-            )}
+            ))}
 
-            {/* Formulario para agregar proveedor */}
-            {addingSupplier && (
-              <div className="bg-zinc-800/60 border border-zinc-700 rounded-lg p-3 space-y-2">
-                <p className="text-xs text-zinc-400 mb-1">Asignar proveedor</p>
+            {/* Dropdown para agregar proveedor — igual al modal de crear */}
+            {availableSuppliers.length > 0 && (
+              <>
                 <CustomSelect
                   value={supplierForm.supplier_id}
                   onChange={(e) => setSupplierForm((p) => ({ ...p, supplier_id: e.target.value }))}
@@ -1165,41 +1130,30 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
                 </CustomSelect>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-xs text-zinc-500 mb-1">Precio de este proveedor (opcional)</label>
-                    <PriceInput value={supplierForm.unit_price} onChange={(v) => setSupplierForm((p) => ({ ...p, unit_price: v }))} placeholder="Mismo precio base" />
+                {supplierForm.supplier_id && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs text-zinc-500 mb-1">Precio de este proveedor (opcional)</label>
+                      <PriceInput value={supplierForm.unit_price} onChange={(v) => setSupplierForm((p) => ({ ...p, unit_price: v }))} placeholder="Mismo precio base" />
+                    </div>
+                    <div className="flex items-end pb-1">
+                      <label className="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer">
+                        <input type="checkbox" checked={supplierForm.is_preferred} onChange={(e) => setSupplierForm((p) => ({ ...p, is_preferred: e.target.checked }))} className="rounded" />
+                        Proveedor preferido
+                      </label>
+                    </div>
                   </div>
-                  <div className="flex items-end pb-1">
-                    <label className="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={supplierForm.is_preferred}
-                        onChange={(e) => setSupplierForm((p) => ({ ...p, is_preferred: e.target.checked }))}
-                        className="rounded"
-                      />
-                      Proveedor preferido
-                    </label>
+                )}
+                {supplierForm.supplier_id && (
+                  <div className="flex gap-2 justify-end">
+                    <button type="button" className="btn-secondary text-xs py-1 px-3" onClick={() => setSupplierForm({ supplier_id: "", unit_price: "", is_preferred: false })}>Cancelar</button>
+                    <button type="button" className="btn-primary text-xs py-1 px-3" disabled={addSupplierMut.isPending}
+                      onClick={() => addSupplierMut.mutate({ supplier_id: supplierForm.supplier_id, unit_price: supplierForm.unit_price || null, is_preferred: supplierForm.is_preferred })}>
+                      {addSupplierMut.isPending ? "Guardando..." : "Asignar"}
+                    </button>
                   </div>
-                </div>
-                <div className="flex gap-2 justify-end pt-1">
-                  <button type="button" className="btn-secondary text-xs py-1 px-3" onClick={() => { setAddingSupplier(false); setSupplierForm({ supplier_id: "", unit_price: "", is_preferred: false }); }}>
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-primary text-xs py-1 px-3"
-                    disabled={!supplierForm.supplier_id || addSupplierMut.isPending}
-                    onClick={() => addSupplierMut.mutate({
-                      supplier_id: supplierForm.supplier_id,
-                      unit_price: supplierForm.unit_price || null,
-                      is_preferred: supplierForm.is_preferred,
-                    })}
-                  >
-                    {addSupplierMut.isPending ? "Guardando..." : "Asignar"}
-                  </button>
-                </div>
-              </div>
+                )}
+              </>
             )}
           </div>
         )}
