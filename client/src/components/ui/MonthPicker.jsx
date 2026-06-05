@@ -16,7 +16,7 @@ const MONTHS = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov
  *   dateRange      – { start: Date, end: Date } | null
  *   onChange       – (month: string | null, range: { start, end } | null) => void
  */
-export default function MonthPicker({ value, currentMonth, availableMonths = [], dateRange, onChange }) {
+export default function MonthPicker({ value, currentMonth, availableMonths = [], dateRange, onChange, alignRight = false }) {
   const [open,     setOpen]     = useState(false);
   const [step,     setStep]     = useState("month"); // "month" | "days"
   const [viewYear, setViewYear] = useState(() => {
@@ -138,7 +138,7 @@ export default function MonthPicker({ value, currentMonth, availableMonths = [],
 
       {/* Popover */}
       {open && (
-        <div className="absolute top-10 left-0 z-50 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl p-4 w-72">
+        <div className={`absolute top-10 z-50 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl p-4 w-72 ${alignRight ? "right-0" : "left-0"}`}>
 
           {/* ── PASO 1: Selección de mes ────────────────────── */}
           {step === "month" && (
