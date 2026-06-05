@@ -1076,6 +1076,8 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
                       <div className="flex-1">
                         <PriceInput value={initSupplierPrice} onChange={setInitSupplierPrice} placeholder="Mismo precio base" />
                       </div>
+                      <button type="button" className="btn-secondary text-xs py-1.5 px-3 shrink-0" onClick={() => { setInitSupplier(""); setInitSupplierPrice(""); setInitSupplierPreferred(false); }}>Cancelar</button>
+                      <button type="button" className="btn-primary text-xs py-1.5 px-3 shrink-0" onClick={() => {}}>Asignar</button>
                     </div>
                   </div>
                   <label className="flex items-center gap-2.5 text-sm text-zinc-300 cursor-pointer select-none">
