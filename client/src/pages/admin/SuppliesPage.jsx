@@ -985,6 +985,12 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
   const [initSupplier,          setInitSupplier]          = useState("");
   const [initSupplierPrice,     setInitSupplierPrice]     = useState("");
   const [initSupplierPreferred, setInitSupplierPreferred] = useState(false);
+  const [initSupplierConfirmed, setInitSupplierConfirmed] = useState(false);
+
+  function clearInitSupplier() {
+    setInitSupplier(""); setInitSupplierPrice("");
+    setInitSupplierPreferred(false); setInitSupplierConfirmed(false);
+  }
 
   // ── Proveedores ───────────────────────────────────────────────
   const [addingSupplier, setAddingSupplier]   = useState(false);
@@ -1062,29 +1068,51 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
           {!item?.id && (
             <div className="space-y-3">
               <label className="block text-xs text-zinc-400 mb-1">Proveedor</label>
-              <CustomSelect value={initSupplier} onChange={(e) => setInitSupplier(e.target.value)}>
-                <option value="">Seleccionar proveedor...</option>
-                {allSuppliers.filter(s => s.is_active).map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </CustomSelect>
-              {initSupplier && (
-                <div className="bg-zinc-800/50 border border-zinc-700/60 rounded-xl p-3 space-y-3">
-                  <div>
-                    <label className="block text-xs text-zinc-400 mb-1.5">Precio de este proveedor</label>
-                    <div className="flex items-stretch gap-2">
-                      <div className="w-1/2">
-                        <PriceInput value={initSupplierPrice} onChange={setInitSupplierPrice} placeholder="Mismo precio base" />
-                      </div>
-                      <button type="button" className="btn-secondary text-sm px-4 shrink-0" onClick={() => { setInitSupplier(""); setInitSupplierPrice(""); setInitSupplierPreferred(false); }}>Cancelar</button>
-                      <button type="button" className="btn-primary text-sm px-4 shrink-0" onClick={() => {}}>Asignar</button>
+              {/* Chip del proveedor confirmado */}
+              {initSupplier && initSupplierConfirmed ? (
+                <div className="flex items-center gap-3 bg-zinc-800 rounded-lg px-3 py-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-white text-sm font-medium truncate">
+                        {allSuppliers.find(s => s.id === initSupplier)?.name}
+                      </p>
+                      {initSupplierPreferred && (
+                        <span className="text-[10px] bg-brand-green/20 text-brand-green border border-brand-green/30 px-1.5 py-0.5 rounded-full shrink-0">Preferido</span>
+                      )}
                     </div>
+                    {initSupplierPrice && (
+                      <p className="text-zinc-400 text-xs">${Number(initSupplierPrice).toLocaleString("es-CO")} / {form.unit || "unidad"}</p>
+                    )}
                   </div>
-                  <label className="flex items-center gap-2.5 text-sm text-zinc-300 cursor-pointer select-none">
-                    <input type="checkbox" checked={initSupplierPreferred} onChange={(e) => setInitSupplierPreferred(e.target.checked)} className="rounded accent-brand-green w-4 h-4" />
-                    Marcar como proveedor preferido
-                  </label>
+                  <button type="button" onClick={clearInitSupplier} className="text-zinc-600 hover:text-red-400 text-xs transition-colors">✕</button>
                 </div>
+              ) : (
+                <>
+                  <CustomSelect value={initSupplier} onChange={(e) => { setInitSupplier(e.target.value); setInitSupplierConfirmed(false); }}>
+                    <option value="">Seleccionar proveedor...</option>
+                    {allSuppliers.filter(s => s.is_active).map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </CustomSelect>
+                  {initSupplier && (
+                    <div className="bg-zinc-800/50 border border-zinc-700/60 rounded-xl p-3 space-y-3">
+                      <div>
+                        <label className="block text-xs text-zinc-400 mb-1.5">Precio de este proveedor</label>
+                        <div className="flex items-stretch gap-2">
+                          <div className="w-1/2">
+                            <PriceInput value={initSupplierPrice} onChange={setInitSupplierPrice} placeholder="Mismo precio base" />
+                          </div>
+                          <button type="button" className="btn-secondary text-sm px-4 shrink-0" onClick={clearInitSupplier}>Cancelar</button>
+                          <button type="button" className="btn-primary text-sm px-4 shrink-0" onClick={() => setInitSupplierConfirmed(true)}>Asignar</button>
+                        </div>
+                      </div>
+                      <label className="flex items-center gap-2.5 text-sm text-zinc-300 cursor-pointer select-none">
+                        <input type="checkbox" checked={initSupplierPreferred} onChange={(e) => setInitSupplierPreferred(e.target.checked)} className="rounded accent-brand-green w-4 h-4" />
+                        Marcar como proveedor preferido
+                      </label>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
