@@ -1084,10 +1084,6 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
               )}
             </div>
           )}
-          <div>
-            <label className="block text-xs text-zinc-400 mb-1">Notas</label>
-            <input className="input-field" placeholder="Descripción adicional..." value={form.notes} onChange={(e) => set("notes", e.target.value)} />
-          </div>
         </div>
 
         {/* ── Proveedores (solo al editar) ── */}
@@ -1157,6 +1153,11 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
             )}
           </div>
         )}
+
+        <div>
+          <label className="block text-xs text-zinc-400 mb-1">Notas</label>
+          <input className="input-field" placeholder="Descripción adicional..." value={form.notes} onChange={(e) => set("notes", e.target.value)} />
+        </div>
 
         <div className="flex gap-2 justify-end pt-2">
           <button className="btn-secondary" onClick={onClose}>Cancelar</button>
