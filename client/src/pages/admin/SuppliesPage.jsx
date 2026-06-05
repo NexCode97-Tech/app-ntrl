@@ -1072,12 +1072,12 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
                 <div className="bg-zinc-800/50 border border-zinc-700/60 rounded-xl p-3 space-y-3">
                   <div>
                     <label className="block text-xs text-zinc-400 mb-1.5">Precio de este proveedor</label>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1">
+                    <div className="flex items-stretch gap-2">
+                      <div className="w-1/2">
                         <PriceInput value={initSupplierPrice} onChange={setInitSupplierPrice} placeholder="Mismo precio base" />
                       </div>
-                      <button type="button" className="btn-secondary text-xs py-1.5 px-3 shrink-0" onClick={() => { setInitSupplier(""); setInitSupplierPrice(""); setInitSupplierPreferred(false); }}>Cancelar</button>
-                      <button type="button" className="btn-primary text-xs py-1.5 px-3 shrink-0" onClick={() => {}}>Asignar</button>
+                      <button type="button" className="btn-secondary text-sm px-4 shrink-0" onClick={() => { setInitSupplier(""); setInitSupplierPrice(""); setInitSupplierPreferred(false); }}>Cancelar</button>
+                      <button type="button" className="btn-primary text-sm px-4 shrink-0" onClick={() => {}}>Asignar</button>
                     </div>
                   </div>
                   <label className="flex items-center gap-2.5 text-sm text-zinc-300 cursor-pointer select-none">
@@ -1134,12 +1134,12 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
                   <div className="bg-zinc-800/50 border border-zinc-700/60 rounded-xl p-3 space-y-3">
                     <div>
                       <label className="block text-xs text-zinc-400 mb-1.5">Precio de este proveedor</label>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1">
+                      <div className="flex items-stretch gap-2">
+                        <div className="w-1/2">
                           <PriceInput value={supplierForm.unit_price} onChange={(v) => setSupplierForm((p) => ({ ...p, unit_price: v }))} placeholder="Mismo precio base" />
                         </div>
-                        <button type="button" className="btn-secondary text-xs py-1.5 px-3 shrink-0" onClick={() => setSupplierForm({ supplier_id: "", unit_price: "", is_preferred: false })}>Cancelar</button>
-                        <button type="button" className="btn-primary text-xs py-1.5 px-3 shrink-0" disabled={addSupplierMut.isPending}
+                        <button type="button" className="btn-secondary text-sm px-4 shrink-0" onClick={() => setSupplierForm({ supplier_id: "", unit_price: "", is_preferred: false })}>Cancelar</button>
+                        <button type="button" className="btn-primary text-sm px-4 shrink-0" disabled={addSupplierMut.isPending}
                           onClick={() => addSupplierMut.mutate({ supplier_id: supplierForm.supplier_id, unit_price: supplierForm.unit_price || null, is_preferred: supplierForm.is_preferred })}>
                           {addSupplierMut.isPending ? "..." : "Asignar"}
                         </button>
