@@ -560,16 +560,18 @@ export default function DashboardPage() {
       {/* Selector de mes + botón actualizar en la misma fila */}
       <div className="flex items-center justify-between gap-2">
         <h1 className="lg:hidden text-white font-bold text-xl">Dashboard</h1>
-        <div className="flex items-center gap-2">
-          <span className="hidden sm:inline text-zinc-500 text-xs shrink-0">Ver mes:</span>
-          <MonthPicker
-            value={selectedMonth}
-            currentMonth={currentMonth}
-            availableMonths={(monthlyHistory ?? []).map((s) => s.month)}
-            dateRange={selectedRange}
-            onChange={(m, range) => { setSelectedMonth(m); setSelectedRange(range); setSelectedSport(null); }}
-            alignRight
-          />
+        <div className="flex items-center gap-2 lg:w-full lg:justify-between">
+          <div className="flex items-center gap-2">
+            <span className="hidden sm:inline text-zinc-500 text-xs shrink-0">Ver mes:</span>
+            <MonthPicker
+              value={selectedMonth}
+              currentMonth={currentMonth}
+              availableMonths={(monthlyHistory ?? []).map((s) => s.month)}
+              dateRange={selectedRange}
+              onChange={(m, range) => { setSelectedMonth(m); setSelectedRange(range); setSelectedSport(null); }}
+              alignRight
+            />
+          </div>
           <button
             onClick={handleRefresh}
             className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg px-3 py-1.5 transition-colors shrink-0"
