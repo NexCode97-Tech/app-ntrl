@@ -524,8 +524,8 @@ function RequestForm({ orders, onSave, onClose, saving, error }) {
   function handleSelectCatalog(id) {
     const item = catalog.find((c) => c.id === id);
     set("supply_catalog_id", id);
-    if (item) { set("item_name", item.name); set("unit", item.unit); }
-    else       { set("item_name", ""); }
+    if (item) { set("item_name", item.name); set("unit", item.unit); set("color", item.color || ""); }
+    else       { set("item_name", ""); set("color", ""); }
   }
 
   function handleCategoryChange(cat) {
