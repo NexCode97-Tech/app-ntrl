@@ -6,6 +6,18 @@ import { ChatBubbleLeftIcon } from "@heroicons/react/24/outline";
 import ColorPicker from "../../components/ui/ColorPicker.jsx";
 import CustomSelect from "../../components/ui/CustomSelect.jsx";
 
+const COLOR_HEX = { Blanco:"#FFFFFF", Negro:"#111111", Azul:"#2563EB", Rojo:"#DC2626", Amarillo:"#EAB308" };
+function ColorSwatch({ color }) {
+  const hex = COLOR_HEX[color] ?? (color?.startsWith("#") ? color : null);
+  if (!hex) return null;
+  return (
+    <span className="inline-flex items-center gap-1 text-xs text-zinc-400">
+      <span className="w-3 h-3 rounded-full border border-zinc-600 shrink-0" style={{ backgroundColor: hex }} />
+      {color}
+    </span>
+  );
+}
+
 const STATUS_COLORS = {
   pending:     "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30",
   in_progress: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
@@ -70,6 +82,7 @@ export default function SuppliesWorkerPage() {
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[r.status]}`}>{STATUS_LABELS[r.status]}</span>
               </div>
               <p className="text-zinc-400 text-sm">{r.quantity} {r.unit}</p>
+              {r.color && <ColorSwatch color={r.color} />}
               {r.order_number && (
                 <p className="text-zinc-500 text-xs mt-0.5">Pedido #{String(r.order_number).padStart(3,"0")}</p>
               )}
@@ -162,8 +175,8 @@ function RequestForm({ orders, onSave, onClose, saving, error }) {
   function handleSelectCatalog(id) {
     const item = catalog.find((c) => c.id === id);
     set("supply_catalog_id", id);
-    if (item) { set("item_name", item.name); set("unit", item.unit); }
-    else       { set("item_name", ""); }
+    if (item) { set("item_name", item.name); set("unit", item.unit); set("color", item.color || ""); }
+    else       { set("item_name", ""); set("color", ""); }
   }
 
   function handleCategoryChange(cat) {
