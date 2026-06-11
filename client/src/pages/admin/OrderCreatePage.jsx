@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../../config/api.js";
 import CascadeFilter from "../../components/orders/CascadeFilter.jsx";
+import DeliveryDatePicker from "../../components/ui/DeliveryDatePicker.jsx";
 import CustomSelect from "../../components/ui/CustomSelect.jsx";
 import SizeQuantityGrid from "../../components/orders/SizeQuantityGrid.jsx";
 import { DocumentTextIcon, DocumentIcon } from "@heroicons/react/24/outline";
@@ -201,7 +202,7 @@ export default function OrderCreatePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs text-zinc-400 mb-1">Fecha de entrega</label>
-              <input type="date" className="input-field" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
+              <DeliveryDatePicker value={deliveryDate} onChange={setDeliveryDate} />
             </div>
             <div>
               <label className="block text-xs text-zinc-400 mb-1">Diseños (JPG/PNG/WebP/HEIC/PDF)</label>

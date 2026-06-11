@@ -96,6 +96,9 @@ function toLocalStr(date) {
 }
 
 // ── Grilla de días compartida ──────────────────────────────────
+const MAX_PER_DAY = 3;
+const ACTIVE_STATUSES_SET = new Set(["pending", "in_progress", "ready", "delivered"]);
+
 function DayGrid({ days, ordersByDay, selectedDay, onSelect, today, holidays }) {
   return (
     <div className="grid grid-cols-7 gap-1">
@@ -104,18 +107,21 @@ function DayGrid({ days, ordersByDay, selectedDay, onSelect, today, holidays }) 
       ))}
       {days.map((cell, i) => {
         if (!cell) return <div key={`e-${i}`} />;
-        const orders     = ordersByDay[cell.str] ?? [];
-        const isToday    = cell.str === today;
-        const isSelected = cell.str === selectedDay;
-        const holiday    = holidays[cell.str];
+        const orders      = ordersByDay[cell.str] ?? [];
+        const activeCount = orders.filter((o) => ACTIVE_STATUSES_SET.has(o.status)).length;
+        const isFull      = activeCount >= MAX_PER_DAY;
+        const isToday     = cell.str === today;
+        const isSelected  = cell.str === selectedDay;
+        const holiday     = holidays[cell.str];
         return (
           <button
             key={cell.str}
             onClick={() => onSelect(cell.str === selectedDay ? null : cell.str)}
-            title={holiday ?? undefined}
+            title={holiday ?? (isFull ? "Fecha completa (3/3 pedidos)" : undefined)}
             className={`
               relative flex flex-col items-center py-2 px-1 rounded-lg transition-colors text-sm min-h-[52px]
               ${isSelected ? "bg-brand-green text-black"
+                : isFull   ? "bg-red-950/40 hover:bg-red-950/50 text-red-300"
                 : isToday  ? "bg-zinc-700 text-white"
                 : holiday  ? "bg-red-950/40 hover:bg-red-950/60 text-red-300"
                 : orders.length ? "hover:bg-zinc-800 text-white"
@@ -123,6 +129,14 @@ function DayGrid({ days, ordersByDay, selectedDay, onSelect, today, holidays }) 
             `}
           >
             <span className="font-medium leading-none">{cell.day}</span>
+            {activeCount > 0 && (
+              <span className={`text-[9px] font-medium leading-none mt-0.5
+                ${isFull
+                  ? (isSelected ? "text-black/70" : "text-red-400")
+                  : (isSelected ? "text-black/70" : "text-zinc-500")}`}>
+                {activeCount}/{MAX_PER_DAY}
+              </span>
+            )}
             {holiday && !isSelected && (
               <span className="w-1 h-1 rounded-full bg-red-400 mt-1" />
             )}
@@ -321,6 +335,10 @@ export default function CalendarPage() {
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-red-400" />
             <span className="text-xs text-zinc-500">Festivo</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-bold text-red-400">3/3</span>
+            <span className="text-xs text-zinc-500">Fecha llena</span>
           </div>
         </div>
 
