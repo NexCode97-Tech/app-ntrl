@@ -12,8 +12,8 @@ import {
   EnvelopeIcon,
   ClipboardDocumentCheckIcon,
 } from "@heroicons/react/24/outline";
-import TabBar from "../../components/ui/TabBar.jsx";
 import CustomSelect from "../../components/ui/CustomSelect.jsx";
+import StatusFilterDropdown from "../../components/ui/StatusFilterDropdown.jsx";
 
 const GENDERS = [
   { value: "nino",   label: "Niño"         },
@@ -511,7 +511,7 @@ export default function QuotesPage() {
   const qc       = useQueryClient();
   const [showForm,   setShowForm]   = useState(false);
   const [selected,     setSelected]     = useState(null);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusSel,    setStatusSel]    = useState([]); // [] = todas
   const [search,       setSearch]       = useState("");
 
   const { data: quotes = [], isLoading } = useQuery({
@@ -544,7 +544,7 @@ export default function QuotesPage() {
   }
 
   const filtered = quotes
-    .filter((q) => statusFilter === "all" || q.status === statusFilter)
+    .filter((q) => statusSel.length === 0 || statusSel.includes(q.status))
     .filter((q) => {
       if (!search.trim()) return true;
       const s = search.toLowerCase();
@@ -554,24 +554,15 @@ export default function QuotesPage() {
       );
     });
 
-  const STATUS_TABS = [
-    { value: "all",      label: "Todas"     },
-    { value: "draft",    label: "Borrador"  },
-    { value: "sent",     label: "Enviadas"  },
-    { value: "approved", label: "Aprobadas" },
-    { value: "rejected", label: "Rechazadas"},
-  ];
-
-  const STATUS_CARDS = [
-    { value: "all",      label: "Todas",      color: "text-zinc-300",    border: "border-zinc-600",         bg: "bg-zinc-800/60",    activeBorder: "border-zinc-500",         activeRing: "ring-zinc-500"         },
-    { value: "draft",    label: "Borrador",   color: "text-zinc-400",    border: "border-zinc-600",         bg: "bg-zinc-800/60",    activeBorder: "border-zinc-400",         activeRing: "ring-zinc-400"         },
-    { value: "sent",     label: "Enviadas",   color: "text-blue-400",    border: "border-blue-500/40",      bg: "bg-blue-950/60",    activeBorder: "border-blue-400",         activeRing: "ring-blue-400"         },
-    { value: "approved", label: "Aprobadas",  color: "text-brand-green", border: "border-brand-green/40",   bg: "bg-[#0d1f14]",      activeBorder: "border-brand-green",      activeRing: "ring-brand-green"      },
-    { value: "rejected", label: "Rechazadas", color: "text-red-400",     border: "border-red-500/40",       bg: "bg-red-950/60",     activeBorder: "border-red-400",          activeRing: "ring-red-400"          },
+  const STATUS_FILTER_OPTS = [
+    { value: "draft",    label: "Borrador",   dot: "#a1a1aa" },
+    { value: "sent",     label: "Enviadas",   dot: "#60a5fa" },
+    { value: "approved", label: "Aprobadas",  dot: "#c5ff3a" },
+    { value: "rejected", label: "Rechazadas", dot: "#f87171" },
   ];
 
   const countByStatus = {
-    all:      quotes.length,
+    "":       quotes.length,
     draft:    quotes.filter((q) => q.status === "draft").length,
     sent:     quotes.filter((q) => q.status === "sent").length,
     approved: quotes.filter((q) => q.status === "approved").length,
@@ -582,62 +573,30 @@ export default function QuotesPage() {
     <div className="space-y-4">
       <h1 className="text-white font-bold text-xl lg:hidden">Cotizaciones</h1>
 
-      {/* Toolbar */}
-      <div className="space-y-3">
-        {/* Móvil — select */}
-        <div className="md:hidden">
-          <CustomSelect value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            {STATUS_TABS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-          </CustomSelect>
-        </div>
-
-        {/* Tablet — TabBar */}
-        <div className="hidden md:block lg:hidden">
-          <TabBar
-            tabs={STATUS_TABS.map((t) => ({
-              ...t,
-              count: t.value !== "all" ? countByStatus[t.value] : undefined,
-            }))}
-            value={statusFilter}
-            onChange={setStatusFilter}
-          />
-        </div>
-
-        {/* Desktop — tarjetas de conteo */}
-        <div className="hidden lg:grid grid-cols-5 gap-3">
-          {STATUS_CARDS.map((s) => {
-            const isActive = statusFilter === s.value;
-            return (
-              <button
-                key={s.value}
-                onClick={() => setStatusFilter(s.value)}
-                className={`rounded-xl border p-4 flex flex-col items-center justify-center gap-0.5 transition-all duration-150
-                  ${isActive
-                    ? `${s.bg} ${s.activeBorder} ring-1 ring-inset ${s.activeRing}`
-                    : "bg-zinc-900 border-zinc-800 hover:border-zinc-600"
-                  }`}
-              >
-                <p className={`text-2xl font-bold ${isActive ? s.color : "text-zinc-300"}`}>
-                  {countByStatus[s.value]}
-                </p>
-                <p className={`text-xs mt-0.5 ${isActive ? s.color : "text-zinc-500"} opacity-90`}>
-                  {s.label}
-                </p>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Buscador + botón — debajo de los filtros */}
-        <div className="flex items-center gap-3">
+      {/* Toolbar — búsqueda + estado + nueva cotización */}
+      <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+        {/* Búsqueda (primero) */}
+        <div className="relative flex-1 order-1">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
           <input
-            className="input-field flex-1"
-            placeholder="Buscar por # o cliente..."
+            className="w-full h-10 bg-zinc-900 border border-zinc-700 focus:border-zinc-500 rounded-lg pl-9 pr-3 text-sm text-white placeholder-zinc-500 outline-none transition-colors"
+            placeholder="Buscar por número o cliente..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <button onClick={() => setShowForm(true)} className="btn-primary shrink-0 whitespace-nowrap">
-            + Nueva cotización
+        </div>
+
+        {/* Estado + Nueva cotización */}
+        <div className="flex gap-2 order-2 shrink-0">
+          <StatusFilterDropdown
+            options={STATUS_FILTER_OPTS}
+            selected={statusSel}
+            onChange={setStatusSel}
+            counts={countByStatus}
+          />
+          <button onClick={() => setShowForm(true)} className="btn-primary h-10 shrink-0 whitespace-nowrap hidden sm:flex items-center gap-1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Nueva cotización</span>
           </button>
         </div>
       </div>
@@ -710,6 +669,15 @@ export default function QuotesPage() {
           onConvert={handleConvert}
         />
       )}
+
+      {/* FAB — acción primaria en móvil */}
+      <button
+        onClick={() => setShowForm(true)}
+        aria-label="Nueva cotización"
+        className="sm:hidden fixed bottom-6 right-5 z-40 w-14 h-14 rounded-full bg-brand-green text-black shadow-lg shadow-brand-green/30 flex items-center justify-center active:scale-90 transition-transform"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
     </div>
   );
 }
