@@ -184,6 +184,45 @@ export default function OrderDetailPage() {
               {/* Cliente — protagonista */}
               <p className="text-white font-semibold text-base mt-1 truncate">{data.customer_name}</p>
             </div>
+
+            {/* Acciones compactas — esquina superior derecha */}
+            <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+              {data.status !== "delivered" && (
+                <button onClick={() => setShowEdit(true)} title="Editar"
+                  className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-zinc-800/80 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:border-zinc-600 transition-colors">
+                  <IconEdit /> <span className="hidden sm:inline">Editar</span>
+                </button>
+              )}
+              {data.status !== "delivered" && data.status === "completed" && (
+                <button onClick={markDelivered} title="Marcar entregado"
+                  className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-brand-green text-black hover:bg-brand-green/90 transition-colors">
+                  <IconCheck /> <span className="hidden sm:inline">Entregado</span>
+                </button>
+              )}
+              {["completed", "delivered"].includes(data.status) && (
+                <button onClick={() => {
+                    setGuiaForm({
+                      transportadora:    data.guia_data?.transportadora    ?? "",
+                      direccion_destino: data.guia_data?.direccion_destino ?? data.address ?? "",
+                      punto_cucuta:      data.guia_data?.punto_cucuta      ?? false,
+                      punto_bucaramanga: data.guia_data?.punto_bucaramanga ?? false,
+                      observaciones:     data.guia_data?.observaciones     ?? "",
+                    });
+                    setShowGuia(true);
+                  }} title="Guía de despacho"
+                  className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-zinc-800/80 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:border-zinc-600 transition-colors">
+                  <IconTruck /> <span className="hidden sm:inline">Guía</span>
+                </button>
+              )}
+              <button onClick={handleDownloadInvoice} title="Descargar factura"
+                className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-zinc-800/80 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:border-zinc-600 transition-colors">
+                <IconInvoice /> <span className="hidden sm:inline">Factura</span>
+              </button>
+              <button onClick={handleDelete} title="Eliminar pedido"
+                className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-zinc-800/80 border border-red-900/60 text-red-400 hover:bg-red-900/30 hover:border-red-700 transition-colors">
+                <IconTrash /> <span className="hidden sm:inline">Eliminar</span>
+              </button>
+            </div>
           </div>
 
           {/* Metadata chips — fecha y vendedor en fila separada */}
@@ -209,44 +248,6 @@ export default function OrderDetailPage() {
           )}
         </div>
 
-        {/* Acciones — siempre en una sola fila */}
-        <div className="px-4 py-3 flex items-center gap-2 border-t border-zinc-800">
-          {data.status !== "delivered" && (
-            <button onClick={() => setShowEdit(true)}
-              className="flex-1 flex items-center justify-center gap-1.5 text-sm btn-secondary">
-              <IconEdit /> Editar
-            </button>
-          )}
-          {data.status !== "delivered" && data.status === "completed" && (
-            <button onClick={markDelivered}
-              className="flex-1 flex items-center justify-center gap-1.5 text-sm btn-primary">
-              <IconCheck /> Entregado
-            </button>
-          )}
-          {["completed", "delivered"].includes(data.status) && (
-            <button onClick={() => {
-                setGuiaForm({
-                  transportadora:    data.guia_data?.transportadora    ?? "",
-                  direccion_destino: data.guia_data?.direccion_destino ?? data.address ?? "",
-                  punto_cucuta:      data.guia_data?.punto_cucuta      ?? false,
-                  punto_bucaramanga: data.guia_data?.punto_bucaramanga ?? false,
-                  observaciones:     data.guia_data?.observaciones     ?? "",
-                });
-                setShowGuia(true);
-              }}
-              className="flex-1 flex items-center justify-center gap-1.5 text-sm btn-secondary">
-              <IconTruck /> Guía despacho
-            </button>
-          )}
-          <button onClick={handleDownloadInvoice}
-            className="flex-1 flex items-center justify-center gap-1.5 text-sm btn-secondary">
-            <IconInvoice /> Factura
-          </button>
-          <button onClick={handleDelete}
-            className="flex-1 flex items-center justify-center gap-1.5 text-sm px-3 py-2 font-medium rounded-lg text-red-400 hover:text-white hover:bg-red-900 border border-red-800 transition-colors">
-            <IconTrash /> Eliminar
-          </button>
-        </div>
 
         {/* Diseños adjuntos */}
         {designFiles.length > 0 && (
@@ -1215,6 +1216,16 @@ const METHODS = [
 ];
 const BANKS = ["Bancolombia", "Nequi", "Davivienda", "Bold"];
 
+function PaymentMethodIcon({ method }) {
+  const common = { width: 17, height: 17, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" };
+  if (method === "efectivo")
+    return <svg xmlns="http://www.w3.org/2000/svg" {...common}><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>;
+  if (method === "link_bold")
+    return <svg xmlns="http://www.w3.org/2000/svg" {...common}><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>;
+  // transferencia (default)
+  return <svg xmlns="http://www.w3.org/2000/svg" {...common}><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>;
+}
+
 function EditPaymentForm({ payment, orderId, onDone, onCancel }) {
   const [amount,        setAmount]        = useState(String(Math.round(Number(payment.amount))));
   const [amountDisplay, setAmountDisplay] = useState(Number(payment.amount).toLocaleString("es-CO"));
@@ -1369,28 +1380,50 @@ function FinancialTab({ order, onRefresh, onPreviewImage, onPreviewPdf }) {
           <span className="text-red-400 font-medium">{Number(order.descuento_porcentaje)}%</span>
         </div>
       )}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-zinc-800 rounded-lg p-3 text-center">
-          <p className="text-xs text-zinc-400 mb-1">Total</p>
-          <p className="text-white text-xl font-bold">${Number(order.total).toLocaleString()}</p>
+      <div className="grid grid-cols-3 gap-2">
+        <div className="bg-zinc-800 border border-zinc-700/60 rounded-xl p-3 text-center">
+          <p className="text-[11px] text-zinc-500 uppercase tracking-wide mb-1.5">Total</p>
+          <p className="text-white text-lg sm:text-xl font-bold tabular-nums">${Number(order.total).toLocaleString("es-CO")}</p>
         </div>
-        <div className="bg-zinc-800 rounded-lg p-3 text-center">
-          <p className="text-xs text-zinc-400 mb-1">Pagado</p>
-          <p className="text-brand-green text-xl font-bold">${Number(order.amount_paid).toLocaleString()}</p>
+        <div className="bg-zinc-800 border border-zinc-700/60 rounded-xl p-3 text-center">
+          <p className="text-[11px] text-zinc-500 uppercase tracking-wide mb-1.5">Pagado</p>
+          <p className="text-brand-green text-lg sm:text-xl font-bold tabular-nums">${Number(order.amount_paid).toLocaleString("es-CO")}</p>
         </div>
-        <div className="bg-zinc-800 rounded-lg p-3 text-center">
-          <p className="text-xs text-zinc-400 mb-1">Saldo</p>
-          <p className="text-yellow-400 text-xl font-bold">${Number(order.balance).toLocaleString()}</p>
+        <div className="bg-zinc-800 border border-zinc-700/60 rounded-xl p-3 text-center">
+          <p className="text-[11px] text-zinc-500 uppercase tracking-wide mb-1.5">Saldo</p>
+          <p className="text-yellow-400 text-lg sm:text-xl font-bold tabular-nums">${Number(order.balance).toLocaleString("es-CO")}</p>
         </div>
       </div>
 
+      {/* Barra de progreso de pago */}
+      {Number(order.total) > 0 && (() => {
+        const pct = Math.round((Number(order.amount_paid) / Number(order.total)) * 100);
+        return (
+          <div className="bg-zinc-800 border border-zinc-700/60 rounded-xl px-4 py-3.5">
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-zinc-400 text-xs">Progreso de pago</span>
+              <span className="text-brand-green text-sm font-bold tabular-nums">{pct}%</span>
+            </div>
+            <div className="h-2 bg-zinc-700 rounded-full overflow-hidden">
+              <div className="h-full rounded-full bg-gradient-to-r from-lime-500 to-brand-green transition-all" style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Lista de abonos */}
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-zinc-400 text-sm font-medium">Abonos</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-zinc-400 text-sm font-medium flex items-center gap-2">
+            Abonos
+            {order.payments?.length > 0 && (
+              <span className="text-[10px] bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-full tabular-nums">{order.payments.length}</span>
+            )}
+          </h3>
           {canAdd && !showForm && (
-            <button className="btn-primary text-xs py-1 px-3" onClick={() => setShowForm(true)}>
-              + Agregar abono
+            <button className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5" onClick={() => setShowForm(true)}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Agregar abono
             </button>
           )}
         </div>
@@ -1409,23 +1442,29 @@ function FinancialTab({ order, onRefresh, onPreviewImage, onPreviewPdf }) {
                 onCancel={() => setEditingId(null)}
               />
             ) : (
-              <div className="flex items-center justify-between bg-zinc-800 rounded-lg px-3 py-2.5 mb-2">
-                {/* Izquierda: número + método + fecha + banco */}
-                <div className="flex flex-col gap-0.5 min-w-0">
-                  <span className="text-white text-sm font-medium">Abono #{p.payment_number} · {p.method}</span>
+              <div className="group relative overflow-hidden flex items-center gap-3 bg-zinc-800 border border-zinc-700/60 hover:border-zinc-600 rounded-xl px-3.5 py-3 mb-2 transition-colors">
+                {/* Spotlight */}
+                <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  style={{ background: "radial-gradient(160px circle at 80% 50%, rgba(197,255,58,0.06), transparent 65%)" }} />
+                {/* Ícono del método */}
+                <div className="relative w-9 h-9 rounded-lg bg-brand-green/10 border border-brand-green/20 flex items-center justify-center shrink-0 text-brand-green">
+                  <PaymentMethodIcon method={p.method} />
+                </div>
+                {/* Centro: número + método + fecha + banco */}
+                <div className="relative flex flex-col gap-1 min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    {p.paid_at && (
-                      <span className="text-zinc-500 text-xs">
-                        {new Date(p.paid_at).toLocaleDateString("es-CO")}
-                      </span>
-                    )}
-                    {p.bank && <span className="text-zinc-500 text-xs">{p.bank}</span>}
+                    <span className="text-white text-sm font-semibold">Abono #{p.payment_number}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-700 text-zinc-300 capitalize">{p.method?.replace("_", " ")}</span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap text-[11px] text-zinc-500">
+                    {p.paid_at && <span>{new Date(p.paid_at).toLocaleDateString("es-CO")}</span>}
+                    {p.bank && <><span className="text-zinc-700">·</span><span>{p.bank}</span></>}
                   </div>
                 </div>
-                {/* Derecha: precio arriba, iconos abajo */}
-                <div className="flex flex-col items-end gap-1.5 shrink-0">
-                  <span className="text-white font-semibold text-base">${Number(p.amount).toLocaleString("es-CO")}</span>
-                  <div className="flex items-center gap-1">
+                {/* Derecha: precio + iconos */}
+                <div className="relative flex items-center gap-3 shrink-0">
+                  <span className="text-white font-bold text-sm tabular-nums">${Number(p.amount).toLocaleString("es-CO")}</span>
+                  <div className="flex items-center gap-0.5">
                   {p.receipt_url && (
                     <button
                       title="Ver comprobante"
@@ -1466,61 +1505,114 @@ function FinancialTab({ order, onRefresh, onPreviewImage, onPreviewPdf }) {
 
         {/* Formulario nuevo abono */}
         {showForm && (
-          <form onSubmit={handleAddPayment} className="bg-zinc-800 rounded-lg p-4 space-y-3 mt-2">
-            <p className="text-white text-sm font-medium">Abono #{nextNumber}</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs text-zinc-400 mb-1">Monto</label>
-                <input type="text" inputMode="numeric" className="input-field"
-                  value={amountDisplay}
-                  onChange={(e) => {
-                    const digits = e.target.value.replace(/\D/g, "");
-                    setAmount(digits);
-                    setAmountDisplay(digits ? Number(digits).toLocaleString("es-CO") : "");
-                  }}
-                  placeholder="$0" autoFocus />
+          <motion.form
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            onSubmit={handleAddPayment}
+            className="bg-zinc-800 border border-zinc-700 rounded-xl overflow-hidden mt-2"
+          >
+            {/* Header */}
+            <div className="flex items-center gap-2.5 px-4 py-3 border-b border-zinc-700 bg-zinc-800/80">
+              <div className="w-8 h-8 rounded-lg bg-brand-green/10 border border-brand-green/20 flex items-center justify-center text-brand-green shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/></svg>
               </div>
               <div>
-                <label className="block text-xs text-zinc-400 mb-1">Fecha de pago</label>
+                <p className="text-white text-sm font-semibold">Nuevo abono · #{nextNumber}</p>
+                <p className="text-[11px] text-zinc-500">Saldo pendiente ${Number(order.balance).toLocaleString("es-CO")}</p>
+              </div>
+            </div>
+
+            <div className="p-4 space-y-3.5">
+              {/* Monto destacado */}
+              <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-3.5">
+                <label className="block text-[11px] text-zinc-500 uppercase tracking-wide mb-1.5">Monto del abono</label>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-2xl font-bold text-zinc-600">$</span>
+                  <input type="text" inputMode="numeric"
+                    className="flex-1 bg-transparent text-2xl font-bold text-white outline-none placeholder-zinc-700 min-w-0"
+                    value={amountDisplay}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, "");
+                      setAmount(digits);
+                      setAmountDisplay(digits ? Number(digits).toLocaleString("es-CO") : "");
+                    }}
+                    placeholder="0" autoFocus />
+                </div>
+                {/* Botones rápidos */}
+                <div className="flex gap-1.5 mt-2.5 flex-wrap">
+                  {Number(order.balance) > 0 && (
+                    <button type="button"
+                      onClick={() => { const v = String(Math.round(Number(order.balance))); setAmount(v); setAmountDisplay(Number(v).toLocaleString("es-CO")); }}
+                      className="text-[11px] px-2.5 py-1 rounded-full bg-brand-green/10 text-brand-green hover:bg-brand-green/20 transition-colors font-medium">
+                      Saldo total · ${Number(order.balance).toLocaleString("es-CO")}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Fecha */}
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1.5">Fecha de pago</label>
                 <input type="date" className="input-field"
                   value={paidAt} onChange={(e) => setPaidAt(e.target.value)} />
               </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+              {/* Método como chips */}
               <div>
-                <label className="block text-xs text-zinc-400 mb-1">Método</label>
-                <CustomSelect value={method}
-                  onChange={(e) => { setMethod(e.target.value); setBank(""); }}>
-                  {METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-                </CustomSelect>
+                <label className="block text-xs text-zinc-400 mb-1.5">Método de pago</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {METHODS.map((m) => {
+                    const active = method === m.value;
+                    return (
+                      <button key={m.value} type="button"
+                        onClick={() => { setMethod(m.value); setBank(""); }}
+                        className={`flex flex-col items-center gap-1.5 py-2.5 px-2 rounded-lg border transition-all
+                          ${active ? "bg-brand-green/10 border-brand-green/40 text-brand-green" : "bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-600"}`}>
+                        <PaymentMethodIcon method={m.value} />
+                        <span className="text-[11px] font-medium">{m.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+
+              {/* Banco (solo transferencia) */}
               {method === "transferencia" && (
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1">Banco</label>
+                  <label className="block text-xs text-zinc-400 mb-1.5">Banco</label>
                   <CustomSelect value={bank} onChange={(e) => setBank(e.target.value)}>
                     <option value="">Seleccionar...</option>
                     {BANKS.map((b) => <option key={b} value={b}>{b}</option>)}
                   </CustomSelect>
                 </div>
               )}
+
+              {/* Comprobante */}
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1.5">Comprobante <span className="text-zinc-600">(opcional)</span></label>
+                <label className="flex items-center justify-center gap-2 border border-dashed border-zinc-600 hover:border-zinc-500 rounded-lg py-3 text-xs text-zinc-500 hover:text-zinc-400 cursor-pointer transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  {receipt ? receipt.name : "Subir comprobante · JPG, PNG o PDF"}
+                  <input type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.avif,.pdf" className="hidden"
+                    onChange={(e) => setReceipt(e.target.files[0] || null)} />
+                </label>
+              </div>
+
+              {error && (
+                <div className="bg-red-950 border border-red-800 text-red-300 text-xs px-3 py-2 rounded-lg">{error}</div>
+              )}
+
+              <div className="flex gap-2 justify-end pt-1">
+                <button type="button" className="btn-secondary text-sm py-2 px-4"
+                  onClick={() => { setShowForm(false); setError(""); setReceipt(null); }}>Cancelar</button>
+                <button type="submit" className="btn-primary text-sm py-2 px-4 flex items-center gap-1.5" disabled={saving}>
+                  {!saving && <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                  {saving ? "Guardando..." : "Registrar abono"}
+                </button>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1">Comprobante (opcional · JPG, PNG o PDF)</label>
-              <input type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.avif,.pdf" className="input-field text-sm"
-                onChange={(e) => setReceipt(e.target.files[0] || null)} />
-              {receipt && <p className="text-xs text-zinc-400 mt-1">{receipt.name}</p>}
-            </div>
-            {error && (
-              <div className="bg-red-950 border border-red-800 text-red-300 text-xs px-3 py-2 rounded-lg">{error}</div>
-            )}
-            <div className="flex gap-2 justify-end">
-              <button type="button" className="btn-secondary text-xs py-1 px-3"
-                onClick={() => { setShowForm(false); setError(""); setReceipt(null); }}>Cancelar</button>
-              <button type="submit" className="btn-primary text-xs py-1 px-3" disabled={saving}>
-                {saving ? "Guardando..." : "Registrar"}
-              </button>
-            </div>
-          </form>
+          </motion.form>
         )}
       </div>
     </div>
@@ -1566,45 +1658,94 @@ function ProgressMatrix({ orderId, items }) {
     totalsByArea[key] = rows.filter((r) => doneSet.has(`${r.itemId}|${key}|${r.size}`)).length;
   });
 
+  // Avance general
+  const totalCells = rows.length * AREAS.length;
+  const doneCells  = Object.values(totalsByArea).reduce((a, b) => a + b, 0);
+  const overallPct = totalCells > 0 ? Math.round((doneCells / totalCells) * 100) : 0;
+
+  const CIRC = 2 * Math.PI * 14; // r=14
+
   return (
-    <div className="card overflow-x-auto">
-      <h3 className="text-white font-medium text-sm mb-3">Avance por producto y área</h3>
-      <table className="w-full text-xs min-w-[640px]">
-        <thead>
-          <tr className="border-b border-zinc-700">
-            <th className="text-left text-zinc-400 font-medium pb-2 pr-2">Producto</th>
-            {AREAS.map(([key, label]) => (
-              <th key={key} className="text-center text-zinc-400 font-medium pb-2 px-1">{label}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={`${r.itemId}-${r.size}`} className="border-b border-zinc-800">
-              <td className="py-2 pr-2 text-white">
-                <span className="font-medium">{r.name}</span>
-                <span className="text-zinc-500"> · {r.size} ({r.qty})</span>
-              </td>
-              {AREAS.map(([key]) => {
-                const done = doneSet.has(`${r.itemId}|${key}|${r.size}`);
-                return (
-                  <td key={key} className="text-center px-1 py-2">
-                    {done ? <span className="text-brand-green text-base">✓</span> : <span className="text-zinc-700">·</span>}
-                  </td>
-                );
-              })}
+    <div className="space-y-3">
+      {/* Avance general */}
+      <div className="card">
+        <div className="flex items-center justify-between mb-2.5">
+          <span className="text-zinc-400 text-xs">Avance de producción</span>
+          <span className="text-brand-green text-xl font-bold tabular-nums">{overallPct}%</span>
+        </div>
+        <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+          <div className="h-full rounded-full bg-gradient-to-r from-lime-500 to-brand-green transition-all" style={{ width: `${overallPct}%` }} />
+        </div>
+      </div>
+
+      {/* Anillos por etapa */}
+      <div className="card">
+        <h3 className="text-zinc-400 text-xs font-medium mb-3">Etapas</h3>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          {AREAS.map(([key, label]) => {
+            const done = totalsByArea[key];
+            const pct = rows.length > 0 ? done / rows.length : 0;
+            const complete = done === rows.length;
+            return (
+              <div key={key} className="flex flex-col items-center bg-zinc-800 border border-zinc-700/60 rounded-lg py-2.5 px-1">
+                <span className="text-[10px] text-zinc-500 uppercase tracking-tight mb-1.5 text-center leading-tight">{label}</span>
+                <div className="relative w-9 h-9">
+                  <svg width="36" height="36" viewBox="0 0 34 34" className="-rotate-90">
+                    <circle cx="17" cy="17" r="14" fill="none" stroke="#3f3f46" strokeWidth="3" />
+                    <circle cx="17" cy="17" r="14" fill="none" stroke={complete ? "#c5ff3a" : "#84cc16"} strokeWidth="3"
+                      strokeLinecap="round" strokeDasharray={CIRC} strokeDashoffset={CIRC * (1 - pct)}
+                      style={{ transition: "stroke-dashoffset .4s" }} />
+                  </svg>
+                </div>
+                <span className={`text-[11px] font-semibold tabular-nums mt-1.5 ${complete ? "text-brand-green" : "text-zinc-300"}`}>{done}/{rows.length}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Matriz de detalle */}
+      <div className="card overflow-x-auto">
+        <h3 className="text-zinc-400 text-xs font-medium mb-3">Detalle por producto y área</h3>
+        <table className="w-full text-xs min-w-[600px]">
+          <thead>
+            <tr className="border-b border-zinc-700">
+              <th className="text-left text-zinc-500 font-medium pb-2.5 pr-2">Producto</th>
+              {AREAS.map(([key, label]) => (
+                <th key={key} className="text-center text-zinc-500 font-medium pb-2.5 px-1 text-[10px] uppercase">{label}</th>
+              ))}
             </tr>
-          ))}
-          <tr className="border-t-2 border-zinc-700">
-            <td className="py-2 pr-2 text-zinc-400 font-medium">Total</td>
-            {AREAS.map(([key]) => (
-              <td key={key} className="text-center px-1 py-2 text-zinc-300 font-medium">
-                {totalsByArea[key]}/{rows.length}
-              </td>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={`${r.itemId}-${r.size}`} className="border-b border-zinc-800/70">
+                <td className="py-2.5 pr-2 text-white whitespace-nowrap">
+                  <span className="font-medium">{r.name}</span>
+                  <span className="text-[10px] text-zinc-400 bg-zinc-800 px-1.5 py-0.5 rounded ml-1.5 tabular-nums">{r.size} · {r.qty}</span>
+                </td>
+                {AREAS.map(([key]) => {
+                  const done = doneSet.has(`${r.itemId}|${key}|${r.size}`);
+                  return (
+                    <td key={key} className="text-center px-1 py-2.5">
+                      <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full ${done ? "bg-brand-green text-black" : "border border-zinc-700"}`}>
+                        {done && <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                      </span>
+                    </td>
+                  );
+                })}
+              </tr>
             ))}
-          </tr>
-        </tbody>
-      </table>
+            <tr className="border-t-2 border-zinc-700">
+              <td className="py-2.5 pr-2 text-zinc-400 font-medium">Total</td>
+              {AREAS.map(([key]) => (
+                <td key={key} className="text-center px-1 py-2.5 text-zinc-400 font-semibold tabular-nums">
+                  {totalsByArea[key]}/{rows.length}
+                </td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

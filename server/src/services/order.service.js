@@ -152,8 +152,12 @@ export async function listOrders(pagination, filters) {
   }
 
   if (filters.status) {
-    params.push(filters.status);
-    conditions.push(`o.status = $${params.length}`);
+    // Acepta un array de estados (multi-filtro) o un string suelto
+    const statuses = Array.isArray(filters.status) ? filters.status : [filters.status];
+    if (statuses.length) {
+      params.push(statuses);
+      conditions.push(`o.status = ANY($${params.length})`);
+    }
   }
 
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";

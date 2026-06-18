@@ -17,7 +17,10 @@ function invalidateDashboard() {
 
 export async function list(req, res, next) {
   try {
-    const filters = { status: req.query.status || null };
+    // status puede venir como un solo valor o varios separados por coma (multi-filtro)
+    const statusRaw = req.query.status || "";
+    const statusList = statusRaw.split(",").map((s) => s.trim()).filter(Boolean);
+    const filters = { status: statusList.length ? statusList : null };
     const result = await orderService.listOrders(req.pagination, filters);
     res.json({ status: "ok", ...result, limit: req.pagination.limit, offset: req.pagination.offset });
   } catch (err) { next(err); }
