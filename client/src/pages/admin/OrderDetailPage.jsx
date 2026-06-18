@@ -779,57 +779,71 @@ export default function OrderDetailPage() {
       )}
 
       {/* Tab: Producción */}
-      {tab === "production" && (
-        <div className="space-y-4">
-          {/* Barra de avance general — derivada del estado real de las áreas */}
-          {data.tasks?.length > 0 && (() => {
-            const done   = data.tasks.filter((t) => ["completed", "delivered"].includes(t.status)).length;
-            const inProg = data.tasks.filter((t) => t.status === "in_progress").length;
-            const total  = data.tasks.length;
-            const pct    = total > 0 ? Math.round(((done + inProg * 0.5) / total) * 100) : 0;
-            return (
-              <div className="card">
-                <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-zinc-400 text-xs">Avance de producción</span>
-                  <span className="text-brand-green text-xl font-bold tabular-nums">{pct}%</span>
-                </div>
-                <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full bg-gradient-to-r from-lime-500 to-brand-green transition-all" style={{ width: `${pct}%` }} />
-                </div>
-                <p className="text-[11px] text-zinc-500 mt-2 tabular-nums">{done} de {total} áreas completadas{inProg > 0 ? ` · ${inProg} en proceso` : ""}</p>
-              </div>
-            );
-          })()}
+      {tab === "production" && data.tasks?.length > 0 && (() => {
+        // production_tasks usa status: pending | in_progress | done
+        const statusPct = (s) => s === "done" ? 1 : s === "in_progress" ? 0.5 : 0;
+        const total   = data.tasks.length;
+        const sumPct  = data.tasks.reduce((a, t) => a + statusPct(t.status), 0);
+        const pct     = total > 0 ? Math.round((sumPct / total) * 100) : 0;
+        const done    = data.tasks.filter((t) => t.status === "done").length;
+        const inProg  = data.tasks.filter((t) => t.status === "in_progress").length;
+        const CIRC    = 2 * Math.PI * 16; // r=16
 
-          {/* Tarjetas de área con su estado */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {data.tasks?.map((task) => {
-              const ts = STATUS_LABELS[task.status] || STATUS_LABELS.pending;
-              const dot = task.status === "delivered" || task.status === "completed" ? "#c5ff3a"
-                        : task.status === "in_progress" ? "#60a5fa" : "#eab308";
-              return (
-                <div key={task.id} className="card flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: dot }} />
-                    <p className="text-white font-semibold text-sm leading-tight">{AREA_NAMES[task.area]}</p>
-                  </div>
-                  <span className={`${ts.cls} w-fit`}>{ts.label}</span>
-                  {(task.started_by_name || task.completed_by_name) && (
-                    <div className="space-y-0.5 mt-auto pt-1 border-t border-zinc-800">
-                      {task.started_by_name && (
-                        <p className="text-[11px] text-zinc-500 truncate">▶ {task.started_by_name}</p>
-                      )}
-                      {task.completed_by_name && (
-                        <p className="text-[11px] text-zinc-500 truncate">✓ {task.completed_by_name}</p>
-                      )}
+        return (
+          <div className="space-y-4">
+            {/* Barra de avance general */}
+            <div className="card">
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-zinc-400 text-xs">Avance de producción</span>
+                <span className="text-brand-green text-xl font-bold tabular-nums">{pct}%</span>
+              </div>
+              <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                <div className="h-full rounded-full bg-gradient-to-r from-lime-500 to-brand-green transition-all duration-500" style={{ width: `${pct}%` }} />
+              </div>
+              <p className="text-[11px] text-zinc-500 mt-2 tabular-nums">{done} de {total} áreas completadas{inProg > 0 ? ` · ${inProg} en proceso` : ""}</p>
+            </div>
+
+            {/* Anillos por etapa (alimentados desde data.tasks) */}
+            <div className="card">
+              <h3 className="text-zinc-400 text-xs font-medium mb-4">Etapas</h3>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                {data.tasks.map((task) => {
+                  const p          = statusPct(task.status);
+                  const complete   = task.status === "done";
+                  const inProgress = task.status === "in_progress";
+                  const ringColor  = complete ? "#c5ff3a" : inProgress ? "#60a5fa" : "#3f3f46";
+                  const who = task.completed_by_name || task.started_by_name;
+                  return (
+                    <div key={task.id} className="flex flex-col items-center"
+                      title={who ? `${complete ? "Completado" : inProgress ? "En proceso" : "Pendiente"} · ${who}` : undefined}>
+                      <span className="text-[10px] text-zinc-500 uppercase tracking-tight mb-2 text-center leading-tight">{AREA_NAMES[task.area]}</span>
+                      <div className="relative w-12 h-12">
+                        <svg width="48" height="48" viewBox="0 0 40 40" className="-rotate-90">
+                          <circle cx="20" cy="20" r="16" fill="none" stroke="#27272a" strokeWidth="3.5" />
+                          <circle cx="20" cy="20" r="16" fill="none" stroke={ringColor} strokeWidth="3.5"
+                            strokeLinecap="round" strokeDasharray={CIRC} strokeDashoffset={CIRC * (1 - p)}
+                            style={{ transition: "stroke-dashoffset .5s ease" }} />
+                        </svg>
+                        {complete && (
+                          <span className="absolute inset-0 flex items-center justify-center text-brand-green">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          </span>
+                        )}
+                        {inProgress && (
+                          <span className="absolute inset-0 flex items-center justify-center text-blue-400 text-[9px] font-bold">50%</span>
+                        )}
+                      </div>
+                      <span className={`text-[10px] font-medium mt-2 text-center ${complete ? "text-brand-green" : inProgress ? "text-blue-400" : "text-zinc-500"}`}>
+                        {complete ? "Listo" : inProgress ? "En proceso" : "Pendiente"}
+                      </span>
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Tab: Observaciones */}
       {tab === "notes" && (
