@@ -790,23 +790,22 @@ export default function OrderDetailPage() {
         const CIRC    = 2 * Math.PI * 16; // r=16
 
         return (
-          <div className="space-y-4">
-            {/* Barra de avance general */}
-            <div className="card">
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="text-zinc-400 text-xs">Avance de producción</span>
-                <span className="text-brand-green text-xl font-bold tabular-nums">{pct}%</span>
+          <div className="card">
+            <div className="flex flex-col lg:flex-row lg:items-center gap-5">
+              {/* Avance general — izquierda */}
+              <div className="lg:w-52 lg:shrink-0 lg:border-r lg:border-zinc-800 lg:pr-5">
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-zinc-400 text-xs">Avance de producción</span>
+                  <span className="text-brand-green text-xl font-bold tabular-nums">{pct}%</span>
+                </div>
+                <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full bg-gradient-to-r from-lime-500 to-brand-green transition-all duration-500" style={{ width: `${pct}%` }} />
+                </div>
+                <p className="text-[11px] text-zinc-500 mt-2 tabular-nums">{done} de {total} completadas{inProg > 0 ? ` · ${inProg} en proceso` : ""}</p>
               </div>
-              <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-                <div className="h-full rounded-full bg-gradient-to-r from-lime-500 to-brand-green transition-all duration-500" style={{ width: `${pct}%` }} />
-              </div>
-              <p className="text-[11px] text-zinc-500 mt-2 tabular-nums">{done} de {total} áreas completadas{inProg > 0 ? ` · ${inProg} en proceso` : ""}</p>
-            </div>
 
-            {/* Anillos por etapa (alimentados desde data.tasks) */}
-            <div className="card">
-              <h3 className="text-zinc-400 text-xs font-medium mb-4">Etapas</h3>
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+              {/* Anillos por etapa — derecha */}
+              <div className="flex-1 grid grid-cols-3 sm:grid-cols-6 gap-3">
                 {data.tasks.map((task) => {
                   const p          = statusPct(task.status);
                   const complete   = task.status === "done";
