@@ -792,20 +792,8 @@ export default function OrderDetailPage() {
         return (
           <div className="card">
             <div className="flex flex-col lg:flex-row lg:items-center gap-5">
-              {/* Avance general — izquierda */}
-              <div className="lg:w-52 lg:shrink-0 lg:border-r lg:border-zinc-800 lg:pr-5">
-                <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-zinc-400 text-xs">Avance de producción</span>
-                  <span className="text-brand-green text-xl font-bold tabular-nums">{pct}%</span>
-                </div>
-                <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full bg-gradient-to-r from-lime-500 to-brand-green transition-all duration-500" style={{ width: `${pct}%` }} />
-                </div>
-                <p className="text-[11px] text-zinc-500 mt-2 tabular-nums">{done} de {total} completadas{inProg > 0 ? ` · ${inProg} en proceso` : ""}</p>
-              </div>
-
-              {/* Anillos por etapa — derecha */}
-              <div className="flex-1 grid grid-cols-3 sm:grid-cols-6 gap-3">
+              {/* Anillos por etapa — izquierda */}
+              <div className="flex-1 grid grid-cols-3 sm:grid-cols-6 gap-3 order-2 lg:order-1">
                 {data.tasks.map((task) => {
                   const p          = statusPct(task.status);
                   const complete   = task.status === "done";
@@ -838,6 +826,18 @@ export default function OrderDetailPage() {
                     </div>
                   );
                 })}
+              </div>
+
+              {/* Avance general — derecha */}
+              <div className="lg:w-52 lg:shrink-0 lg:border-l lg:border-zinc-800 lg:pl-5 order-1 lg:order-2">
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-zinc-400 text-xs">Avance de producción</span>
+                  <span className="text-brand-green text-xl font-bold tabular-nums">{pct}%</span>
+                </div>
+                <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full bg-gradient-to-r from-lime-500 to-brand-green transition-all duration-500" style={{ width: `${pct}%` }} />
+                </div>
+                <p className="text-[11px] text-zinc-500 mt-2 tabular-nums">{done} de {total} completadas{inProg > 0 ? ` · ${inProg} en proceso` : ""}</p>
               </div>
             </div>
           </div>
