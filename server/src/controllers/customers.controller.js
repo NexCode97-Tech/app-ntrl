@@ -12,10 +12,12 @@ function toTitleCase(str) {
   return str
     .trim()
     .toLowerCase()
-    .replace(/\b\w+/g, (word, offset) => {
-      if (offset > 0 && LOWERCASE_WORDS.has(word)) return word;
+    .split(/\s+/)
+    .map((word, i) => {
+      if (i > 0 && LOWERCASE_WORDS.has(word)) return word;
       return word.charAt(0).toUpperCase() + word.slice(1);
-    });
+    })
+    .join(" ");
 }
 
 export async function list(req, res, next) {
