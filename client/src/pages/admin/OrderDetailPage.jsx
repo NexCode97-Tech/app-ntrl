@@ -624,66 +624,109 @@ export default function OrderDetailPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-zinc-900 p-1 rounded-lg overflow-x-auto scrollbar-none">
-        {[["items","Productos"],["financial","Abonos"],["production","Producción"],["notes","Observaciones"],["history","Historial"]].map(([key, label]) => (
-          <button key={key}
-            onClick={() => setTab(key)}
-            className={`px-3 py-1.5 rounded text-sm font-medium transition-colors whitespace-nowrap shrink-0
-              ${tab === key ? "bg-brand-green text-black" : "text-zinc-400 hover:text-white"}`}>
-            {label}
-          </button>
-        ))}
+        {[
+          ["items","Productos", <path key="i" d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z M3.27 6.96 12 12.01l8.73-5.05 M12 22.08V12" />],
+          ["financial","Abonos", <path key="i" d="M12 1v22 M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />],
+          ["production","Producción", <><circle key="c" cx="12" cy="12" r="10"/><polyline key="p" points="12 6 12 12 16 14"/></>],
+          ["notes","Observaciones", <path key="i" d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />],
+          ["history","Historial", <><path key="p1" d="M3 3v5h5"/><path key="p2" d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><polyline key="p3" points="12 7 12 12 15 15"/></>],
+        ].map(([key, label, icon]) => {
+          const active = tab === key;
+          return (
+            <button key={key}
+              onClick={() => setTab(key)}
+              className="relative px-3 py-1.5 rounded text-sm font-medium whitespace-nowrap shrink-0 focus:outline-none">
+              {active && (
+                <motion.div layoutId="orderTabPill"
+                  className="absolute inset-0 bg-brand-green rounded"
+                  transition={{ type: "spring", stiffness: 400, damping: 32 }} />
+              )}
+              <span className={`relative z-10 flex items-center gap-1.5 transition-colors
+                ${active ? "text-black" : "text-zinc-400 hover:text-white"}`}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  {icon}
+                </svg>
+                {label}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Tab: Productos */}
       {tab === "items" && (
         <div className="card space-y-3">
-          {data.items?.map((item) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {data.items?.map((item, idx) => {
             const df = item.design_file_index != null ? designFiles[item.design_file_index] : null;
             const dfUrl = df ? fileUrl(df.url ?? df) : null;
             const dfIsPdf = df ? (String(df.url ?? df).toLowerCase().endsWith(".pdf") || String(df.url ?? df).includes("/raw/upload/")) : false;
             const itemQty = Object.values(item.sizes).reduce((s, q) => s + (Number(q) || 0), 0);
             const itemSubtotal = itemQty * (Number(item.unit_price) || 0);
             return (
-              <div key={item.id} className="bg-zinc-800 rounded-lg p-3">
-                {/* Fila superior: miniatura + nombre + tallas a la derecha */}
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  {/* Izquierda: imagen + nombre + meta */}
-                  <div className="flex items-start gap-2 min-w-0">
-                    {df && (
-                      dfIsPdf ? (
-                        <PdfThumbnail url={dfUrl} width={32} btnClassName="rounded border border-zinc-600 shrink-0" onClick={() => setPdfSrc(dfUrl)} />
-                      ) : (
-                        <button type="button" onClick={() => setLightboxSrc(dfUrl)} className="shrink-0 focus:outline-none">
-                          <img src={dfUrl} alt="diseño" className="w-8 h-8 rounded object-cover border border-zinc-600 hover:border-brand-green transition-colors cursor-zoom-in" />
-                        </button>
-                      )
-                    )}
-                    <div className="min-w-0">
-                      <p className="text-white font-medium leading-tight">{item.product_name}</p>
-                      <p className="text-zinc-500 text-xs mt-0.5">
-                        {[item.sport_name, item.line_name, item.gender].filter(Boolean).join(" · ")}
-                      </p>
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.04, duration: 0.25 }}
+                whileHover={{ y: -3, boxShadow: "0 8px 24px rgba(0,0,0,0.45)" }}
+                onMouseMove={(e) => {
+                  const r = e.currentTarget.getBoundingClientRect();
+                  e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
+                  e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
+                }}
+                className="group relative overflow-hidden bg-zinc-800 border border-zinc-700/60 rounded-xl p-3 flex flex-col gap-2.5"
+              >
+                {/* Spotlight que sigue el cursor */}
+                <div
+                  className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  style={{ background: "radial-gradient(200px circle at var(--mx,50%) var(--my,50%), rgba(197,255,58,0.10), transparent 65%)" }}
+                />
+
+                {/* Header: miniatura + nombre + meta */}
+                <div className="relative flex items-start gap-2.5 min-w-0">
+                  {df ? (
+                    dfIsPdf ? (
+                      <PdfThumbnail url={dfUrl} width={40} btnClassName="rounded-lg border border-zinc-600 shrink-0" onClick={() => setPdfSrc(dfUrl)} />
+                    ) : (
+                      <button type="button" onClick={() => setLightboxSrc(dfUrl)} className="shrink-0 focus:outline-none">
+                        <img src={dfUrl} alt="diseño" className="w-10 h-10 rounded-lg object-cover border border-zinc-600 hover:border-brand-green transition-colors cursor-zoom-in" />
+                      </button>
+                    )
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-zinc-700/50 border border-zinc-600 shrink-0 flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#71717a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
                     </div>
-                  </div>
-                  {/* Derecha: tallas */}
-                  <div className="flex gap-1.5 flex-wrap justify-end shrink-0 max-w-[45%]">
-                    {Object.entries(item.sizes).filter(([,q]) => q > 0).map(([size, qty]) => (
-                      <span key={size} className="bg-zinc-700 text-white text-xs px-2 py-0.5 rounded">
-                        {size}: {qty}
-                      </span>
-                    ))}
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-white font-semibold text-sm leading-tight truncate">{item.product_name}</p>
+                    <p className="text-zinc-500 text-[11px] mt-0.5 truncate">
+                      {[item.sport_name, item.line_name, item.gender].filter(Boolean).join(" · ")}
+                    </p>
                   </div>
                 </div>
-                {/* Fila inferior: unidades + subtotal */}
-                <div className="flex items-center justify-end gap-3 text-xs text-zinc-400 pt-1 border-t border-zinc-700/60">
-                  <span>{itemQty} und.</span>
+
+                {/* Tallas */}
+                <div className="relative flex gap-1 flex-wrap">
+                  {Object.entries(item.sizes).filter(([,q]) => q > 0).map(([size, qty]) => (
+                    <span key={size} className="bg-zinc-700 text-zinc-200 text-[11px] px-2 py-0.5 rounded-md font-medium tabular-nums">
+                      {size} <span className="text-brand-green font-semibold">×{qty}</span>
+                    </span>
+                  ))}
+                </div>
+
+                {/* Footer: unidades + subtotal */}
+                <div className="relative flex items-center justify-between gap-3 pt-2 border-t border-zinc-700/60">
+                  <span className="text-[11px] text-zinc-500 tabular-nums">{itemQty} {itemQty === 1 ? "unidad" : "unidades"}</span>
                   {itemSubtotal > 0 && (
-                    <span className="text-white font-medium">${itemSubtotal.toLocaleString("es-CO")}</span>
+                    <span className="text-brand-green font-bold text-sm tabular-nums">${itemSubtotal.toLocaleString("es-CO")}</span>
                   )}
                 </div>
-              </div>
+              </motion.div>
             );
           })}
+          </div>
 
           {/* Total general */}
           {data.items?.length > 0 && (() => {
