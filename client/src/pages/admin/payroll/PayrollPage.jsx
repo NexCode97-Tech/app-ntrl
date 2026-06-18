@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../../config/api.js";
@@ -57,27 +57,41 @@ const CONTRATO_LABEL = {
 // ══════════════════════════════════════════════════════════════
 export default function PayrollPage() {
   const [tab, setTab] = useState("periodos");
+  const [showPeriodModal, setShowPeriodModal] = useState(false);
+  const [createEmpSignal, setCreateEmpSignal] = useState(0);
+
+  function handleNew() {
+    if (tab === "periodos") setShowPeriodModal(true);
+    else                    setCreateEmpSignal((n) => n + 1);
+  }
+
   return (
     <div className="space-y-5">
-      {/* Mobile select */}
-      <div className="md:hidden">
-        <CustomSelect value={tab} onChange={(e) => setTab(e.target.value)}>
-          <option value="periodos">Períodos</option>
-          <option value="empleados">Empleados</option>
-        </CustomSelect>
+      {/* Toolbar — tabs + botón nuevo en una fila */}
+      <div className="flex items-center gap-2">
+        <TabBar
+          tabs={[
+            { value: "periodos",  label: "Períodos",  Icon: BanknotesIcon },
+            { value: "empleados", label: "Empleados", Icon: UserGroupIcon },
+          ]}
+          value={tab}
+          onChange={setTab}
+        />
+        <button onClick={handleNew} className="btn-primary h-10 ml-auto shrink-0 whitespace-nowrap hidden sm:flex items-center gap-1.5">
+          <PlusIcon className="w-4 h-4" />
+          {tab === "periodos" ? "Nuevo período" : "Nuevo empleado"}
+        </button>
       </div>
 
-      {/* Desktop tabs */}
-      <TabBar
-        tabs={[
-          { value: "periodos",  label: "Períodos",  Icon: BanknotesIcon },
-          { value: "empleados", label: "Empleados", Icon: UserGroupIcon },
-        ]}
-        value={tab}
-        onChange={setTab}
-      />
+      {tab === "periodos"
+        ? <PeriodsTab showModal={showPeriodModal} setShowModal={setShowPeriodModal} />
+        : <EmployeesTab createSignal={createEmpSignal} />}
 
-      {tab === "periodos" ? <PeriodsTab /> : <EmployeesTab />}
+      {/* FAB — nuevo en móvil */}
+      <button onClick={handleNew} aria-label="Nuevo"
+        className="sm:hidden fixed bottom-6 right-5 z-40 w-14 h-14 rounded-full bg-brand-green text-black shadow-lg shadow-brand-green/30 flex items-center justify-center active:scale-90 transition-transform">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
     </div>
   );
 }
@@ -85,10 +99,9 @@ export default function PayrollPage() {
 // ══════════════════════════════════════════════════════════════
 // TAB PERÍODOS
 // ══════════════════════════════════════════════════════════════
-function PeriodsTab() {
+function PeriodsTab({ showModal, setShowModal }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const [showModal,     setShowModal]     = useState(false);
   const [form,          setForm]          = useState({ quincena: 1, mes: new Date().getMonth() + 1, anio: 2026 });
   const [error,         setError]         = useState("");
   const [downloadingId, setDownloadingId] = useState(null);
@@ -146,13 +159,7 @@ function PeriodsTab() {
 
   return (
     <div className="space-y-4">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between">
-        <p className="text-zinc-400 text-sm">{periods.length} período{periods.length !== 1 ? "s" : ""} registrado{periods.length !== 1 ? "s" : ""}</p>
-        <button onClick={() => { setShowModal(true); setError(""); }} className="btn-primary flex items-center gap-2">
-          <PlusIcon className="w-4 h-4" /> Nuevo período
-        </button>
-      </div>
+      <p className="text-zinc-400 text-sm">{periods.length} período{periods.length !== 1 ? "s" : ""} registrado{periods.length !== 1 ? "s" : ""}</p>
 
       {/* Lista */}
       {isLoading ? (
@@ -326,7 +333,7 @@ const EMPTY_EMP = {
   hora_entrada: "07:00", hora_salida: "17:00",
 };
 
-function EmployeesTab() {
+function EmployeesTab({ createSignal }) {
   const qc = useQueryClient();
   const [modal, setModal]         = useState(null);
   const [form, setForm]           = useState(EMPTY_EMP);
@@ -373,6 +380,12 @@ function EmployeesTab() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["employees"] }),
     onError: (e) => alert(e.response?.data?.message ?? "No se puede eliminar."),
   });
+
+  // Abrir modal de creación desde el botón/FAB del componente padre
+  useEffect(() => {
+    if (createSignal) setModal({ mode: "create" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createSignal]);
 
   function openCreate() {
     setModal({ mode: "create" });
@@ -425,13 +438,12 @@ function EmployeesTab() {
 
   return (
     <div className="space-y-4">
-      {/* Toolbar */}
-      <div className="flex items-center gap-3">
-        <input className="input-field flex-1" placeholder="Buscar empleado..." value={search}
+      {/* Búsqueda */}
+      <div className="relative">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input className="w-full h-10 bg-zinc-900 border border-zinc-700 focus:border-zinc-500 rounded-lg pl-9 pr-3 text-sm text-white placeholder-zinc-500 outline-none transition-colors"
+          placeholder="Buscar empleado..." value={search}
           onChange={(e) => setSearch(e.target.value)} />
-        <button onClick={openCreate} className="btn-primary shrink-0 flex items-center gap-2">
-          <PlusIcon className="w-4 h-4" /> Agregar
-        </button>
       </div>
 
       {/* Lista */}

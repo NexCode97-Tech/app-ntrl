@@ -194,29 +194,31 @@ export default function CatalogPage() {
     <div className="space-y-4">
       <h1 className="text-white font-bold text-xl lg:hidden">Catálogo</h1>
 
-      {/* Toolbar */}
-      <div className="flex items-center gap-3">
+      {/* Toolbar — tabs + búsqueda + botón en una sola fila */}
+      <div className="flex items-center gap-2">
+        {/* Tabs (íconos en móvil, con texto desde sm) */}
+        <div className="flex gap-1 bg-zinc-900 border border-zinc-800 p-1 rounded-xl shrink-0">
+          {TABS.map(([key, label, Icon]) => (
+            <button key={key} onClick={() => { setTab(key); setSearch(""); }}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-150 whitespace-nowrap
+                ${tab === key ? "bg-brand-green text-black" : "text-zinc-400 hover:text-white"}`}>
+              <Icon />
+              <span className="hidden sm:inline">{label}</span>
+            </button>
+          ))}
+        </div>
+        {/* Búsqueda */}
         <input
-          className="input-field flex-1"
-          placeholder={tab === "products" ? "Buscar producto, deporte o línea..." : tab === "lines" ? "Buscar línea o deporte..." : "Buscar deporte..."}
+          className="flex-1 min-w-0 h-10 bg-zinc-900 border border-zinc-700 focus:border-zinc-500 rounded-lg px-3 text-sm text-white placeholder-zinc-500 outline-none transition-colors"
+          placeholder={tab === "products" ? "Buscar producto..." : tab === "lines" ? "Buscar línea..." : "Buscar deporte..."}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <button className="btn-primary shrink-0 whitespace-nowrap" onClick={openAdd}>
-          + Agregar
+        {/* Botón — oculto en móvil (FAB) */}
+        <button className="btn-primary h-10 shrink-0 whitespace-nowrap hidden sm:flex items-center gap-1.5" onClick={openAdd}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Agregar
         </button>
-      </div>
-
-      {/* Tabs — solo tablet y escritorio */}
-      <div className="hidden md:flex gap-1 bg-zinc-900 border border-zinc-800 p-1 rounded-xl w-fit">
-        {TABS.map(([key, label, Icon]) => (
-          <button key={key} onClick={() => { setTab(key); setSearch(""); }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-150 whitespace-nowrap
-              ${tab === key ? "bg-brand-green text-black" : "text-zinc-400 hover:text-white"}`}>
-            <Icon />
-            {label}
-          </button>
-        ))}
       </div>
 
       {/* ── Deportes ── */}
@@ -414,6 +416,15 @@ export default function CatalogPage() {
       {form?.type === "sport"   && <SportModal   form={form} onSave={(d) => saveSport.mutate(d)}   onClose={() => setForm(null)} saving={saveSport.isLoading} />}
       {form?.type === "line"    && <LineModal     form={form} onSave={(d) => saveLine.mutate(d)}    onClose={() => setForm(null)} saving={saveLine.isLoading}  sports={sports.data} />}
       {form?.type === "product" && <ProductModal  form={form} onSave={(d) => saveProduct.mutate(d)} onClose={() => setForm(null)} saving={saveProduct.isLoading} lines={lines.data} />}
+
+      {/* FAB — agregar en móvil */}
+      <button
+        onClick={openAdd}
+        aria-label="Agregar"
+        className="sm:hidden fixed bottom-6 right-5 z-40 w-14 h-14 rounded-full bg-brand-green text-black shadow-lg shadow-brand-green/30 flex items-center justify-center active:scale-90 transition-transform"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
     </div>
   );
 }

@@ -7,12 +7,18 @@ import { UserIcon, PhoneIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
 import TabBar from "../../components/ui/TabBar.jsx";
 import ColorPicker from "../../components/ui/ColorPicker.jsx";
 import CustomSelect from "../../components/ui/CustomSelect.jsx";
+import StatusFilterDropdown from "../../components/ui/StatusFilterDropdown.jsx";
 
 const STATUS_COLORS = {
   pending:     "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30",
   in_progress: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
   delivered:   "bg-brand-green/20 text-brand-green border border-brand-green/30",
 };
+const SUPPLY_STATUS_OPTS = [
+  { value: "pending",     label: "Pendientes", dot: "#eab308" },
+  { value: "in_progress", label: "En proceso", dot: "#60a5fa" },
+  { value: "delivered",   label: "Entregados", dot: "#c5ff3a" },
+];
 const STATUS_LABELS = {
   pending: "Pendiente", in_progress: "En proceso", delivered: "Entregado",
 };
@@ -25,13 +31,20 @@ const UNITS = ["Unidades", "Metros", "Kg", "Litros", "Rollos", "Yardas", "Piezas
 
 export default function SuppliesPage() {
   const [tab, setTab] = useState("requests");
+  const [statusSel, setStatusSel] = useState([]); // filtro de estado de solicitudes ([] = todos)
   const [showRequestForm,  setShowRequestForm]  = useState(false);
   const [showSupplierForm, setShowSupplierForm] = useState(false);
   const [showCatalogForm,  setShowCatalogForm]  = useState(false);
 
+  const addBtn =
+    tab === "requests"  ? { fn: () => setShowRequestForm(true),  label: "Nueva solicitud" } :
+    tab === "catalog"   ? { fn: () => setShowCatalogForm(true),  label: "Nuevo insumo" } :
+                          { fn: () => setShowSupplierForm(true), label: "Nuevo proveedor" };
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      {/* Toolbar — tabs + filtro estado + botón en una fila */}
+      <div className="flex items-center gap-2 flex-wrap">
         <TabBar
           tabs={[
             { value: "requests",  label: "Solicitudes" },
@@ -41,15 +54,25 @@ export default function SuppliesPage() {
           value={tab}
           onChange={setTab}
         />
-        <div className="order-first sm:order-last self-start sm:self-auto">
-          {tab === "requests"  && <button className="btn-primary whitespace-nowrap" onClick={() => setShowRequestForm(true)}>+ Nueva solicitud</button>}
-          {tab === "catalog"   && <button className="btn-primary whitespace-nowrap" onClick={() => setShowCatalogForm(true)}>+ Nuevo insumo</button>}
-          {tab === "suppliers" && <button className="btn-primary whitespace-nowrap" onClick={() => setShowSupplierForm(true)}>+ Nuevo proveedor</button>}
+        <div className="flex items-center gap-2 ml-auto">
+          {tab === "requests" && (
+            <StatusFilterDropdown options={SUPPLY_STATUS_OPTS} selected={statusSel} onChange={setStatusSel} />
+          )}
+          <button className="btn-primary h-10 whitespace-nowrap hidden sm:flex items-center gap-1.5" onClick={addBtn.fn}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            {addBtn.label}
+          </button>
         </div>
       </div>
-      {tab === "requests"  && <RequestsTab  showForm={showRequestForm}  setShowForm={setShowRequestForm} />}
+      {tab === "requests"  && <RequestsTab  showForm={showRequestForm}  setShowForm={setShowRequestForm} statusSel={statusSel} />}
       {tab === "catalog"   && <CatalogTab   showForm={showCatalogForm}  setShowForm={setShowCatalogForm} />}
       {tab === "suppliers" && <SuppliersTab showForm={showSupplierForm} setShowForm={setShowSupplierForm} />}
+
+      {/* FAB — agregar en móvil */}
+      <button onClick={addBtn.fn} aria-label={addBtn.label}
+        className="sm:hidden fixed bottom-6 right-5 z-40 w-14 h-14 rounded-full bg-brand-green text-black shadow-lg shadow-brand-green/30 flex items-center justify-center active:scale-90 transition-transform">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
     </div>
   );
 }
@@ -158,10 +181,9 @@ function RowMenu({ onEdit, onManage }) {
   );
 }
 
-function RequestsTab({ showForm, setShowForm }) {
+function RequestsTab({ showForm, setShowForm, statusSel = [] }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const [filter,   setFilter]   = useState("all");
   const [selected, setSelected] = useState(null);
   const [editing,  setEditing]  = useState(null);
 
@@ -170,7 +192,7 @@ function RequestsTab({ showForm, setShowForm }) {
     queryFn: () => api.get("/supplies").then((r) => r.data.data),
   });
 
-  const data = filter === "all" ? allData : allData?.filter((r) => r.status === filter);
+  const data = statusSel.length === 0 ? allData : allData?.filter((r) => statusSel.includes(r.status));
 
   const updateStatus = useMutation({
     mutationFn: ({ id, status, admin_notes }) => api.put(`/supplies/${id}`, { status, admin_notes }),
@@ -197,31 +219,8 @@ function RequestsTab({ showForm, setShowForm }) {
     queryFn: () => api.get("/orders?limit=50").then((r) => r.data.data),
   });
 
-  const counts = (allData ?? []).reduce((acc, r) => { acc[r.status] = (acc[r.status] ?? 0) + 1; return acc; }, {});
-
   return (
     <div className="space-y-4">
-
-      {/* Filtros — dropdown en móvil, botones en escritorio */}
-      <div className="md:hidden">
-        <CustomSelect value={filter} onChange={(e) => setFilter(e.target.value)}>
-          {[["all","Todos"], ["pending","Pendientes"], ["in_progress","En proceso"], ["delivered","Entregados"]].map(([val, label]) => (
-            <option key={val} value={val}>
-              {label}{val !== "all" && counts[val] ? ` (${counts[val]})` : ""}
-            </option>
-          ))}
-        </CustomSelect>
-      </div>
-      <TabBar
-        tabs={[
-          { value: "all",         label: "Todos" },
-          { value: "pending",     label: "Pendientes",  count: counts.pending },
-          { value: "in_progress", label: "En proceso",  count: counts.in_progress },
-          { value: "delivered",   label: "Entregados",  count: counts.delivered },
-        ]}
-        value={filter}
-        onChange={setFilter}
-      />
 
       {/* Cards — móvil y tablet */}
       <div className="lg:hidden">
