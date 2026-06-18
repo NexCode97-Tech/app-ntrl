@@ -8,6 +8,7 @@ import {
   RadialBarChart, RadialBar, Legend,
 } from "recharts";
 import { api } from "../../config/api.js";
+import MonthPicker from "../../components/ui/MonthPicker.jsx";
 import CustomSelect from "../../components/ui/CustomSelect.jsx";
 
 /* ── Constantes ─────────────────────────────────────────────────────── */
@@ -76,6 +77,7 @@ function ActiveShape(props) {
 export default function ReportsPage() {
   const [activePieIdx,     setActivePieIdx]     = useState(null);
   const [selectedMonth,    setSelectedMonth]    = useState(null);
+  const [selectedRange,    setSelectedRange]    = useState(null); // { start: Date, end: Date } | null
   const [selectedSport,    setSelectedSport]    = useState(null);
   const [selectedDepto,    setSelectedDepto]    = useState(null);
 
@@ -84,11 +86,42 @@ export default function ReportsPage() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   }, []);
 
+  // Rango de fechas efectivo (start/end) según mes o rango de días seleccionado
+  const range = useMemo(() => {
+    const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    if (selectedRange?.start && selectedRange?.end) {
+      return { start: fmt(selectedRange.start), end: fmt(selectedRange.end) };
+    }
+    const month = selectedMonth ?? currentMonth;
+    const [y, m] = month.split("-").map(Number);
+    const last = new Date(y, m, 0).getDate();
+    return { start: `${month}-01`, end: `${month}-${String(last).padStart(2, "0")}` };
+  }, [selectedMonth, selectedRange, currentMonth]);
+
+  const rangeQS = `start=${range.start}&end=${range.end}`;
+  const rangeKey = `${range.start}_${range.end}`;
+
+  // Etiqueta del período activo (mes o rango de días)
+  const periodLabel = useMemo(() => {
+    if (selectedRange?.start && selectedRange?.end) {
+      const f = (d) => d.toLocaleDateString("es-CO", { day: "2-digit", month: "short" });
+      return `${f(selectedRange.start)} – ${f(selectedRange.end)}`;
+    }
+    return formatMonth(selectedMonth ?? currentMonth);
+  }, [selectedRange, selectedMonth, currentMonth]);
+
   /* ── Queries ────────────────────────────────────────────────────────── */
-  const { data, isLoading } = useQuery({
+  // Serie de 12 meses (histórico, no se filtra) + KPIs por rango
+  const { data: dashboardData, isLoading } = useQuery({
     queryKey:  ["dashboard"],
     queryFn:   () => api.get("/dashboard").then((r) => r.data.data),
     staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: rangeSummary } = useQuery({
+    queryKey: ["reports-range", rangeKey],
+    queryFn:  () => api.get(`/dashboard/range?${rangeQS}`).then((r) => r.data.data),
+    staleTime: 2 * 60 * 1000,
   });
 
   const { data: monthlyHistory } = useQuery({
@@ -98,44 +131,38 @@ export default function ReportsPage() {
   });
 
   const { data: sportByMonth } = useQuery({
-    queryKey: ["sport-by-month", selectedMonth ?? currentMonth],
-    queryFn:  () => api.get(`/dashboard/sport-by-month?month=${selectedMonth ?? currentMonth}`).then((r) => r.data.data),
+    queryKey: ["sport-by-month", rangeKey],
+    queryFn:  () => api.get(`/dashboard/sport-by-month?${rangeQS}`).then((r) => r.data.data),
     staleTime: 5 * 60 * 1000,
   });
 
   const { data: topProducts } = useQuery({
-    queryKey: ["top-products", selectedMonth ?? currentMonth],
-    queryFn:  () => api.get(`/dashboard/top-products?month=${selectedMonth ?? currentMonth}`).then((r) => r.data.data),
+    queryKey: ["top-products", rangeKey],
+    queryFn:  () => api.get(`/dashboard/top-products?${rangeQS}`).then((r) => r.data.data),
     staleTime: 5 * 60 * 1000,
   });
 
   const { data: topCustomers } = useQuery({
-    queryKey: ["top-customers"],
-    queryFn:  () => api.get("/dashboard/top-customers").then((r) => r.data.data),
+    queryKey: ["top-customers", rangeKey],
+    queryFn:  () => api.get(`/dashboard/top-customers?${rangeQS}`).then((r) => r.data.data),
     staleTime: 5 * 60 * 1000,
   });
 
   const { data: geoData } = useQuery({
-    queryKey: ["geo-by-month", selectedMonth ?? currentMonth],
-    queryFn:  () => api.get(`/dashboard/geo-by-month?month=${selectedMonth ?? currentMonth}`).then((r) => r.data.data),
+    queryKey: ["geo-by-month", rangeKey],
+    queryFn:  () => api.get(`/dashboard/geo-by-month?${rangeQS}`).then((r) => r.data.data),
     staleTime: 5 * 60 * 1000,
   });
 
   const { data: genderData } = useQuery({
-    queryKey: ["gender-by-month", selectedMonth ?? currentMonth],
-    queryFn:  () => api.get(`/dashboard/gender-by-month?month=${selectedMonth ?? currentMonth}`).then((r) => r.data.data),
+    queryKey: ["gender-by-month", rangeKey],
+    queryFn:  () => api.get(`/dashboard/gender-by-month?${rangeQS}`).then((r) => r.data.data),
     staleTime: 5 * 60 * 1000,
   });
 
   /* ── Datos derivados ─────────────────────────────────────────────────── */
-  const selectedSnapshot = useMemo(() => {
-    if (!selectedMonth) return null;
-    return (monthlyHistory ?? []).find((s) => s.month === selectedMonth) ?? null;
-  }, [selectedMonth, monthlyHistory]);
-
-  const financialDisplay = selectedSnapshot
-    ? { total_revenue: selectedSnapshot.total_revenue, collected: selectedSnapshot.collected, pending: selectedSnapshot.pending }
-    : data?.financial;
+  const data = dashboardData; // alias para la serie histórica de 12 meses
+  const financialDisplay = rangeSummary?.financial;
 
   const donutData = useMemo(() => {
     const collected = Number(financialDisplay?.collected || 0);
@@ -149,13 +176,9 @@ export default function ReportsPage() {
 
   const byStatusData = useMemo(() => {
     const base = { pending: 0, in_progress: 0, completed: 0, delivered: 0 };
-    if (selectedSnapshot) {
-      Object.entries(selectedSnapshot.status_counts ?? {}).forEach(([k, v]) => { base[k] = Number(v); });
-    } else {
-      (data?.byStatus ?? []).forEach((r) => { base[r.status] = Number(r.total); });
-    }
+    (rangeSummary?.byStatus ?? []).forEach((r) => { base[r.status] = Number(r.total); });
     return Object.entries(base).map(([status, total]) => ({ status, total, label: STATUS_LABELS[status] }));
-  }, [data?.byStatus, selectedSnapshot]);
+  }, [rangeSummary?.byStatus]);
 
   const monthlyData = useMemo(() => {
     if (data?.monthly?.length) return data.monthly.map((r) => ({ ...r, Ingresos: Number(r.revenue) }));
@@ -225,18 +248,17 @@ export default function ReportsPage() {
           <h1 className="lg:hidden text-white font-bold text-xl">Reportes</h1>
         </div>
 
-        {/* Selector de mes */}
+        {/* Selector de período — mes + rango de días */}
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-zinc-500 text-xs">Período:</span>
-          <CustomSelect
-            value={selectedMonth ?? ""}
-            onChange={(e) => { setSelectedMonth(e.target.value || null); setSelectedSport(null); }}
-          >
-            <option value="">{formatMonth(currentMonth)} (actual)</option>
-            {(monthlyHistory ?? []).map((s) => (
-              <option key={s.month} value={s.month}>{formatMonth(s.month)}</option>
-            ))}
-          </CustomSelect>
+          <MonthPicker
+            value={selectedMonth}
+            currentMonth={currentMonth}
+            availableMonths={(monthlyHistory ?? []).map((s) => s.month)}
+            dateRange={selectedRange}
+            onChange={(m, r) => { setSelectedMonth(m); setSelectedRange(r); setSelectedSport(null); }}
+            alignRight
+          />
         </div>
       </motion.div>
 
@@ -257,7 +279,7 @@ export default function ReportsPage() {
             <p className={`${kpi.color} text-2xl font-black tracking-tight`}>
               $<CountUp end={kpi.value} duration={1.2} separator="." decimal="," preserveValue />
             </p>
-            <p className="text-zinc-600 text-[11px] mt-1">{formatMonth(selectedMonth ?? currentMonth)}</p>
+            <p className="text-zinc-600 text-[11px] mt-1">{periodLabel}</p>
           </motion.div>
         ))}
       </div>
@@ -269,7 +291,7 @@ export default function ReportsPage() {
         <motion.div variants={itemVariants} className="card flex flex-col">
           <h2 className="text-white font-semibold mb-4 text-sm">
             Estado del dinero
-            <span className="text-zinc-600 font-normal text-xs ml-2">{formatMonth(selectedMonth ?? currentMonth)}</span>
+            <span className="text-zinc-600 font-normal text-xs ml-2">{periodLabel}</span>
           </h2>
           {donutData.length === 0 ? (
             <div className="flex-1 flex items-center justify-center py-10">
@@ -334,7 +356,7 @@ export default function ReportsPage() {
         <motion.div variants={itemVariants} className="card flex flex-col min-h-[260px]">
           <h2 className="text-white font-semibold mb-4 text-sm">
             Ventas por deporte
-            <span className="text-zinc-600 font-normal text-xs ml-2">{formatMonth(selectedMonth ?? currentMonth)}</span>
+            <span className="text-zinc-600 font-normal text-xs ml-2">{periodLabel}</span>
           </h2>
           <div className="flex-1">
             <ResponsiveContainer width="100%" height="100%">
@@ -424,7 +446,7 @@ export default function ReportsPage() {
         <motion.div variants={itemVariants} className="card flex flex-col">
           <h2 className="text-white font-semibold mb-4 text-sm">
             Pedidos por estado
-            <span className="text-zinc-600 font-normal text-xs ml-2">{formatMonth(selectedMonth ?? currentMonth)}</span>
+            <span className="text-zinc-600 font-normal text-xs ml-2">{periodLabel}</span>
           </h2>
           <div className="grid grid-cols-2 gap-3 flex-1">
             {byStatusData.map((item, i) => (
@@ -501,7 +523,7 @@ export default function ReportsPage() {
         <motion.div variants={itemVariants} className="card flex flex-col">
           <h2 className="text-white font-semibold mb-4 text-sm">
             Ventas por género
-            <span className="text-zinc-600 font-normal text-xs ml-2">{formatMonth(selectedMonth ?? currentMonth)}</span>
+            <span className="text-zinc-600 font-normal text-xs ml-2">{periodLabel}</span>
           </h2>
           {!(genderData ?? []).length ? (
             <div className="flex-1 flex items-center justify-center py-8">
@@ -560,7 +582,7 @@ export default function ReportsPage() {
           <motion.div variants={itemVariants} className="card">
             <h2 className="text-white font-semibold mb-1 text-sm">
               Top 5 productos
-              <span className="text-zinc-600 font-normal text-xs ml-2">por unidades vendidas · {formatMonth(selectedMonth ?? currentMonth)}</span>
+              <span className="text-zinc-600 font-normal text-xs ml-2">por unidades vendidas · {periodLabel}</span>
             </h2>
             {!radialData.length ? (
               <p className="text-zinc-600 text-sm text-center py-8">Sin datos.</p>
@@ -638,7 +660,7 @@ export default function ReportsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
           <h2 className="text-white font-semibold text-sm flex-1">
             Distribución geográfica
-            <span className="text-zinc-600 font-normal text-xs ml-2">{formatMonth(selectedMonth ?? currentMonth)}</span>
+            <span className="text-zinc-600 font-normal text-xs ml-2">{periodLabel}</span>
           </h2>
           {/* Selector departamento */}
           {deptoTotals.length > 0 && (

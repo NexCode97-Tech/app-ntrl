@@ -4,6 +4,20 @@ async function cached(key, fn) {
   return await fn();
 }
 
+// Resuelve el rango de fechas desde la query.
+// Acepta: ?start=YYYY-MM-DD&end=YYYY-MM-DD (rango libre) o ?month=YYYY-MM (mes completo).
+// Devuelve { start, end } como strings YYYY-MM-DD, o null si no hay filtro.
+function resolveRange(query) {
+  const { start, end, month } = query;
+  if (start && end) return { start, end };
+  if (month) {
+    const [y, m] = month.split("-").map(Number);
+    const last = new Date(y, m, 0).getDate();
+    return { start: `${month}-01`, end: `${month}-${String(last).padStart(2, "0")}` };
+  }
+  return { start: null, end: null };
+}
+
 // Guarda snapshot del mes indicado (formato 'YYYY-MM') si aún no existe
 async function saveSnapshotIfMissing(month) {
   const existing = await pool.query(
@@ -260,8 +274,7 @@ export async function getPendingBalances(req, res, next) {
 
 export async function getSportByMonth(req, res, next) {
   try {
-    const { month } = req.query; // formato YYYY-MM
-    const dateFilter = month ? `${month}-01` : null;
+    const { start, end } = resolveRange(req.query);
 
     const { rows } = await pool.query(`
       SELECT s.name AS sport,
@@ -272,10 +285,10 @@ export async function getSportByMonth(req, res, next) {
       JOIN lines l     ON l.id  = p.line_id
       JOIN sports s    ON s.id  = l.sport_id
       JOIN orders o    ON o.id  = oi.order_id
-      WHERE ($1::date IS NULL OR DATE_TRUNC('month', o.created_at) = DATE_TRUNC('month', $1::date))
+      WHERE ($1::date IS NULL OR o.created_at::date BETWEEN $1::date AND $2::date)
       GROUP BY s.name
       ORDER BY revenue DESC
-    `, [dateFilter]);
+    `, [start, end]);
 
     res.json({ status: "ok", data: rows });
   } catch (err) { next(err); }
@@ -283,24 +296,25 @@ export async function getSportByMonth(req, res, next) {
 
 export async function getTopCustomers(req, res, next) {
   try {
+    const { start, end } = resolveRange(req.query);
     const { rows } = await pool.query(`
       SELECT c.id, c.name AS customer,
              COUNT(DISTINCT o.id)    AS orders,
              COALESCE(SUM(o.total), 0) AS revenue
       FROM customers c
       JOIN orders o ON o.customer_id = c.id
+      WHERE ($1::date IS NULL OR o.created_at::date BETWEEN $1::date AND $2::date)
       GROUP BY c.id, c.name
       ORDER BY revenue DESC
       LIMIT 5
-    `);
+    `, [start, end]);
     res.json({ status: "ok", data: rows });
   } catch (err) { next(err); }
 }
 
 export async function getTopProducts(req, res, next) {
   try {
-    const { month } = req.query;
-    const dateFilter = month ? `${month}-01` : null;
+    const { start, end } = resolveRange(req.query);
     const { rows } = await pool.query(`
       SELECT p.name                                                          AS product,
              COUNT(DISTINCT o.id)                                           AS orders,
@@ -313,19 +327,18 @@ export async function getTopProducts(req, res, next) {
       JOIN products p ON p.id = oi.product_id
       JOIN orders o   ON o.id = oi.order_id
       WHERE ($1::date IS NULL
-             OR DATE_TRUNC('month', o.created_at) = DATE_TRUNC('month', $1::date))
+             OR o.created_at::date BETWEEN $1::date AND $2::date)
       GROUP BY p.name
       ORDER BY units DESC
       LIMIT 5
-    `, [dateFilter]);
+    `, [start, end]);
     res.json({ status: "ok", data: rows });
   } catch (err) { next(err); }
 }
 
 export async function getGeoByMonth(req, res, next) {
   try {
-    const { month } = req.query;
-    const dateFilter = month ? `${month}-01` : null;
+    const { start, end } = resolveRange(req.query);
     const { rows } = await pool.query(`
       SELECT
         COALESCE(NULLIF(TRIM(c.department), ''), 'Sin departamento') AS department,
@@ -335,19 +348,18 @@ export async function getGeoByMonth(req, res, next) {
       FROM orders o
       JOIN customers c ON c.id = o.customer_id
       WHERE ($1::date IS NULL
-             OR DATE_TRUNC('month', o.created_at) = DATE_TRUNC('month', $1::date))
+             OR o.created_at::date BETWEEN $1::date AND $2::date)
       GROUP BY department, city
       ORDER BY revenue DESC
       LIMIT 20
-    `, [dateFilter]);
+    `, [start, end]);
     res.json({ status: "ok", data: rows });
   } catch (err) { next(err); }
 }
 
 export async function getGenderByMonth(req, res, next) {
   try {
-    const { month } = req.query;
-    const dateFilter = month ? `${month}-01` : null;
+    const { start, end } = resolveRange(req.query);
     const { rows } = await pool.query(`
       SELECT oi.gender,
              COUNT(DISTINCT o.id)                                                         AS orders,
@@ -359,10 +371,10 @@ export async function getGenderByMonth(req, res, next) {
       FROM order_items oi
       JOIN orders o ON o.id = oi.order_id
       WHERE ($1::date IS NULL
-             OR DATE_TRUNC('month', o.created_at) = DATE_TRUNC('month', $1::date))
+             OR o.created_at::date BETWEEN $1::date AND $2::date)
       GROUP BY oi.gender
       ORDER BY revenue DESC
-    `, [dateFilter]);
+    `, [start, end]);
     res.json({ status: "ok", data: rows });
   } catch (err) { next(err); }
 }

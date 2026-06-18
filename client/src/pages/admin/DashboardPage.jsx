@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useMemo, useState, useCallback } from "react";
 import { api } from "../../config/api.js";
 import { useAuthStore } from "../../stores/authStore.js";
-import MonthPicker from "../../components/ui/MonthPicker.jsx";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   PieChart, Pie, Cell, Sector,
@@ -320,13 +319,12 @@ export default function DashboardPage() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   }, []);
 
-  const [selectedMonth, setSelectedMonth] = useState(null); // null = mes actual
-  const [selectedRange,  setSelectedRange]  = useState(null); // { start: Date, end: Date } | null
   const [activePieIndex, setActivePieIndex] = useState(null);
   const onPieEnter = useCallback((_, index) => setActivePieIndex(index), []);
   const onPieLeave = useCallback(() => setActivePieIndex(null), []);
   const [selectedSport, setSelectedSport] = useState(null);
 
+  // Dashboard siempre muestra el mes actual
   const { data: monthlyHistory } = useQuery({
     queryKey: ["dashboard-history"],
     queryFn:  () => api.get("/dashboard/history").then((r) => r.data.data),
@@ -334,59 +332,34 @@ export default function DashboardPage() {
     enabled: !isVendedor,
   });
 
-  // Query para rango de días específico
-  const fmtDate = (d) => d.toISOString().slice(0, 10);
-  const { data: rangeData } = useQuery({
-    queryKey: ["dashboard-range", selectedRange?.start, selectedRange?.end],
-    queryFn:  () => api.get(`/dashboard/range?start=${fmtDate(selectedRange.start)}&end=${fmtDate(selectedRange.end)}`).then((r) => r.data.data),
-    enabled:  !!selectedRange?.start && !!selectedRange?.end,
-    staleTime: 2 * 60 * 1000,
-  });
-
   const { data: sportByMonth } = useQuery({
-    queryKey: ["sport-by-month", selectedMonth ?? currentMonth],
-    queryFn:  () => api.get(`/dashboard/sport-by-month?month=${selectedMonth ?? currentMonth}`).then((r) => r.data.data),
+    queryKey: ["sport-by-month", currentMonth],
+    queryFn:  () => api.get(`/dashboard/sport-by-month?month=${currentMonth}`).then((r) => r.data.data),
     staleTime: 5 * 60 * 1000,
   });
 
-  // Datos del mes seleccionado (historial) o del mes actual (live)
-  const selectedSnapshot = useMemo(() => {
-    if (!selectedMonth) return null;
-    return (monthlyHistory ?? []).find((s) => s.month === selectedMonth) ?? null;
-  }, [selectedMonth, monthlyHistory]);
-
-  // Mes anterior para % comparación
+  // Mes anterior para % comparación (escalado proporcionalmente a los días transcurridos)
   const prevSnapshot = useMemo(() => {
-    const activeMonth = selectedMonth ?? currentMonth;
     const history = monthlyHistory ?? [];
-    const [y, m] = activeMonth.split("-").map(Number);
+    const [y, m] = currentMonth.split("-").map(Number);
     const prevDate = new Date(y, m - 2, 1);
     const prevKey  = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
     const snap = history.find((s) => s.month === prevKey) ?? null;
+    if (!snap) return null;
 
-    // Si estamos viendo el mes actual (sin snapshot seleccionado), escalar el mes anterior
-    // proporcionalmente a los días transcurridos para comparar periodos equivalentes.
-    // Ej: hoy es día 5 de 30 → ratio = 5/30 → ajustamos el total del mes anterior.
-    if (!selectedMonth && snap) {
-      const now   = new Date();
-      const dayOfMonth  = now.getDate();
-      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-      const ratio = dayOfMonth / daysInMonth;
-      return {
-        ...snap,
-        total_revenue: Number(snap.total_revenue) * ratio,
-        collected:     Number(snap.collected)     * ratio,
-        pending:       Number(snap.pending)       * ratio,
-      };
-    }
-    return snap;
-  }, [selectedMonth, currentMonth, monthlyHistory]);
+    const now   = new Date();
+    const dayOfMonth  = now.getDate();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const ratio = dayOfMonth / daysInMonth;
+    return {
+      ...snap,
+      total_revenue: Number(snap.total_revenue) * ratio,
+      collected:     Number(snap.collected)     * ratio,
+      pending:       Number(snap.pending)       * ratio,
+    };
+  }, [currentMonth, monthlyHistory]);
 
-  const financialDisplay = selectedRange && rangeData
-    ? rangeData.financial
-    : selectedSnapshot
-    ? { total_revenue: selectedSnapshot.total_revenue, collected: selectedSnapshot.collected, pending: selectedSnapshot.pending }
-    : data?.financial;
+  const financialDisplay = data?.financial;
 
   // % de cambio vs mes anterior
   function pctChange(current, prev) {
@@ -399,16 +372,12 @@ export default function DashboardPage() {
   // Datos siempre presentes — si no hay info real se muestran en cero
   const byStatusData = useMemo(() => {
     const base = { pending: 0, in_progress: 0, completed: 0, delivered: 0 };
-    if (selectedSnapshot) {
-      Object.entries(selectedSnapshot.status_counts ?? {}).forEach(([k, v]) => { base[k] = Number(v); });
-    } else {
-      (data?.byStatus ?? []).forEach((r) => { base[r.status] = Number(r.total); });
-    }
+    (data?.byStatus ?? []).forEach((r) => { base[r.status] = Number(r.total); });
     return Object.entries(base).map(([status, total]) => ({
       status, total,
       label: { pending:"Pendiente", in_progress:"En proceso", completed:"Completado", delivered:"Entregado" }[status],
     }));
-  }, [data?.byStatus, selectedSnapshot]);
+  }, [data?.byStatus]);
 
   const monthlyData = useMemo(() => {
     if (data?.monthly?.length) return data.monthly.map((r) => ({ ...r, Ingresos: Number(r.revenue) }));
@@ -557,29 +526,19 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Selector de mes + botón actualizar en la misma fila */}
+      {/* Encabezado — mes actual + botón actualizar */}
       <div className="flex items-center justify-between gap-2">
-        <h1 className="lg:hidden text-white font-bold text-xl">Dashboard</h1>
-        <div className="flex items-center gap-2 lg:w-full lg:justify-between">
-          <div className="flex items-center gap-2">
-            <span className="hidden sm:inline text-zinc-500 text-xs shrink-0">Ver mes:</span>
-            <MonthPicker
-              value={selectedMonth}
-              currentMonth={currentMonth}
-              availableMonths={(monthlyHistory ?? []).map((s) => s.month)}
-              dateRange={selectedRange}
-              onChange={(m, range) => { setSelectedMonth(m); setSelectedRange(range); setSelectedSport(null); }}
-              alignRight
-            />
-          </div>
-          <button
-            onClick={handleRefresh}
-            className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg px-3 py-1.5 transition-colors shrink-0"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={refreshing ? "animate-spin" : ""}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-            <span className="hidden sm:inline">{refreshing ? "Actualizando..." : "Actualizar"}</span>
-          </button>
+        <div>
+          <h1 className="text-white font-bold text-xl">Dashboard</h1>
+          <p className="text-zinc-500 text-xs mt-0.5 capitalize">{new Date().toLocaleDateString("es-CO", { month: "long", year: "numeric" })}</p>
         </div>
+        <button
+          onClick={handleRefresh}
+          className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg px-3 py-1.5 transition-colors shrink-0"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={refreshing ? "animate-spin" : ""}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          <span className="hidden sm:inline">{refreshing ? "Actualizando..." : "Actualizar"}</span>
+        </button>
       </div>
 
       {/* FILA 1 — KPIs financieros */}
@@ -601,7 +560,7 @@ export default function DashboardPage() {
             prev:  Number(prevSnapshot?.pending      || 0),
           },
         ].map((kpi, i) => {
-          const pct = !selectedRange ? pctChange(kpi.value, kpi.prev) : null;
+          const pct = pctChange(kpi.value, kpi.prev);
           const up  = pct !== null && pct >= 0;
           return (
             <motion.div
@@ -637,7 +596,7 @@ export default function DashboardPage() {
         >
           <h2 className="text-white font-semibold mb-3">
             Estado del dinero
-            <span className="text-zinc-500 font-normal text-xs ml-2">{formatMonth(selectedMonth ?? currentMonth)}</span>
+            <span className="text-zinc-500 font-normal text-xs ml-2">{formatMonth(currentMonth)}</span>
           </h2>
           {donutData.length === 0 ? (
             <p className="text-zinc-600 text-xs text-center py-10">Sin datos financieros.</p>
@@ -715,7 +674,7 @@ export default function DashboardPage() {
         >
           <h2 className="text-white font-semibold mb-3">
             Ventas por deporte
-            <span className="text-zinc-500 font-normal text-xs ml-2">{formatMonth(selectedMonth ?? currentMonth)}</span>
+            <span className="text-zinc-500 font-normal text-xs ml-2">{formatMonth(currentMonth)}</span>
           </h2>
           <div className="flex-1">
             <ResponsiveContainer width="100%" height="100%">
@@ -778,20 +737,18 @@ export default function DashboardPage() {
                     `${formatPesos(v)} · ${props.payload.orders} pedido${props.payload.orders !== 1 ? "s" : ""}`,
                     "Ingresos",
                   ]}
-                  labelFormatter={(m) => `${formatMonth(m)}${m === (selectedMonth ?? currentMonth) ? " ● seleccionado" : " — clic para seleccionar"}`}
+                  labelFormatter={(m) => `${formatMonth(m)}${m === currentMonth ? " ● mes actual" : ""}`}
                 />
                 <Bar
                   dataKey="Ingresos"
                   radius={[4,4,0,0]}
-                  cursor="pointer"
-                  onClick={(data) => setSelectedMonth(data.month === currentMonth ? null : data.month)}
                   activeBar={{ fill: "#c5ff3a", filter: "drop-shadow(0 0 6px #98f909)" }}
                   isAnimationActive animationDuration={900} animationEasing="ease-out"
                 >
                   {monthlyData.map((entry) => (
                     <Cell
                       key={entry.month}
-                      fill={entry.month === (selectedMonth ?? currentMonth) ? "#c5ff3a" : "#98f909"}
+                      fill={entry.month === (currentMonth) ? "#c5ff3a" : "#98f909"}
                     />
                   ))}
                 </Bar>
@@ -808,7 +765,7 @@ export default function DashboardPage() {
         >
           <h2 className="text-white font-semibold mb-3">
             Pedidos por estado
-            <span className="text-zinc-500 font-normal text-xs ml-2">{formatMonth(selectedMonth ?? currentMonth)}</span>
+            <span className="text-zinc-500 font-normal text-xs ml-2">{formatMonth(currentMonth)}</span>
           </h2>
           <div className="grid grid-cols-2 gap-3 flex-1">
             {byStatusData.map((item, i) => (
