@@ -781,12 +781,38 @@ export default function OrderDetailPage() {
       {/* Tab: Producción */}
       {tab === "production" && (
         <div className="space-y-4">
+          {/* Barra de avance general — derivada del estado real de las áreas */}
+          {data.tasks?.length > 0 && (() => {
+            const done   = data.tasks.filter((t) => ["completed", "delivered"].includes(t.status)).length;
+            const inProg = data.tasks.filter((t) => t.status === "in_progress").length;
+            const total  = data.tasks.length;
+            const pct    = total > 0 ? Math.round(((done + inProg * 0.5) / total) * 100) : 0;
+            return (
+              <div className="card">
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-zinc-400 text-xs">Avance de producción</span>
+                  <span className="text-brand-green text-xl font-bold tabular-nums">{pct}%</span>
+                </div>
+                <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full bg-gradient-to-r from-lime-500 to-brand-green transition-all" style={{ width: `${pct}%` }} />
+                </div>
+                <p className="text-[11px] text-zinc-500 mt-2 tabular-nums">{done} de {total} áreas completadas{inProg > 0 ? ` · ${inProg} en proceso` : ""}</p>
+              </div>
+            );
+          })()}
+
+          {/* Tarjetas de área con su estado */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {data.tasks?.map((task) => {
               const ts = STATUS_LABELS[task.status] || STATUS_LABELS.pending;
+              const dot = task.status === "delivered" || task.status === "completed" ? "#c5ff3a"
+                        : task.status === "in_progress" ? "#60a5fa" : "#eab308";
               return (
                 <div key={task.id} className="card flex flex-col gap-2">
-                  <p className="text-white font-semibold text-sm leading-tight">{AREA_NAMES[task.area]}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: dot }} />
+                    <p className="text-white font-semibold text-sm leading-tight">{AREA_NAMES[task.area]}</p>
+                  </div>
                   <span className={`${ts.cls} w-fit`}>{ts.label}</span>
                   {(task.started_by_name || task.completed_by_name) && (
                     <div className="space-y-0.5 mt-auto pt-1 border-t border-zinc-800">
@@ -802,8 +828,6 @@ export default function OrderDetailPage() {
               );
             })}
           </div>
-
-          <ProgressMatrix orderId={id} items={data.items || []} />
         </div>
       )}
 
@@ -1614,137 +1638,6 @@ function FinancialTab({ order, onRefresh, onPreviewImage, onPreviewPdf }) {
             </div>
           </motion.form>
         )}
-      </div>
-    </div>
-  );
-}
-
-function ProgressMatrix({ orderId, items }) {
-  const AREAS = [
-    ["corte", "Corte"],
-    ["diseno_disenar", "Diseño"],
-    ["impresion", "Impresión"],
-    ["sublimacion", "Sublim."],
-    ["ensamble", "Ensamble"],
-    ["terminados", "Terminados"],
-  ];
-
-  const { data: progress, isLoading } = useQuery({
-    queryKey: ["order-progress", orderId],
-    queryFn:  () => api.get(`/production/order/${orderId}/progress`).then((r) => r.data.data),
-  });
-
-  if (isLoading) return <div className="card text-zinc-500 text-sm">Cargando avance...</div>;
-
-  const doneSet = new Set(
-    (progress || [])
-      .filter((p) => p.is_done)
-      .map((p) => `${p.order_item_id}|${p.area}|${p.size}`)
-  );
-
-  // Generar filas: una por cada (item, talla con qty>0)
-  const rows = [];
-  items.forEach((item) => {
-    Object.entries(item.sizes || {}).forEach(([size, qty]) => {
-      if (Number(qty) > 0) rows.push({ itemId: item.id, name: item.product_name, size, qty });
-    });
-  });
-
-  if (rows.length === 0) return null;
-
-  // Totales por área
-  const totalsByArea = {};
-  AREAS.forEach(([key]) => {
-    totalsByArea[key] = rows.filter((r) => doneSet.has(`${r.itemId}|${key}|${r.size}`)).length;
-  });
-
-  // Avance general
-  const totalCells = rows.length * AREAS.length;
-  const doneCells  = Object.values(totalsByArea).reduce((a, b) => a + b, 0);
-  const overallPct = totalCells > 0 ? Math.round((doneCells / totalCells) * 100) : 0;
-
-  const CIRC = 2 * Math.PI * 14; // r=14
-
-  return (
-    <div className="space-y-3">
-      {/* Avance general */}
-      <div className="card">
-        <div className="flex items-center justify-between mb-2.5">
-          <span className="text-zinc-400 text-xs">Avance de producción</span>
-          <span className="text-brand-green text-xl font-bold tabular-nums">{overallPct}%</span>
-        </div>
-        <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-          <div className="h-full rounded-full bg-gradient-to-r from-lime-500 to-brand-green transition-all" style={{ width: `${overallPct}%` }} />
-        </div>
-      </div>
-
-      {/* Anillos por etapa */}
-      <div className="card">
-        <h3 className="text-zinc-400 text-xs font-medium mb-3">Etapas</h3>
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-          {AREAS.map(([key, label]) => {
-            const done = totalsByArea[key];
-            const pct = rows.length > 0 ? done / rows.length : 0;
-            const complete = done === rows.length;
-            return (
-              <div key={key} className="flex flex-col items-center bg-zinc-800 border border-zinc-700/60 rounded-lg py-2.5 px-1">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-tight mb-1.5 text-center leading-tight">{label}</span>
-                <div className="relative w-9 h-9">
-                  <svg width="36" height="36" viewBox="0 0 34 34" className="-rotate-90">
-                    <circle cx="17" cy="17" r="14" fill="none" stroke="#3f3f46" strokeWidth="3" />
-                    <circle cx="17" cy="17" r="14" fill="none" stroke={complete ? "#c5ff3a" : "#84cc16"} strokeWidth="3"
-                      strokeLinecap="round" strokeDasharray={CIRC} strokeDashoffset={CIRC * (1 - pct)}
-                      style={{ transition: "stroke-dashoffset .4s" }} />
-                  </svg>
-                </div>
-                <span className={`text-[11px] font-semibold tabular-nums mt-1.5 ${complete ? "text-brand-green" : "text-zinc-300"}`}>{done}/{rows.length}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Matriz de detalle */}
-      <div className="card overflow-x-auto">
-        <h3 className="text-zinc-400 text-xs font-medium mb-3">Detalle por producto y área</h3>
-        <table className="w-full text-xs min-w-[600px]">
-          <thead>
-            <tr className="border-b border-zinc-700">
-              <th className="text-left text-zinc-500 font-medium pb-2.5 pr-2">Producto</th>
-              {AREAS.map(([key, label]) => (
-                <th key={key} className="text-center text-zinc-500 font-medium pb-2.5 px-1 text-[10px] uppercase">{label}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={`${r.itemId}-${r.size}`} className="border-b border-zinc-800/70">
-                <td className="py-2.5 pr-2 text-white whitespace-nowrap">
-                  <span className="font-medium">{r.name}</span>
-                  <span className="text-[10px] text-zinc-400 bg-zinc-800 px-1.5 py-0.5 rounded ml-1.5 tabular-nums">{r.size} · {r.qty}</span>
-                </td>
-                {AREAS.map(([key]) => {
-                  const done = doneSet.has(`${r.itemId}|${key}|${r.size}`);
-                  return (
-                    <td key={key} className="text-center px-1 py-2.5">
-                      <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full ${done ? "bg-brand-green text-black" : "border border-zinc-700"}`}>
-                        {done && <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
-                      </span>
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-            <tr className="border-t-2 border-zinc-700">
-              <td className="py-2.5 pr-2 text-zinc-400 font-medium">Total</td>
-              {AREAS.map(([key]) => (
-                <td key={key} className="text-center px-1 py-2.5 text-zinc-400 font-semibold tabular-nums">
-                  {totalsByArea[key]}/{rows.length}
-                </td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
       </div>
     </div>
   );
