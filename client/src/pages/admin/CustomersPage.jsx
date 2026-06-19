@@ -336,8 +336,9 @@ export default function CustomersPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <button className="btn-primary shrink-0 whitespace-nowrap" onClick={() => setForm({})}>
-          + Nuevo cliente
+        <button className="btn-primary shrink-0 whitespace-nowrap hidden sm:flex items-center gap-1.5" onClick={() => setForm({})}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nuevo cliente
         </button>
       </div>
 
@@ -400,6 +401,12 @@ export default function CustomersPage() {
 
       {form !== null && <CustomerModal form={form} onSave={(d) => { setSaveError(""); save.mutate(d); }} onClose={() => { setForm(null); setSaveError(""); }} saving={save.isPending} apiError={saveError} />}
       {viewing && <CustomerView customer={viewing} onEdit={() => { setForm(viewing); setViewing(null); }} onClose={() => setViewing(null)} />}
+
+      {/* FAB — nuevo cliente en móvil */}
+      <button onClick={() => setForm({})} aria-label="Nuevo cliente"
+        className="sm:hidden fixed bottom-6 right-5 z-40 w-14 h-14 rounded-full bg-brand-green text-black shadow-lg shadow-brand-green/30 flex items-center justify-center active:scale-90 transition-transform">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
     </div>
   );
 }

@@ -32,6 +32,7 @@ const UNITS = ["Unidades", "Metros", "Kg", "Litros", "Rollos", "Yardas", "Piezas
 export default function SuppliesPage() {
   const [tab, setTab] = useState("requests");
   const [statusSel, setStatusSel] = useState([]); // filtro de estado de solicitudes ([] = todos)
+  const [search, setSearch] = useState("");
   const [showRequestForm,  setShowRequestForm]  = useState(false);
   const [showSupplierForm, setShowSupplierForm] = useState(false);
   const [showCatalogForm,  setShowCatalogForm]  = useState(false);
@@ -41,9 +42,14 @@ export default function SuppliesPage() {
     tab === "catalog"   ? { fn: () => setShowCatalogForm(true),  label: "Nuevo insumo" } :
                           { fn: () => setShowSupplierForm(true), label: "Nuevo proveedor" };
 
+  const searchPlaceholder =
+    tab === "requests" ? "Buscar solicitud..." :
+    tab === "catalog"  ? "Buscar insumo..." :
+                         "Buscar proveedor...";
+
   return (
     <div className="space-y-4">
-      {/* Toolbar — tabs + filtro estado + botón en una fila */}
+      {/* Toolbar — tabs + búsqueda + filtro estado + botón en una fila */}
       <div className="flex items-center gap-2 flex-wrap">
         <TabBar
           tabs={[
@@ -52,9 +58,19 @@ export default function SuppliesPage() {
             { value: "suppliers", label: "Proveedores" },
           ]}
           value={tab}
-          onChange={setTab}
+          onChange={(t) => { setTab(t); setSearch(""); }}
         />
-        <div className="flex items-center gap-2 ml-auto">
+        {/* Búsqueda */}
+        <div className="relative flex-1 min-w-[140px] order-last sm:order-none w-full sm:w-auto">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input
+            className="w-full h-10 bg-zinc-900 border border-zinc-700 focus:border-zinc-500 rounded-lg pl-9 pr-3 text-sm text-white placeholder-zinc-500 outline-none transition-colors"
+            placeholder={searchPlaceholder}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center gap-2">
           {tab === "requests" && (
             <StatusFilterDropdown options={SUPPLY_STATUS_OPTS} selected={statusSel} onChange={setStatusSel} />
           )}
@@ -64,9 +80,9 @@ export default function SuppliesPage() {
           </button>
         </div>
       </div>
-      {tab === "requests"  && <RequestsTab  showForm={showRequestForm}  setShowForm={setShowRequestForm} statusSel={statusSel} />}
-      {tab === "catalog"   && <CatalogTab   showForm={showCatalogForm}  setShowForm={setShowCatalogForm} />}
-      {tab === "suppliers" && <SuppliersTab showForm={showSupplierForm} setShowForm={setShowSupplierForm} />}
+      {tab === "requests"  && <RequestsTab  showForm={showRequestForm}  setShowForm={setShowRequestForm} statusSel={statusSel} search={search} />}
+      {tab === "catalog"   && <CatalogTab   showForm={showCatalogForm}  setShowForm={setShowCatalogForm} search={search} />}
+      {tab === "suppliers" && <SuppliersTab showForm={showSupplierForm} setShowForm={setShowSupplierForm} search={search} />}
 
       {/* FAB — agregar en móvil */}
       <button onClick={addBtn.fn} aria-label={addBtn.label}
@@ -181,7 +197,7 @@ function RowMenu({ onEdit, onManage }) {
   );
 }
 
-function RequestsTab({ showForm, setShowForm, statusSel = [] }) {
+function RequestsTab({ showForm, setShowForm, statusSel = [], search = "" }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [selected, setSelected] = useState(null);
@@ -192,7 +208,10 @@ function RequestsTab({ showForm, setShowForm, statusSel = [] }) {
     queryFn: () => api.get("/supplies").then((r) => r.data.data),
   });
 
-  const data = statusSel.length === 0 ? allData : allData?.filter((r) => statusSel.includes(r.status));
+  const q = search.trim().toLowerCase();
+  const data = (allData ?? [])
+    .filter((r) => statusSel.length === 0 || statusSel.includes(r.status))
+    .filter((r) => !q || r.item_name?.toLowerCase().includes(q) || r.color?.toLowerCase().includes(q));
 
   const updateStatus = useMutation({
     mutationFn: ({ id, status, admin_notes }) => api.put(`/supplies/${id}`, { status, admin_notes }),
@@ -362,17 +381,22 @@ function RequestsTab({ showForm, setShowForm, statusSel = [] }) {
 }
 
 // ── Pestaña de Proveedores ─────────────────────────────────────────
-function SuppliersTab({ showForm, setShowForm }) {
+function SuppliersTab({ showForm, setShowForm, search = "" }) {
   const qc = useQueryClient();
   const [form, setFormInternal] = useState(null);
 
   useEffect(() => { if (showForm) setFormInternal({}); }, [showForm]);
   const setForm = (v) => { setFormInternal(v); if (!v) setShowForm(false); };
 
-  const { data, isLoading } = useQuery({
+  const { data: allData, isLoading } = useQuery({
     queryKey: ["suppliers"],
     queryFn: () => api.get("/supplies/suppliers").then((r) => r.data.data),
   });
+
+  const q = search.trim().toLowerCase();
+  const data = q
+    ? (allData ?? []).filter((s) => s.name?.toLowerCase().includes(q) || s.city?.toLowerCase().includes(q) || s.department?.toLowerCase().includes(q))
+    : allData;
 
   const save = useMutation({
     mutationFn: (d) => d.id ? api.put(`/supplies/suppliers/${d.id}`, d) : api.post("/supplies/suppliers", d),
@@ -723,14 +747,19 @@ function ManageModal({ request, onSave, onDelete, onClose, saving }) {
 
 const CATEGORIES = ["Telas", "Elásticos", "Hilos", "Insumos de impresión", "Empaque", "Otros"];
 
-function CatalogTab({ showForm, setShowForm }) {
+function CatalogTab({ showForm, setShowForm, search = "" }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState(null);
 
-  const { data: items = [], isLoading } = useQuery({
+  const { data: allItems = [], isLoading } = useQuery({
     queryKey: ["supply-catalog-all"],
     queryFn: () => api.get("/supply-catalog/all").then((r) => r.data.data),
   });
+
+  const q = search.trim().toLowerCase();
+  const items = q
+    ? allItems.filter((it) => it.name?.toLowerCase().includes(q) || it.category?.toLowerCase().includes(q))
+    : allItems;
 
   const createMut = useMutation({
     mutationFn: (d) => api.post("/supply-catalog", d),
