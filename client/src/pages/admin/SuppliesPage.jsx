@@ -60,25 +60,25 @@ export default function SuppliesPage() {
           value={tab}
           onChange={(t) => { setTab(t); setSearch(""); }}
         />
-        {/* Búsqueda */}
-        <div className="relative flex-1 min-w-[140px] order-last sm:order-none w-full sm:w-auto">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          <input
-            className="w-full h-10 bg-zinc-900 border border-zinc-700 focus:border-zinc-500 rounded-lg pl-9 pr-3 text-sm text-white placeholder-zinc-500 outline-none transition-colors"
-            placeholder={searchPlaceholder}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <div className="flex items-center gap-2">
+        {/* Búsqueda + estado — siempre juntos, búsqueda primero */}
+        <div className="flex items-center gap-2 flex-1 min-w-[200px] w-full sm:w-auto">
+          <div className="relative flex-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input
+              className="w-full h-10 bg-zinc-900 border border-zinc-700 focus:border-zinc-500 rounded-lg pl-9 pr-3 text-sm text-white placeholder-zinc-500 outline-none transition-colors"
+              placeholder={searchPlaceholder}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
           {tab === "requests" && (
             <StatusFilterDropdown options={SUPPLY_STATUS_OPTS} selected={statusSel} onChange={setStatusSel} />
           )}
-          <button className="btn-primary h-10 whitespace-nowrap hidden sm:flex items-center gap-1.5" onClick={addBtn.fn}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            {addBtn.label}
-          </button>
         </div>
+        <button className="btn-primary h-10 whitespace-nowrap hidden sm:flex items-center gap-1.5 shrink-0" onClick={addBtn.fn}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          {addBtn.label}
+        </button>
       </div>
       {tab === "requests"  && <RequestsTab  showForm={showRequestForm}  setShowForm={setShowRequestForm} statusSel={statusSel} search={search} />}
       {tab === "catalog"   && <CatalogTab   showForm={showCatalogForm}  setShowForm={setShowCatalogForm} search={search} />}
