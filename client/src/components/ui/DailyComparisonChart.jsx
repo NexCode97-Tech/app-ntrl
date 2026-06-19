@@ -84,7 +84,7 @@ export default function DailyComparisonChart({ data }) {
             </span>
           </div>
         </div>
-        <span className="text-xl font-bold tabular-nums" style={{ color: meta.color }}>{fmtFull(totalActual)}</span>
+        <span className="text-xl font-bold tabular-nums" style={{ color: metric === "recaudado" ? "#ffffff" : meta.color }}>{fmtFull(totalActual)}</span>
       </div>
 
       <div style={{ width: "100%", height: 240 }}>

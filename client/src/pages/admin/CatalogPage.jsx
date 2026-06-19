@@ -194,8 +194,15 @@ export default function CatalogPage() {
     <div className="space-y-4">
       <h1 className="text-white font-bold text-xl lg:hidden">Catálogo</h1>
 
-      {/* Toolbar — tabs + búsqueda + botón en una sola fila */}
+      {/* Toolbar — búsqueda + tabs + botón en una sola fila */}
       <div className="flex items-center gap-2">
+        {/* Búsqueda (primero) */}
+        <input
+          className="flex-1 min-w-0 h-10 bg-zinc-900 border border-zinc-700 focus:border-zinc-500 rounded-lg px-3 text-sm text-white placeholder-zinc-500 outline-none transition-colors"
+          placeholder={tab === "products" ? "Buscar producto..." : tab === "lines" ? "Buscar línea..." : "Buscar deporte..."}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
         {/* Tabs (íconos en móvil, con texto desde sm) */}
         <div className="flex gap-1 bg-zinc-900 border border-zinc-800 p-1 rounded-xl shrink-0">
           {TABS.map(([key, label, Icon]) => (
@@ -207,13 +214,6 @@ export default function CatalogPage() {
             </button>
           ))}
         </div>
-        {/* Búsqueda */}
-        <input
-          className="flex-1 min-w-0 h-10 bg-zinc-900 border border-zinc-700 focus:border-zinc-500 rounded-lg px-3 text-sm text-white placeholder-zinc-500 outline-none transition-colors"
-          placeholder={tab === "products" ? "Buscar producto..." : tab === "lines" ? "Buscar línea..." : "Buscar deporte..."}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
         {/* Botón — oculto en móvil (FAB) */}
         <button className="btn-primary h-10 shrink-0 whitespace-nowrap hidden sm:flex items-center gap-1.5" onClick={openAdd}>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
