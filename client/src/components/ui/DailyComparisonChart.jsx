@@ -38,6 +38,8 @@ function CustomTooltip({ active, payload, label, color }) {
 export default function DailyComparisonChart({ data }) {
   const [metric, setMetric] = useState("facturado");
   const meta = METRICS.find((m) => m.key === metric);
+  // Color de acento para número total y punto de leyenda (blanco en recaudado)
+  const accent = metric === "recaudado" ? "#ffffff" : meta.color;
 
   const chartData = useMemo(() => {
     const current  = data?.current  ?? [];
@@ -77,14 +79,14 @@ export default function DailyComparisonChart({ data }) {
           {/* Leyenda */}
           <div className="hidden sm:flex items-center gap-3 ml-1">
             <span className="flex items-center gap-1.5 text-[11px] text-zinc-500">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ background: meta.color }} /> Este mes
+              <span className="w-2.5 h-2.5 rounded-full" style={{ background: accent }} /> Este mes
             </span>
             <span className="flex items-center gap-1.5 text-[11px] text-zinc-500">
               <span className="w-2.5 h-2.5 rounded-full bg-zinc-600" /> Mes anterior
             </span>
           </div>
         </div>
-        <span className="text-xl font-bold tabular-nums" style={{ color: metric === "recaudado" ? "#ffffff" : meta.color }}>{fmtFull(totalActual)}</span>
+        <span className="text-xl font-bold tabular-nums" style={{ color: accent }}>{fmtFull(totalActual)}</span>
       </div>
 
       <div style={{ width: "100%", height: 240 }}>
