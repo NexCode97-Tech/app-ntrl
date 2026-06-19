@@ -11,6 +11,7 @@ import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { motion } from "framer-motion";
 import CountUp from "react-countup";
+import DailyComparisonChart from "../../components/ui/DailyComparisonChart.jsx";
 
 const STATUS_COLORS = {
   pending: "#71717a", in_progress: "#eab308", completed: "#22c55e", delivered: "#98f909",
@@ -314,6 +315,13 @@ export default function DashboardPage() {
     enabled: isVendedor,
   });
 
+  const { data: dailyComparison } = useQuery({
+    queryKey: ["daily-comparison"],
+    queryFn:  () => api.get("/dashboard/daily-comparison").then((r) => r.data.data),
+    staleTime: 5 * 60 * 1000,
+    enabled: !isVendedor,
+  });
+
   const currentMonth = useMemo(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -584,6 +592,9 @@ export default function DashboardPage() {
           );
         })}
       </div>
+
+      {/* Gráfica comparativa diaria — mes actual vs mes anterior */}
+      {dailyComparison && <DailyComparisonChart data={dailyComparison} />}
 
       {/* FILA 2 — Dona + Ventas por deporte */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">

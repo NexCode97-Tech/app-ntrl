@@ -819,6 +819,7 @@ function CatalogTab({ showForm, setShowForm }) {
         <CatalogItemModal
           key={editing?.id || "new"}
           item={editing}
+          existingCategories={Object.keys(grouped).filter((c) => c !== "Sin categoría")}
           onClose={() => { setShowForm(false); setEditing(null); }}
           onSave={async (d) => {
             if (editing) {
@@ -968,7 +969,7 @@ function PriceInput({ value, onChange, placeholder = "0" }) {
   );
 }
 
-function CatalogItemModal({ item, onClose, onSave, saving }) {
+function CatalogItemModal({ item, existingCategories = [], onClose, onSave, saving }) {
   const qc = useQueryClient();
   const [form, setForm] = useState({
     name:       item?.name       || "",
@@ -979,6 +980,9 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
     notes:      item?.notes      || "",
   });
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
+
+  // Categorías sugeridas: base predefinida + las que ya existen en el catálogo
+  const catOptions = [...new Set([...CATEGORIES, ...existingCategories])].sort();
 
   // ── Proveedor inicial (solo al crear) ────────────────────────
   const [initSupplier,          setInitSupplier]          = useState("");
@@ -1055,10 +1059,18 @@ function CatalogItemModal({ item, onClose, onSave, saving }) {
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Categoría</label>
-            <CustomSelect value={form.category} onChange={(e) => set("category", e.target.value)}>
-              <option value="">Sin categoría</option>
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </CustomSelect>
+            <input
+              list="catalog-categories"
+              className="input-field"
+              placeholder="Elige una o escribe una nueva..."
+              value={form.category}
+              onChange={(e) => set("category", e.target.value)}
+              autoComplete="off"
+            />
+            <datalist id="catalog-categories">
+              {catOptions.map((c) => <option key={c} value={c} />)}
+            </datalist>
+            <p className="text-[11px] text-zinc-600 mt-1">Escribe un nombre nuevo para crear una categoría.</p>
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Color</label>

@@ -10,6 +10,7 @@ router.get("/",                    requireRole("admin"), permissiveLimiter, ctrl
 router.get("/range",               requireRole("admin"), permissiveLimiter, ctrl.getDateRangeSummary);
 router.get("/history",             requireRole("admin"), permissiveLimiter, ctrl.getMonthlyHistory);
 router.get("/upcoming-deliveries", requireRole("admin","vendedor"), permissiveLimiter, ctrl.getUpcomingDeliveries);
+router.get("/daily-comparison",    requireRole("admin"), permissiveLimiter, ctrl.getDailyComparison);
 router.get("/top-customers",       requireRole("admin","vendedor"), permissiveLimiter, ctrl.getTopCustomers);
 router.get("/sport-by-month",      requireRole("admin","vendedor"), permissiveLimiter, ctrl.getSportByMonth);
 router.get("/gender-by-month",     requireRole("admin","vendedor"), permissiveLimiter, ctrl.getGenderByMonth);

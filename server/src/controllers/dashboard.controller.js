@@ -394,3 +394,50 @@ export async function getUpcomingDeliveries(req, res, next) {
     res.json({ status: "ok", data: rows });
   } catch (err) { next(err); }
 }
+
+// Serie diaria del mes actual vs mes anterior: facturado, recaudado y pendiente por día.
+export async function getDailyComparison(req, res, next) {
+  try {
+    async function dailySeries(monthOffset) {
+      const { rows } = await pool.query(`
+        WITH ref AS (
+          SELECT DATE_TRUNC('month', NOW()) - ($1 || ' month')::interval AS month_start
+        ),
+        days AS (
+          SELECT generate_series(
+            (SELECT month_start FROM ref),
+            (SELECT month_start FROM ref) + INTERVAL '1 month' - INTERVAL '1 day',
+            INTERVAL '1 day'
+          )::date AS d
+        ),
+        fact AS (
+          SELECT created_at::date AS d,
+                 SUM(total)   AS facturado,
+                 SUM(balance) AS pendiente
+          FROM orders
+          WHERE DATE_TRUNC('month', created_at) = (SELECT month_start FROM ref)
+          GROUP BY created_at::date
+        ),
+        recau AS (
+          SELECT paid_at::date AS d, SUM(amount) AS recaudado
+          FROM order_payments
+          WHERE DATE_TRUNC('month', paid_at) = (SELECT month_start FROM ref)
+          GROUP BY paid_at::date
+        )
+        SELECT EXTRACT(DAY FROM days.d)::int AS day,
+               COALESCE(fact.facturado, 0)   AS facturado,
+               COALESCE(recau.recaudado, 0)  AS recaudado,
+               COALESCE(fact.pendiente, 0)   AS pendiente
+        FROM days
+        LEFT JOIN fact  ON fact.d  = days.d
+        LEFT JOIN recau ON recau.d = days.d
+        WHERE days.d <= CASE WHEN $1 = '0' THEN NOW()::date ELSE days.d END
+        ORDER BY day
+      `, [String(monthOffset)]);
+      return rows;
+    }
+
+    const [current, previous] = await Promise.all([dailySeries(0), dailySeries(1)]);
+    res.json({ status: "ok", data: { current, previous } });
+  } catch (err) { next(err); }
+}
