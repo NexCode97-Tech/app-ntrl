@@ -285,7 +285,7 @@ export function generateQuotePDF(quote, emittedBy) {
   });
 }
 
-/* ─── FACTURA ─────────────────────────────────────────────────── */
+/* ─── REMISIÓN ─────────────────────────────────────────────────── */
 export function generateInvoicePDF(order) {
   return new Promise((resolve, reject) => {
     const doc    = new PDFDocument({ margin: 45, size: "A4", autoFirstPage: true });
@@ -304,7 +304,7 @@ export function generateInvoicePDF(order) {
     } catch { /* sin logo */ }
 
     doc.fontSize(26).fillColor(BLACK).font("Helvetica-Bold")
-       .text("FACTURA", m, m + 4, { align: "right", width: cW });
+       .text("REMISIÓN", m, m + 4, { align: "right", width: cW });
 
     const numStr = `N° ${order.order_number_fmt || String(order.order_number).padStart(3, "0")}`;
     doc.fontSize(9).fillColor(GRAY).font("Helvetica")
@@ -353,7 +353,6 @@ export function generateInvoicePDF(order) {
 
     doc.fontSize(9).fillColor(GRAY).font("Helvetica");
     const empLines = [
-      `NIT: 91156614-3`,
       EMPRESA.direccion,
       EMPRESA.ciudad,
       EMPRESA.tel,

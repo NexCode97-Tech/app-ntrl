@@ -165,7 +165,7 @@ export async function downloadInvoice(req, res, next) {
       .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // quitar tildes
       .replace(/\s+/g, "_")
       .replace(/[^a-zA-Z0-9_]/g, "");
-    const filename = `Factura_${num}_${name}.pdf`;
+    const filename = `Remision_${num}_${name}.pdf`;
     res.setHeader("Content-Disposition",
       `attachment; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`);
     res.send(pdf);
@@ -182,23 +182,23 @@ export async function sendInvoiceByEmail(req, res, next) {
 
     await sendMail({
       to:      order.customer_email,
-      subject: `Factura N° ${num} — Natural Ropa Deportiva`,
+      subject: `Remisión N° ${num} — Natural Ropa Deportiva`,
       html: `
         <div style="font-family:sans-serif;max-width:560px;margin:auto">
           <h2 style="color:#22c55e">Hola, ${order.customer_name}</h2>
-          <p>Adjunto encontrarás la factura <strong>N° ${num}</strong> correspondiente a tu pedido.</p>
+          <p>Adjunto encontrarás la remisión <strong>N° ${num}</strong> correspondiente a tu pedido.</p>
           <p>Para cualquier consulta puedes responder a este correo.</p>
           <br/>
           <p style="color:#71717a;font-size:12px">Natural Ropa Deportiva — NTRL</p>
         </div>
       `,
       attachments: [{
-        filename:    `Factura_${num}_${order.customer_name?.replace(/\s+/g,"_") || "cliente"}.pdf`,
+        filename:    `Remision_${num}_${order.customer_name?.replace(/\s+/g,"_") || "cliente"}.pdf`,
         content:     pdf,
         contentType: "application/pdf",
       }],
     });
 
-    res.json({ status: "ok", message: "Factura enviada correctamente." });
+    res.json({ status: "ok", message: "Remisión enviada correctamente." });
   } catch (err) { next(err); }
 }

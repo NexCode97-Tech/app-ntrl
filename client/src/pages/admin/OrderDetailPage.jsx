@@ -112,7 +112,7 @@ export default function OrderDetailPage() {
       const safeName = (data?.customer_name || "cliente")
         .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
         .replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
-      a.download = `Factura_${data?.order_number_fmt || id}_${safeName}.pdf`;
+      a.download = `Remision_${data?.order_number_fmt || id}_${safeName}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
     } catch { /* ignorar */ }
@@ -214,9 +214,9 @@ export default function OrderDetailPage() {
                   <IconTruck /> <span className="hidden sm:inline">Guía</span>
                 </button>
               )}
-              <button onClick={handleDownloadInvoice} title="Descargar factura"
+              <button onClick={handleDownloadInvoice} title="Descargar remisión"
                 className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-zinc-800/80 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:border-zinc-600 transition-colors">
-                <IconInvoice /> <span className="hidden sm:inline">Factura</span>
+                <IconInvoice /> <span className="hidden sm:inline">Remisión</span>
               </button>
               <button onClick={handleDelete} title="Eliminar pedido"
                 className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-zinc-800/80 border border-red-900/60 text-red-400 hover:bg-red-900/30 hover:border-red-700 transition-colors">
